@@ -1,10 +1,12 @@
 from fastapi import FastAPI
-from app.api import auth
-from app.models import user
-from app.db.session import engine
+from app.api import auth, user  # 라우터들
+from app.db.init_db import init_db  # 테이블 생성 함수
 
 app = FastAPI()
-app.include_router(auth.router)
+
+# 라우터 등록
+app.include_router(user.router, prefix="/api/user")
+app.include_router(auth.router, prefix="/api/auth")  # prefix 추가하는 걸 추천
 
 # DB 테이블 생성
-user.Base.metadata.create_all(bind=engine)
+init_db()  # 내부에서 Base.metadata.create_all 수행
