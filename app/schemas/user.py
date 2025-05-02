@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, model_validator
 from datetime import datetime
 
 class UserCreate(BaseModel):
@@ -6,12 +6,11 @@ class UserCreate(BaseModel):
     password: str
     nickname: str
     password_confirm: str
-    @field_validator("password_confirm", mode="after")
-    @classmethod
-    def passwords_match(cls, values):
-        if values.password != values.password_confirm:
+    @model_validator(mode="after")
+    def check_passwords_match(self):
+        if self.password != self.password_confirm:
             raise ValueError("비밀번호가 일치하지 않습니다.")
-        return values
+        return self
 class UserLogin(BaseModel):
     user_id: str
     password: str

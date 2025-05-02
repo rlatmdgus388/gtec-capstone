@@ -5,7 +5,7 @@ from app.crud import user as crud_user
 from app.db.session import get_db
 from app.core.security import verify_password
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 @router.post("/signup", response_model=UserOut)
 def signup(user: UserCreate, db: Session = Depends(get_db)):
