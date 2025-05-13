@@ -1,16 +1,16 @@
-from sqlalchemy.orm import Session
 from app.models.word import Word
+from sqlalchemy.orm import Session
 from app.schemas.word import WordCreate
 
 def save_words_to_wordbook(db: Session, wordbook_id: int, words: list[WordCreate]):
-    created = []
-    for word_data in words:
-        word = Word(
-            wordbook_id=wordbook_id,
-            word=word_data.word,
-            meaning=word_data.meaning
+    created_words = []
+    for word in words:
+        db_word = Word(
+            word=word.word,
+            meaning=word.meaning,
+            wordbook_id=wordbook_id
         )
-        db.add(word)
-        created.append(word)
+        db.add(db_word)
+        created_words.append(db_word)
     db.commit()
-    return created
+    return {"message": f"{len(created_words)}개 단어 저장 완료"}

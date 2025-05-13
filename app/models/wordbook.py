@@ -12,5 +12,8 @@ class Wordbook(Base):
     owner_id = Column(String(20), ForeignKey("users.system_id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # 관계 설정 (단어장.owner → 사용자)
+    # 사용자와의 관계
     owner = relationship("User", backref="wordbooks")
+
+    # ✅ 단어(word)와의 관계 추가
+    words = relationship("Word", back_populates="wordbook", cascade="all, delete")

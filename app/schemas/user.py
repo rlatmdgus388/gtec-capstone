@@ -3,8 +3,8 @@ from datetime import datetime
 
 class UserCreate(BaseModel):
     user_id: str
-    password: str
     nickname: str
+    password: str
     password_confirm: str
     @model_validator(mode="after")
     def check_passwords_match(self):
