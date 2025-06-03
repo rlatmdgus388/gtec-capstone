@@ -1,27 +1,33 @@
-import '/flutter_flow/flutter_flow_icon_button.dart';
-import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/index.dart';
-import 'select_voca_book_widget.dart' show SelectVocaBookWidget;
-import 'package:ff_theme/flutter_flow/flutter_flow_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:gtec_capstone/flutter_flow/flutter_flow_util.dart';
 
-class SelectVocaBookModel extends FlutterFlowModel<SelectVocaBookWidget> {
-  ///  State fields for stateful widgets in this page.
-
-  // State field(s) for TextField widget.
-  FocusNode? textFieldFocusNode;
+class SelectVocaBookModel extends FlutterFlowModel {
+  // State fields
+  final unfocusNode = FocusNode();
+  
+  // 컨트롤러 추가
   TextEditingController? textController;
+  
+  // 유효성 검사 함수
   String? Function(BuildContext, String?)? textControllerValidator;
 
+  FocusNode? textFieldFocusNode;
+
+  /// Initialization and disposal methods.
   @override
-  void initState(BuildContext context) {}
+  void initState(BuildContext context) {
+    textControllerValidator = _textControllerValidator;
+  }
 
   @override
   void dispose() {
-    textFieldFocusNode?.dispose();
+    unfocusNode.dispose();
     textController?.dispose();
+    textFieldFocusNode?.dispose();
+  }
+
+  // 유효성 검사 로직
+  String? _textControllerValidator(BuildContext context, String? val) {
+    return null;
   }
 }

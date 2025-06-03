@@ -20,3 +20,19 @@ export '/login_and_register/verification/verification_widget.dart'
     show VerificationWidget;
 export '/settings/main_settings_page/main_settings_page_widget.dart'
     show MainSettingsPageWidget;
+
+// Routes
+class AppRoutes {
+  static const String home = '/';
+  static const String login = '/login';
+  static const String signup = '/signup';
+  static const String verification = '/verification';
+  static const String selectVocaBook = '/select-voca-book';
+  static const String mainLearning = '/main-learning';
+  static const String ddd = '/ddd';
+  static const String inVocaBookEmptyV2 = '/in-voca-book-empty-v2';
+  static const String inVocaBookEmptyV1 = '/in-voca-book-empty-v1';
+  static const String makeVocaBook = '/make-voca-book';
+  static const String manualAddWord = '/manual-add-word';
+  static const String settings = '/settings';
+}

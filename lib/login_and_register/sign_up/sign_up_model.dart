@@ -1,41 +1,70 @@
-import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/index.dart';
-import 'sign_up_widget.dart' show SignUpWidget;
-import 'package:ff_theme/flutter_flow/flutter_flow_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
-class SignUpModel extends FlutterFlowModel<SignUpWidget> {
-  ///  State fields for stateful widgets in this page.
-
-  // State field(s) for emailAddress widget.
-  FocusNode? emailAddressFocusNode;
-  TextEditingController? emailAddressTextController;
-  String? Function(BuildContext, String?)? emailAddressTextControllerValidator;
-  // State field(s) for passwordcheck widget.
-  FocusNode? passwordcheckFocusNode;
-  TextEditingController? passwordcheckTextController;
-  String? Function(BuildContext, String?)? passwordcheckTextControllerValidator;
-  // State field(s) for password widget.
-  FocusNode? passwordFocusNode;
+class SignUpModel extends FlutterFlowModel {
+  // State fields
+  final unfocusNode = FocusNode();
+  
+  // 컨트롤러 추가
+  TextEditingController? emailAddressController;
+  TextEditingController? nicknameTextController;
   TextEditingController? passwordTextController;
+  TextEditingController? confirmPasswordTextController;
+  
+  // 유효성 검사 함수
+  String? Function(BuildContext, String?)? emailAddressControllerValidator;
+  String? Function(BuildContext, String?)? nicknameTextControllerValidator;
   String? Function(BuildContext, String?)? passwordTextControllerValidator;
+  String? Function(BuildContext, String?)? confirmPasswordTextControllerValidator;
 
-  @override
-  void initState(BuildContext context) {}
+  /// Initialization and disposal methods.
+  void initState(BuildContext context) {
+    emailAddressControllerValidator = _emailAddressControllerValidator;
+    nicknameTextControllerValidator = _nicknameTextControllerValidator;
+    passwordTextControllerValidator = _passwordTextControllerValidator;
+    confirmPasswordTextControllerValidator = _confirmPasswordTextControllerValidator;
+  }
 
-  @override
   void dispose() {
-    emailAddressFocusNode?.dispose();
-    emailAddressTextController?.dispose();
-
-    passwordcheckFocusNode?.dispose();
-    passwordcheckTextController?.dispose();
-
-    passwordFocusNode?.dispose();
+    unfocusNode.dispose();
+    emailAddressController?.dispose();
+    nicknameTextController?.dispose();
     passwordTextController?.dispose();
+    confirmPasswordTextController?.dispose();
+  }
+
+  // 유효성 검사 로직
+  String? _emailAddressControllerValidator(BuildContext context, String? val) {
+    if (val == null || val.isEmpty) {
+      return '아이디를 입력해주세요';
+    }
+    return null;
+  }
+
+  String? _nicknameTextControllerValidator(BuildContext context, String? val) {
+    if (val == null || val.isEmpty) {
+      return '닉네임을 입력해주세요';
+    }
+    return null;
+  }
+
+  String? _passwordTextControllerValidator(BuildContext context, String? val) {
+    if (val == null || val.isEmpty) {
+      return '비밀번호를 입력해주세요';
+    }
+    if (val.length < 6) {
+      return '비밀번호는 최소 6자 이상이어야 합니다';
+    }
+    return null;
+  }
+
+  String? _confirmPasswordTextControllerValidator(BuildContext context, String? val) {
+    if (val == null || val.isEmpty) {
+      return '비밀번호 확인을 입력해주세요';
+    }
+    if (val != passwordTextController?.text) {
+      return '비밀번호가 일치하지 않습니다';
+    }
+    return null;
   }
 }

@@ -45,6 +45,12 @@ class _ManulAddWordWidgetState extends State<ManulAddWordWidget> {
     _model.textFieldFocusNode4 ??= FocusNode();
   }
 
+  void safeSetState(VoidCallback callback) {
+    if (mounted) {
+      setState(callback);
+    }
+  }
+
   @override
   void dispose() {
     _model.dispose();

@@ -1,19 +1,43 @@
-import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import 'dart:ui';
-import '/index.dart';
-import 'bottom_sheet_of_manual_add_word_widget.dart'
-    show BottomSheetOfManualAddWordWidget;
-import 'package:ff_theme/flutter_flow/flutter_flow_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:gtec_capstone/flutter_flow/flutter_flow_util.dart';
 
-class BottomSheetOfManualAddWordModel
-    extends FlutterFlowModel<BottomSheetOfManualAddWordWidget> {
+class BottomSheetOfManualAddWordModel extends FlutterFlowModel {
+  // State fields
+  final unfocusNode = FocusNode();
+  
+  // 컨트롤러 추가
+  TextEditingController? textController1;
+  TextEditingController? textController2;
+  
+  // 유효성 검사 함수
+  String? Function(BuildContext, String?)? textController1Validator;
+  String? Function(BuildContext, String?)? textController2Validator;
+
+  /// Initialization and disposal methods.
   @override
-  void initState(BuildContext context) {}
+  void initState(BuildContext context) {
+    textController1Validator = _textController1Validator;
+    textController2Validator = _textController2Validator;
+  }
 
   @override
-  void dispose() {}
+  void dispose() {
+    unfocusNode.dispose();
+    textController1?.dispose();
+    textController2?.dispose();
+  }
+
+  // 유효성 검사 로직
+  String? _textController1Validator(BuildContext context, String? val) {
+    return null;
+  }
+  
+  String? _textController2Validator(BuildContext context, String? val) {
+    return null;
+  }
+
+  void onUpdate() {}
+  void maybeDispose() {
+    dispose();
+  }
 }

@@ -1,34 +1,50 @@
-import '/flutter_flow/flutter_flow_icon_button.dart';
-import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/index.dart';
-import 'log_in_widget.dart' show LogInWidget;
-import 'package:ff_theme/flutter_flow/flutter_flow_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:gtec_capstone/flutter_flow/flutter_flow_util.dart';
 
-class LogInModel extends FlutterFlowModel<LogInWidget> {
-  ///  State fields for stateful widgets in this page.
-
-  // State field(s) for password widget.
-  FocusNode? passwordFocusNode;
-  TextEditingController? passwordTextController;
-  String? Function(BuildContext, String?)? passwordTextControllerValidator;
-  // State field(s) for emailAddress widget.
-  FocusNode? emailAddressFocusNode;
+class LogInModel extends FlutterFlowModel {
+  // State fields
+  final unfocusNode = FocusNode();
+  
+  // 컨트롤러 추가
   TextEditingController? emailAddressTextController;
+  TextEditingController? passwordTextController;
+  
+  // 포커스 노드 추가
+  FocusNode? emailAddressFocusNode;
+  FocusNode? passwordFocusNode;
+  
+  // 유효성 검사 함수
   String? Function(BuildContext, String?)? emailAddressTextControllerValidator;
+  String? Function(BuildContext, String?)? passwordTextControllerValidator;
 
+  /// Initialization and disposal methods.
   @override
-  void initState(BuildContext context) {}
+  void initState(BuildContext context) {
+    emailAddressTextControllerValidator = _emailAddressTextControllerValidator;
+    passwordTextControllerValidator = _passwordTextControllerValidator;
+  }
 
   @override
   void dispose() {
-    passwordFocusNode?.dispose();
-    passwordTextController?.dispose();
-
-    emailAddressFocusNode?.dispose();
+    unfocusNode.dispose();
     emailAddressTextController?.dispose();
+    passwordTextController?.dispose();
+    emailAddressFocusNode?.dispose();
+    passwordFocusNode?.dispose();
+  }
+
+  // 유효성 검사 로직
+  String? _emailAddressTextControllerValidator(BuildContext context, String? val) {
+    if (val == null || val.isEmpty) {
+      return '아이디를 입력해주세요';
+    }
+    return null;
+  }
+
+  String? _passwordTextControllerValidator(BuildContext context, String? val) {
+    if (val == null || val.isEmpty) {
+      return '비밀번호를 입력해주세요';
+    }
+    return null;
   }
 }

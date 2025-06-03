@@ -1,19 +1,30 @@
-import '/flutter_flow/flutter_flow_icon_button.dart';
-import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/voca_book/bottom_sheet_of_manual_add_word/bottom_sheet_of_manual_add_word_widget.dart';
-import '/index.dart';
-import 'in_voca_book_of_empty_v1_widget.dart' show InVocaBookOfEmptyV1Widget;
-import 'package:ff_theme/flutter_flow/flutter_flow_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:gtec_capstone/flutter_flow/flutter_flow_util.dart';
 
-class InVocaBookOfEmptyV1Model
-    extends FlutterFlowModel<InVocaBookOfEmptyV1Widget> {
+class InVocaBookOfEmptyV1Model extends FlutterFlowModel {
+  // State fields
+  final unfocusNode = FocusNode();
+  
+  // 컨트롤러 추가
+  TextEditingController? textController;
+  
+  // 유효성 검사 함수
+  String? Function(BuildContext, String?)? textControllerValidator;
+
+  /// Initialization and disposal methods.
   @override
-  void initState(BuildContext context) {}
+  void initState(BuildContext context) {
+    textControllerValidator = _textControllerValidator;
+  }
 
   @override
-  void dispose() {}
+  void dispose() {
+    unfocusNode.dispose();
+    textController?.dispose();
+  }
+
+  // 유효성 검사 로직
+  String? _textControllerValidator(BuildContext context, String? val) {
+    return null;
+  }
 }

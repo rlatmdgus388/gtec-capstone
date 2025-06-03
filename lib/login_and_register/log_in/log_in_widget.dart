@@ -6,6 +6,7 @@ import 'package:ff_theme/flutter_flow/flutter_flow_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../services/auth.dart';
 import 'log_in_model.dart';
 export 'log_in_model.dart';
 
@@ -20,6 +21,9 @@ class LogInWidget extends StatefulWidget {
 }
 
 class _LogInWidgetState extends State<LogInWidget> {
+  final _formKey = GlobalKey<FormState>();
+  final _idController = TextEditingController();
+  final _pwController = TextEditingController();
   late LogInModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
@@ -38,6 +42,8 @@ class _LogInWidgetState extends State<LogInWidget> {
 
   @override
   void dispose() {
+    _idController.dispose();
+    _pwController.dispose();
     _model.dispose();
 
     super.dispose();
@@ -50,11 +56,14 @@ class _LogInWidgetState extends State<LogInWidget> {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
       },
+      
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: Colors.white,
         body: SafeArea(
           top: true,
+          child: Form(
+          key: _formKey,
           child: Stack(
             children: [
               Align(
@@ -62,16 +71,17 @@ class _LogInWidgetState extends State<LogInWidget> {
                 child: Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(10.0, 0.0, 0.0, 0.0),
                   child: FlutterFlowIconButton(
-                    borderRadius: 8.0,
+                    borderColor: Colors.transparent,
+                    borderRadius: 30.0,
+                    borderWidth: 1.0,
                     buttonSize: 40.0,
-                    fillColor: Colors.white,
                     icon: Icon(
-                      Icons.arrow_back,
+                      Icons.arrow_back_ios_rounded,
                       color: Color(0xFFF38F38),
-                      size: 24.0,
+                      size: 20.0,
                     ),
                     onPressed: () async {
-                      context.pushNamed(HomePageWidget.routeName);
+                      Navigator.pushNamed(context, HomePageWidget.routeName);
                     },
                   ),
                 ),
@@ -96,7 +106,7 @@ class _LogInWidgetState extends State<LogInWidget> {
                 child: Container(
                   width: 340.0,
                   child: TextFormField(
-                    controller: _model.passwordTextController,
+                    controller: _pwController,
                     focusNode: _model.passwordFocusNode,
                     autofocus: true,
                     autofillHints: [AutofillHints.email],
@@ -172,7 +182,7 @@ class _LogInWidgetState extends State<LogInWidget> {
                 child: Container(
                   width: 340.0,
                   child: TextFormField(
-                    controller: _model.emailAddressTextController,
+                    controller: _idController,
                     focusNode: _model.emailAddressFocusNode,
                     autofocus: true,
                     autofillHints: [AutofillHints.email],
@@ -287,8 +297,27 @@ class _LogInWidgetState extends State<LogInWidget> {
                   padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 16.0),
                   child: FFButtonWidget(
                     onPressed: () async {
-                      context.pushNamed(SelectVocaBookWidget.routeName);
-                    },
+                    // 1) 입력 검증: 아이디·비번이 빈칸이면 리턴
+                    if (!_formKey.currentState!.validate()) return;
+
+                    // 2) 백엔드 로그인 호출
+                    final err = await login(
+                      _idController.text.trim(),
+                      _pwController.text.trim(),
+                    );
+
+                    // 3) 결과 처리
+                    if (err == null) {
+                      // 로그인 성공 → 다음 페이지
+                      if (context.mounted) {
+                        context.pushNamed(SelectVocaBookWidget.routeName);
+                      }
+                    } else {
+                      // 로그인 실패 → 스낵바로 오류 표시
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text(err)));
+                    }
+                  },
                     text: '로그인',
                     options: FFButtonOptions(
                       width: 340.0,
@@ -317,6 +346,7 @@ class _LogInWidgetState extends State<LogInWidget> {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

@@ -57,7 +57,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                   onPressed: () {
                     print('Button pressed ...');
                   },
-                  text: 'Google로 로그인',
+                  text: ' Google로 로그인',
                   icon: FaIcon(
                     FontAwesomeIcons.google,
                     color: Color(0xFFF38F38),
@@ -68,7 +68,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                     height: 50.0,
                     padding:
                         EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-                    iconAlignment: IconAlignment.start,
+                    iconAlignment: FFIconAlignment.start,
                     iconPadding: EdgeInsets.all(0.0),
                     color: Colors.white,
                     textStyle: FlutterFlowTheme.of(context).titleSmall.override(

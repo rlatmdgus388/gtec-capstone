@@ -1,27 +1,36 @@
-import '/flutter_flow/flutter_flow_icon_button.dart';
-import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/index.dart';
-import 'make_voca_book_widget.dart' show MakeVocaBookWidget;
-import 'package:ff_theme/flutter_flow/flutter_flow_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:gtec_capstone/flutter_flow/flutter_flow_util.dart';
 
-class MakeVocaBookModel extends FlutterFlowModel<MakeVocaBookWidget> {
-  ///  State fields for stateful widgets in this page.
+class MakeVocaBookModel extends FlutterFlowModel {
+  // State fields
+  final unfocusNode = FocusNode();
+  
+  // 컨트롤러 추가
+  TextEditingController? textController;
+  
+  // 유효성 검사 함수
+  String? Function(BuildContext, String?)? textControllerValidator;
 
-  // State field(s) for wowowo widget.
-  FocusNode? wowowoFocusNode;
   TextEditingController? wowowoTextController;
+  FocusNode? wowowoFocusNode;
   String? Function(BuildContext, String?)? wowowoTextControllerValidator;
 
+  /// Initialization and disposal methods.
   @override
-  void initState(BuildContext context) {}
+  void initState(BuildContext context) {
+    textControllerValidator = _textControllerValidator;
+  }
 
   @override
   void dispose() {
-    wowowoFocusNode?.dispose();
+    unfocusNode.dispose();
+    textController?.dispose();
     wowowoTextController?.dispose();
+    wowowoFocusNode?.dispose();
+  }
+
+  // 유효성 검사 로직
+  String? _textControllerValidator(BuildContext context, String? val) {
+    return null;
   }
 }
