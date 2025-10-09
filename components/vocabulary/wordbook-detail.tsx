@@ -75,13 +75,17 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
       word.meaning.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleAddWord = (newWordData: any) => {
-    // API 호출 후 상태를 업데이트하는 방식으로 변경하는 것을 추천합니다.
-    // 우선은 UI에 즉시 반영되도록 기존 로직을 유지합니다.
-    const newWord: Word = {
-      id: `${Date.now()}`, ...newWordData, mastered: false, createdAt: new Date().toISOString().split("T")[0],
-    };
-    setWords((prev) => [newWord, ...prev]);
+  const handleAddWord = async (newWordData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
+    try {
+      const newWord = await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
+        method: 'POST',
+        body: JSON.stringify(newWordData),
+      });
+      setWords((prev) => [newWord, ...prev]);
+    } catch (error) {
+      console.error("단어 추가에 실패했습니다:", error);
+      alert("단어 추가 중 오류가 발생했습니다.");
+    }
   };
 
   const handleDeleteWord = (wordId: string) => {
