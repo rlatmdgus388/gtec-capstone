@@ -43,30 +43,27 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const [selectedImageData, setSelectedImageData] = useState<string | null>(null);
   
-  // ▼▼▼ [수정됨] 단어 목록과 로딩 상태 관리 ▼▼▼
   const [words, setWords] = useState<Word[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ▼▼▼ [수정됨] API를 통해 단어 목록을 불러오는 로직 ▼▼▼
   useEffect(() => {
     const fetchWords = async () => {
       if (!wordbook.id) return;
       
       setIsLoading(true);
       try {
-        // API 호출로 실제 단어 데이터 가져오기
         const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`);
         setWords(data.words || []);
       } catch (error) {
         console.error("단어 목록을 불러오는데 실패했습니다:", error);
-        setWords([]); // 에러 발생 시 빈 배열로 초기화
+        setWords([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchWords();
-  }, [wordbook.id]); // wordbook.id가 변경될 때마다 데이터를 새로고침
+  }, [wordbook.id]);
 
   // --- 함수들 ---
   const filteredWords = words.filter(
@@ -89,11 +86,9 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
   };
 
   const handleDeleteWord = (wordId: string) => {
-    // API 호출로 DB에서 삭제 후 UI 업데이트
     setWords((prev) => prev.filter((word) => word.id !== wordId));
   };
   const toggleMastered = (wordId: string) => {
-    // API 호출로 DB 업데이트 후 UI 업데이트
     setWords((prev) => prev.map((word) => (word.id === wordId ? { ...word, mastered: !word.mastered } : word)));
   };
 
@@ -133,7 +128,6 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
 
   const handleWordsAdded = (addedWords: any[], wordbookId: number) => {
      console.log("Words added:", addedWords, "to wordbook:", wordbookId);
-    // TODO: 실제로 API를 호출하여 단어를 추가하고, 목록을 다시 불러오는 로직으로 변경 필요
   };
 
   if (showPhotoCapture) {
@@ -179,18 +173,22 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
           </div>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="h-12 ..."><Edit size={18} />직접 입력</Button>} />
-              <Button variant="outline" className="h-12 ..." onClick={handlePhotoCaptureClick}><Camera size={18} />사진으로 추가</Button>
+              <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="h-12 flex items-center justify-center gap-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={18} />직접 입력</Button>} />
+              <Button variant="outline" className="h-12 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-medium" onClick={handlePhotoCaptureClick}><Camera size={18} />사진으로 추가</Button>
             </div>
-            <Button className="w-full h-12 ..."><Play size={18} />학습하기</Button>
+            <Button className="w-full h-12 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Play size={18} className="mr-2" />학습하기</Button>
           </div>
         </div>
       </div>
 
       <div className="px-4 py-4 space-y-4">
-        <Card className="border border-gray-200 rounded-lg shadow-sm">{/* ... 학습 진도 카드 ... */}</Card>
+        {/* 단어/뜻 가리기 버튼 */}
+        <div className="flex justify-end gap-2">
+          <Button variant={hideMode === "word" ? "default" : "outline"} size="sm" onClick={handleHideWords} className="text-xs rounded-full"><EyeOff size={14} className="mr-1" />단어 가리기</Button>
+          <Button variant={hideMode === "meaning" ? "default" : "outline"} size="sm" onClick={handleHideMeanings} className="text-xs rounded-full"><EyeOff size={14} className="mr-1" />뜻 가리기</Button>
+          <Button variant={hideMode === "none" ? "default" : "outline"} size="sm" onClick={handleShowAll} className="text-xs rounded-full"><Eye size={14} className="mr-1" />모두 보기</Button>
+        </div>
         
-        {/* ▼▼▼ [수정됨] 로딩 및 단어 목록 UI ▼▼▼ */}
         {isLoading ? (
           <div className="space-y-3 pt-4">
             <Skeleton className="h-24 w-full rounded-lg" />
@@ -208,7 +206,7 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
                 {searchQuery ? "다른 검색어를 시도해보세요" : "첫 번째 단어를 추가해보세요"}
               </p>
               {!searchQuery && (
-                <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="bg-[#FF7A00] ..."><Edit size={16} className="mr-2" />단어 추가하기</Button>} />
+                <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={16} className="mr-2" />단어 추가하기</Button>} />
               )}
             </CardContent>
           </Card>
@@ -226,7 +224,7 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
                           <h3 className="text-lg font-semibold text-gray-900">{word.word}</h3>
                         )}
                         {word.mastered && (
-                          <Badge className="bg-green-100 text-green-700 ...">맞기완료</Badge>
+                          <Badge className="bg-green-100 text-green-700 border-0 rounded-full">암기완료</Badge>
                         )}
                       </div>
                       {hideMode === "meaning" && !flippedCards.has(word.id) ? (
@@ -235,7 +233,7 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
                         <p className="text-base text-gray-700 mb-1">{word.meaning}</p>
                       )}
                       {word.pronunciation && <p className="text-sm text-gray-500 mb-2">{word.pronunciation}</p>}
-                      {word.example && <p className="text-sm text-gray-500 italic mt-2 ...">{word.example}</p>}
+                      {word.example && <p className="text-sm text-gray-500 italic mt-2 border-l-2 border-gray-200 pl-3">{word.example}</p>}
                       {hideMode !== "none" && !flippedCards.has(word.id) && (
                         <p className="text-xs text-gray-400 mt-2">탭하여 보기</p>
                       )}
