@@ -2,15 +2,14 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// ‼️ 아래 설정값들을 본인의 Firebase 프로젝트 키로 반드시 교체해주세요!
+// .env.local 파일의 클라이언트용 변수를 사용하여 Firebase 설정
 const firebaseConfig = {
-    apiKey: "AIzaSyAohVZDDr9nAOm0YFtBjpZuzzeDibbeBis",
-    authDomain: "snap-voka.firebaseapp.com",
-    projectId: "snap-voka",
-    storageBucket: "snap-voka.firebasestorage.app",
-    messagingSenderId: "498985170172",
-    appId: "1:498985170172:web:a6f5eb517a8a7137871379",
-    measurementId: "G-6G876SD6Y1"
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Firebase 초기화
