@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 
-// 서비스 계정 키를 사용하여 Vision 클라이언트 초기화
-// .env.local 파일에 키가 올바르게 설정되어 있어야 합니다.
-const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}');
-const client = new ImageAnnotatorClient({ credentials });
+// 최신 SDK에서는 credentials 없이 환경변수만 있으면 자동 인증
+const client = new ImageAnnotatorClient();
 
 export async function POST(request: Request) {
   try {
@@ -13,23 +11,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Image data is required' }, { status: 400 });
     }
 
-    // 'data:image/jpeg;base64,' 와 같은 접두사 제거
-    const imageBuffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+    // Base64 → Buffer
+    const imageBuffer = Buffer.from(
+      image.replace(/^data:image\/\w+;base64,/, ""), 
+      'base64'
+    );
 
-    const [result] = await client.textDetection(imageBuffer);
+    // Vision API 호출
+    const [result] = await client.textDetection({ image: { content: imageBuffer } });
     const detections = result.textAnnotations;
 
     if (!detections || detections.length === 0) {
       return NextResponse.json([]);
     }
 
-    // 전체 텍스트를 제외한 개별 단어들만 추출
+    // 전체 텍스트 제외 후 개별 단어 추출
     const words = detections.slice(1).map(item => ({
       text: item.description,
       confidence: item.score,
     }));
 
     return NextResponse.json(words);
+
   } catch (error) {
     console.error('Google Cloud Vision API Error:', error);
     return NextResponse.json({ message: 'Error processing image' }, { status: 500 });
