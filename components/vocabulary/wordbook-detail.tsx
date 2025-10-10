@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,9 +9,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AddWordDialog } from "./add-word-dialog"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { ImageSelectionModal } from "@/components/camera/image-selection-modal"
-import { ArrowLeft, Search, MoreVertical, Edit, Trash2, Volume2, Play, Eye, EyeOff, Camera, ImageUp } from "lucide-react"
+import { ArrowLeft, Search, MoreVertical, Edit, Trash2, Volume2, Play, Eye, EyeOff, Camera, Lightbulb } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 // --- 인터페이스 정의 ---
 interface Word {
@@ -35,59 +37,72 @@ interface WordbookDetailProps {
 }
 
 export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
-  // --- 상태 관리 ---
+  // --- 상태 관리 (두 파일 기능 모두 포함) ---
+  const [words, setWords] = useState<Word[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // '단어/뜻 가리기' 관련 상태
   const [hideMode, setHideMode] = useState<"none" | "word" | "meaning">("none");
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+
+  // '예문/소리' 관련 상태
+  const [visibleExamples, setVisibleExamples] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
+
+  // '사진으로 추가' 관련 상태
   const [showImageSelection, setShowImageSelection] = useState(false);
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const [selectedImageData, setSelectedImageData] = useState<string | null>(null);
-  
-  const [words, setWords] = useState<Word[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // --- [수정] 데이터 로딩 로직을 안정적인 useCallback으로 분리 ---
+  const fetchWords = useCallback(async () => {
+    if (!wordbook.id) return;
+    
+    setIsLoading(true);
+    try {
+      const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`);
+      setWords(data.words || []);
+    } catch (error) {
+      console.error("단어 목록을 불러오는데 실패했습니다:", error);
+      setWords([]);
+      toast({ title: "오류", description: "단어 목록을 불러오는데 실패했습니다.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [wordbook.id, toast]);
 
   useEffect(() => {
-    const fetchWords = async () => {
-      if (!wordbook.id) return;
-      
-      setIsLoading(true);
-      try {
-        const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`);
-        setWords(data.words || []);
-      } catch (error) {
-        console.error("단어 목록을 불러오는데 실패했습니다:", error);
-        setWords([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchWords();
-  }, [wordbook.id]);
+  }, [fetchWords]);
 
-  // --- 함수들 ---
+  // --- [수정] 단어 추가 핸들러 (안정적인 버전) ---
+  const handleAddWord = async (newWordData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
+    try {
+      await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
+        method: 'POST',
+        body: JSON.stringify(newWordData),
+      });
+      toast({ title: "성공", description: "새로운 단어가 추가되었습니다." });
+      await fetchWords(); // 추가 후 목록 전체 새로고침
+    } catch (error) {
+      console.error("단어 추가에 실패했습니다:", error);
+      toast({ title: "오류", description: "단어 추가 중 오류가 발생했습니다.", variant: "destructive" });
+    }
+  };
+
+  // --- 핸들러 함수들 ---
   const filteredWords = words.filter(
     (word) =>
       word.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
       word.meaning.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleAddWord = async (newWordData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
-    try {
-      const newWord = await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
-        method: 'POST',
-        body: JSON.stringify(newWordData),
-      });
-      setWords((prev) => [newWord, ...prev]);
-    } catch (error) {
-      console.error("단어 추가에 실패했습니다:", error);
-      alert("단어 추가 중 오류가 발생했습니다.");
-    }
-  };
-
   const handleDeleteWord = (wordId: string) => {
     setWords((prev) => prev.filter((word) => word.id !== wordId));
+    toast({ title: "삭제됨", description: "단어가 삭제되었습니다." });
   };
+  
   const toggleMastered = (wordId: string) => {
     setWords((prev) => prev.map((word) => (word.id === wordId ? { ...word, mastered: !word.mastered } : word)));
   };
@@ -102,6 +117,22 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
       newSet.has(wordId) ? newSet.delete(wordId) : newSet.add(wordId);
       return newSet;
     });
+  };
+
+  const handleToggleExample = (wordId: string, hasExample: boolean) => {
+    if (!hasExample) {
+      toast({ title: "예문 없음", description: "이 단어에는 등록된 예문이 없습니다." });
+      return;
+    }
+    setVisibleExamples(prev => {
+      const newSet = new Set(prev);
+      newSet.has(wordId) ? newSet.delete(wordId) : newSet.add(wordId);
+      return newSet;
+    });
+  };
+
+  const handlePlaySound = (wordText: string) => {
+    toast({ title: "음성 재생", description: `"${wordText}" 단어의 음성을 재생합니다.` });
   };
 
   const handlePhotoCaptureClick = () => setShowImageSelection(true);
@@ -128,37 +159,23 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
 
   const handleWordsAdded = (addedWords: any[], wordbookId: number) => {
      console.log("Words added:", addedWords, "to wordbook:", wordbookId);
+     fetchWords();
   };
 
+  // --- 렌더링 ---
   if (showPhotoCapture) {
-    return (
-      <PhotoWordCapture 
-        imageData={selectedImageData} 
-        onClose={() => setShowPhotoCapture(false)} 
-        onWordsAdded={handleWordsAdded} 
-      />
-    );
+    return <PhotoWordCapture imageData={selectedImageData} onClose={() => setShowPhotoCapture(false)} onWordsAdded={handleWordsAdded} />;
   }
 
   return (
     <div className="flex-1 overflow-y-auto pb-20 bg-white">
-      <ImageSelectionModal
-        open={showImageSelection}
-        onClose={() => setShowImageSelection(false)}
-        onCameraSelect={handleCameraSelect}
-        onGallerySelect={handleGallerySelect}
-      />
+      <ImageSelectionModal open={showImageSelection} onClose={() => setShowImageSelection(false)} onCameraSelect={handleCameraSelect} onGallerySelect={handleGallerySelect} />
       
-      <div className="bg-white border-b border-gray-100">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
-            <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">
-              <ArrowLeft size={20} className="text-gray-700" />
-            </Button>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-gray-900">{wordbook.name}</h1>
-              <p className="text-sm text-gray-600">{words.length}개 단어 • {wordbook.progress}% 완료</p>
-            </div>
+            <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2"><ArrowLeft size={20} className="text-gray-700" /></Button>
+            <div className="flex-1"><h1 className="text-xl font-bold text-gray-900">{wordbook.name}</h1><p className="text-sm text-gray-600">{words.length}개 단어 • {wordbook.progress}% 완료</p></div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="p-2"><MoreVertical size={20} className="text-gray-700" /></Button></DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -173,16 +190,15 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
           </div>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="h-12 flex items-center justify-center gap-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={18} />직접 입력</Button>} />
-              <Button variant="outline" className="h-12 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-medium" onClick={handlePhotoCaptureClick}><Camera size={18} />사진으로 추가</Button>
+              <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="h-12 flex items-center justify-center gap-2 rounded-xl font-medium"><Edit size={18} />직접 입력</Button>} />
+              <Button variant="outline" className="h-12 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-medium" onClick={handlePhotoCaptureClick}><Camera size={18} />사진으로 추가</Button>
             </div>
-            <Button className="w-full h-12 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Play size={18} className="mr-2" />학습하기</Button>
+            <Button className="w-full h-12 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-xl font-medium"><Play size={18} />학습하기</Button>
           </div>
         </div>
       </div>
 
       <div className="px-4 py-4 space-y-4">
-        {/* 단어/뜻 가리기 버튼 */}
         <div className="flex justify-end gap-2">
           <Button variant={hideMode === "word" ? "default" : "outline"} size="sm" onClick={handleHideWords} className="text-xs rounded-full"><EyeOff size={14} className="mr-1" />단어 가리기</Button>
           <Button variant={hideMode === "meaning" ? "default" : "outline"} size="sm" onClick={handleHideMeanings} className="text-xs rounded-full"><EyeOff size={14} className="mr-1" />뜻 가리기</Button>
@@ -190,64 +206,62 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
         </div>
         
         {isLoading ? (
-          <div className="space-y-3 pt-4">
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-          </div>
+          <div className="space-y-3 pt-4"><Skeleton className="h-28 w-full rounded-lg" /><Skeleton className="h-28 w-full rounded-lg" /><Skeleton className="h-28 w-full rounded-lg" /></div>
         ) : filteredWords.length === 0 ? (
           <Card className="text-center py-12 border border-gray-200 rounded-lg">
             <CardContent>
               <Edit size={48} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {searchQuery ? "검색 결과가 없습니다" : "단어가 없습니다"}
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                {searchQuery ? "다른 검색어를 시도해보세요" : "첫 번째 단어를 추가해보세요"}
-              </p>
-              {!searchQuery && (
-                <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={16} className="mr-2" />단어 추가하기</Button>} />
-              )}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{searchQuery ? "검색 결과가 없습니다" : "단어가 없습니다"}</h3>
+              <p className="text-sm text-gray-600 mb-4">{searchQuery ? "다른 검색어를 시도해보세요" : "첫 번째 단어를 추가해보세요"}</p>
+              {!searchQuery && (<AddWordDialog onAddWord={handleAddWord} trigger={<Button className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white"><Edit size={16} className="mr-2" />단어 추가하기</Button>} />)}
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-3">
             {filteredWords.map((word) => (
               <Card key={word.id} className="border border-gray-200 hover:shadow-md transition-all rounded-lg bg-white">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 cursor-pointer" onClick={() => handleCardFlip(word.id)}>
+                <CardContent className="p-4 relative min-h-[120px]">
+                  <div className="absolute top-3 right-2 z-10">
+                      <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreVertical size={16} className="text-gray-500" /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => toggleMastered(word.id)}>{word.mastered ? "암기 해제" : "암기 완료"}</DropdownMenuItem>
+                          <DropdownMenuItem>편집</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteWord(word.id)}>삭제</DropdownMenuItem>
+                      </DropdownMenuContent>
+                      </DropdownMenu>
+                  </div>
+                  <div className="flex-1 cursor-pointer pr-8" onClick={() => handleCardFlip(word.id)}>
                       <div className="flex items-center gap-2 mb-1">
-                        {hideMode === "word" && !flippedCards.has(word.id) ? (
+                      {hideMode === "word" && !flippedCards.has(word.id) ? (
                           <div className="h-7 w-32 bg-gray-200 rounded animate-pulse" />
-                        ) : (
-                          <h3 className="text-lg font-semibold text-gray-900">{word.word}</h3>
-                        )}
-                        {word.mastered && (
-                          <Badge className="bg-green-100 text-green-700 border-0 rounded-full">암기완료</Badge>
-                        )}
+                      ) : (
+                          <h3 className="text-lg font-semibold text-gray-900 break-all">{word.word}</h3>
+                      )}
+                      {word.mastered && (
+                          <Badge className="bg-green-100 text-green-700 flex-shrink-0">암기완료</Badge>
+                      )}
                       </div>
                       {hideMode === "meaning" && !flippedCards.has(word.id) ? (
-                        <div className="h-6 w-24 bg-gray-200 rounded animate-pulse mb-1" />
+                      <div className="h-6 w-24 bg-gray-200 rounded animate-pulse mb-1" />
                       ) : (
-                        <p className="text-base text-gray-700 mb-1">{word.meaning}</p>
+                      <p className="text-base text-gray-700 mb-1">{word.meaning}</p>
                       )}
-                      {word.pronunciation && <p className="text-sm text-gray-500 mb-2">{word.pronunciation}</p>}
-                      {word.example && <p className="text-sm text-gray-500 italic mt-2 border-l-2 border-gray-200 pl-3">{word.example}</p>}
+                      {visibleExamples.has(word.id) && word.example && (
+                      <p className="text-sm text-blue-600 italic mt-2 p-2 bg-blue-50 rounded-md">"{word.example}"</p>
+                      )}
                       {hideMode !== "none" && !flippedCards.has(word.id) && (
-                        <p className="text-xs text-gray-400 mt-2">탭하여 보기</p>
+                      <p className="text-xs text-gray-400 mt-2">탭하여 보기</p>
                       )}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 -mr-2"><MoreVertical size={16} className="text-gray-500" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => toggleMastered(word.id)}>{word.mastered ? "암기 해제" : "암기 완료"}</DropdownMenuItem>
-                        <DropdownMenuItem>편집</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteWord(word.id)}>삭제</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  </div>
+                  
+                  <div className="absolute bottom-4 right-4 flex items-center gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleToggleExample(word.id, !!word.example)} className={cn("h-10 w-10 rounded-full", word.example ? "text-gray-600 hover:bg-gray-100" : "text-gray-300 cursor-not-allowed")} title={word.example ? "예문 보기/숨기기" : "등록된 예문 없음"}>
+                          <Lightbulb size={22} />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handlePlaySound(word.word)} className="h-10 w-10 rounded-full text-gray-600 hover:bg-gray-100" title="단어 음성 듣기">
+                          <Volume2 size={22} />
+                      </Button>
                   </div>
                 </CardContent>
               </Card>
