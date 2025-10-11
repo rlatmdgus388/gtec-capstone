@@ -7,12 +7,11 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Clock, Check, X } from "lucide-react"
 
+// Word 인터페이스에서 example과 pronunciation을 제거합니다
 interface Word {
   id: number
   word: string
   meaning: string
-  example?: string
-  pronunciation?: string
 }
 
 interface QuizModeProps {
@@ -164,14 +163,7 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
         <Card>
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-foreground mb-2">{currentWord.word}</h2>
-            {currentWord.pronunciation && (
-              <p className="text-sm text-muted-foreground mb-4">{currentWord.pronunciation}</p>
-            )}
-            {currentWord.example && (
-              <div className="border-l-2 border-primary/20 pl-4 mb-4">
-                <p className="text-sm text-muted-foreground italic">{currentWord.example}</p>
-              </div>
-            )}
+            {/* ▼▼▼ [수정됨] 발음과 예문 관련 UI를 제거합니다 ▼▼▼ */}
             <p className="text-lg text-muted-foreground">이 단어의 뜻은?</p>
           </CardContent>
         </Card>
@@ -200,12 +192,7 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
           ))}
         </div>
 
-        {/* Score Display */}
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            현재 점수: {score} / {currentIndex + (showResult ? 1 : 0)}
-          </p>
-        </div>
+        {/* ▼▼▼ [수정됨] 점수 표시 UI를 제거합니다 ▼▼▼ */}
       </div>
 
       {showResult && (
@@ -225,7 +212,8 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
 
                 <div className="space-y-2">
                   <h3
-                    className={`text-xl font-bold ${selectedAnswer === correctAnswerIndex ? "text-green-600" : "text-red-600"}`}
+                    className={`text-xl font-bold ${selectedAnswer === correctAnswerIndex ? "text-green-600" : "text-red-600"
+                      }`}
                   >
                     {selectedAnswer === correctAnswerIndex ? "정답입니다!" : "틀렸습니다"}
                   </h3>
@@ -259,3 +247,4 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
     </div>
   )
 }
+

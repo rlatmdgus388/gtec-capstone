@@ -7,14 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, Check, X, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, Check, X } from "lucide-react"
 
+// Word 인터페이스에서 example과 pronunciation을 제거합니다
 interface Word {
   id: number
   word: string
   meaning: string
-  example?: string
-  pronunciation?: string
 }
 
 interface WritingModeProps {
@@ -27,17 +26,15 @@ export function WritingMode({ words, onComplete, onBack }: WritingModeProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [userAnswer, setUserAnswer] = useState("")
   const [showResult, setShowResult] = useState(false)
-  const [showHint, setShowHint] = useState(false)
   const [score, setScore] = useState(0)
   const [startTime] = useState(Date.now())
 
   const currentWord = words[currentIndex]
   const progress = ((currentIndex + 1) / words.length) * 100
 
-  // Create blanks in the word (show first and last letter, hide middle)
+  // 단어 길이만큼 밑줄을 생성하고, 밑줄 사이에 공백을 추가합니다
   const createBlanks = (word: string) => {
-    if (word.length <= 2) return "_".repeat(word.length)
-    return word[0] + "_".repeat(word.length - 2) + word[word.length - 1]
+    return Array(word.length).fill("_").join(" ")
   }
 
   const blankedWord = createBlanks(currentWord.word)
@@ -55,7 +52,6 @@ export function WritingMode({ words, onComplete, onBack }: WritingModeProps) {
       setCurrentIndex(currentIndex + 1)
       setUserAnswer("")
       setShowResult(false)
-      setShowHint(false)
     } else {
       // Complete the writing test
       const timeSpent = Math.round((Date.now() - startTime) / 1000)
@@ -86,9 +82,7 @@ export function WritingMode({ words, onComplete, onBack }: WritingModeProps) {
                 {currentIndex + 1} / {words.length}
               </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setShowHint(!showHint)} className="p-2">
-              {showHint ? <EyeOff size={18} /> : <Eye size={18} />}
-            </Button>
+            {/* ▼▼▼ [수정됨] 힌트 보기 버튼을 제거합니다 ▼▼▼ */}
           </div>
 
           <Progress value={progress} className="h-2" />
@@ -100,18 +94,13 @@ export function WritingMode({ words, onComplete, onBack }: WritingModeProps) {
         <Card>
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-primary mb-4">{currentWord.meaning}</h2>
-            {currentWord.example && (
-              <div className="border-l-2 border-primary/20 pl-4 mb-4">
-                <p className="text-sm text-muted-foreground italic">{currentWord.example}</p>
-              </div>
-            )}
             <div className="mb-4">
               <p className="text-lg text-muted-foreground mb-2">빈칸을 채워 단어를 완성하세요</p>
-              <div className="text-3xl font-mono font-bold text-foreground tracking-wider">
-                {showHint ? currentWord.word : blankedWord}
+              {/* ▼▼▼ [수정됨] 힌트 로직을 제거하고 항상 빈칸만 보이도록 수정합니다 ▼▼▼ */}
+              <div className="text-3xl font-mono font-bold text-foreground tracking-tight">
+                {blankedWord}
               </div>
             </div>
-            {currentWord.pronunciation && <p className="text-sm text-muted-foreground">{currentWord.pronunciation}</p>}
           </CardContent>
         </Card>
 
@@ -148,25 +137,9 @@ export function WritingMode({ words, onComplete, onBack }: WritingModeProps) {
           </CardContent>
         </Card>
 
-        {/* Hint */}
-        {showHint && !showResult && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Eye size={16} className="text-primary" />
-                <span className="text-sm font-medium text-primary">힌트</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">단어 길이: {currentWord.word.length}글자</p>
-            </CardContent>
-          </Card>
-        )}
+        {/* ▼▼▼ [수정됨] 힌트 카드 UI를 제거합니다 ▼▼▼ */}
 
-        {/* Score Display */}
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            현재 점수: {score} / {currentIndex + (showResult ? 1 : 0)}
-          </p>
-        </div>
+        {/* ▼▼▼ [수정됨] 점수 표시 UI를 제거합니다 ▼▼▼ */}
       </div>
 
       {showResult && (
@@ -218,3 +191,4 @@ export function WritingMode({ words, onComplete, onBack }: WritingModeProps) {
     </div>
   )
 }
+

@@ -4,14 +4,14 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, RotateCcw, Volume2, Check, X, ChevronLeft, ChevronRight } from "lucide-react"
+// ▼▼▼ [수정됨] RotateCcw 아이콘을 import 목록에서 제거합니다 ▼▼▼
+import { ArrowLeft, Check, X, ChevronLeft, ChevronRight } from "lucide-react"
 
+// Word 인터페이스에서 example과 pronunciation을 제거합니다
 interface Word {
   id: number
   word: string
   meaning: string
-  example?: string
-  pronunciation?: string
 }
 
 interface FlashcardModeProps {
@@ -78,9 +78,7 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
                 {currentIndex + 1} / {words.length}
               </p>
             </div>
-            <Button variant="ghost" size="sm" className="p-2">
-              <RotateCcw size={18} />
-            </Button>
+            {/* ▼▼▼ [수정됨] 리플레이 버튼을 제거합니다 ▼▼▼ */}
           </div>
 
           <Progress value={progress} className="h-2" />
@@ -101,30 +99,15 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
             >
               <CardContent className="h-full flex flex-col items-center justify-center p-6 text-center">
                 {!isFlipped ? (
-                  // Front side - Word
+                  // ▼▼▼ [수정됨] 카드 앞면: 발음 관련 UI를 제거합니다 ▼▼▼
                   <div className="w-full">
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <h2 className="text-3xl font-bold text-foreground">{currentWord.word}</h2>
-                      {currentWord.pronunciation && (
-                        <Button variant="ghost" size="sm" className="p-2">
-                          <Volume2 size={18} className="text-muted-foreground" />
-                        </Button>
-                      )}
-                    </div>
-                    {currentWord.pronunciation && (
-                      <p className="text-sm text-muted-foreground mb-4">{currentWord.pronunciation}</p>
-                    )}
+                    <h2 className="text-3xl font-bold text-foreground mb-4">{currentWord.word}</h2>
                     <p className="text-sm text-muted-foreground">카드를 탭하여 뜻을 확인하세요</p>
                   </div>
                 ) : (
-                  // Back side - Meaning
+                  // ▼▼▼ [수정됨] 카드 뒷면: 예문 관련 UI를 제거합니다 ▼▼▼
                   <div className="w-full" style={{ transform: "rotateY(180deg)" }}>
                     <h2 className="text-2xl font-bold text-primary mb-4">{currentWord.meaning}</h2>
-                    {currentWord.example && (
-                      <div className="border-l-2 border-primary/20 pl-4 mb-4">
-                        <p className="text-sm text-muted-foreground italic">{currentWord.example}</p>
-                      </div>
-                    )}
                     <p className="text-sm text-muted-foreground">알고 있었나요?</p>
                   </div>
                 )}
@@ -161,15 +144,14 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
               {words.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentIndex
+                  className={`w-2 h-2 rounded-full transition-colors ${index === currentIndex
                       ? "bg-primary"
                       : results[words[index].id] === "correct"
                         ? "bg-green-500"
                         : results[words[index].id] === "incorrect"
                           ? "bg-red-500"
                           : "bg-muted"
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -183,3 +165,4 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
     </div>
   )
 }
+

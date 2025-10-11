@@ -4,14 +4,14 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, Play, Pause, SkipForward, SkipBack, Volume2 } from "lucide-react"
+// ▼▼▼ [수정됨] Volume2 아이콘을 import에서 제거합니다 ▼▼▼
+import { ArrowLeft, Play, Pause, SkipForward, SkipBack } from "lucide-react"
 
+// ▼▼▼ [수정됨] Word 인터페이스에서 example과 pronunciation을 제거합니다 ▼▼▼
 interface Word {
   id: number
   word: string
   meaning: string
-  example?: string
-  pronunciation?: string
 }
 
 interface AutoplayModeProps {
@@ -114,28 +114,15 @@ export function AutoplayMode({ words, onComplete, onBack }: AutoplayModeProps) {
         <div className="flex-1 flex items-center justify-center mb-6">
           <Card className="w-full max-w-md h-96 shadow-lg">
             <CardContent className="h-full flex flex-col items-center justify-center p-6 text-center">
+              {/* ▼▼▼ [수정됨] 발음 관련 UI를 제거합니다 ▼▼▼ */}
               <div className="mb-6">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <h2 className="text-4xl font-bold text-foreground">{currentWord.word}</h2>
-                  {currentWord.pronunciation && (
-                    <Button variant="ghost" size="sm" className="p-2">
-                      <Volume2 size={20} className="text-muted-foreground" />
-                    </Button>
-                  )}
-                </div>
-                {currentWord.pronunciation && (
-                  <p className="text-sm text-muted-foreground mb-4">{currentWord.pronunciation}</p>
-                )}
+                <h2 className="text-4xl font-bold text-foreground mb-4">{currentWord.word}</h2>
               </div>
 
               {showMeaning && (
+                // ▼▼▼ [수정됨] 예문 관련 UI를 제거합니다 ▼▼▼
                 <div className="space-y-4 animate-in fade-in duration-500">
                   <h3 className="text-2xl font-bold text-primary">{currentWord.meaning}</h3>
-                  {currentWord.example && (
-                    <div className="border-l-2 border-primary/20 pl-4">
-                      <p className="text-sm text-muted-foreground italic">{currentWord.example}</p>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -180,9 +167,8 @@ export function AutoplayMode({ words, onComplete, onBack }: AutoplayModeProps) {
             {words.map((_, index) => (
               <div
                 key={index}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentIndex ? "bg-primary" : index < currentIndex ? "bg-primary/50" : "bg-muted"
-                }`}
+                className={`w-2 h-2 rounded-full transition-colors ${index === currentIndex ? "bg-primary" : index < currentIndex ? "bg-primary/50" : "bg-muted"
+                  }`}
               />
             ))}
           </div>
