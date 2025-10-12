@@ -50,7 +50,7 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
         const formattedWords = detectedData.map((word: any) => ({
           ...word,
           meaning: '', // 뜻은 나중에 채울 수 있도록 비워둡니다.
-          selected: word.confidence > 0.85, // 신뢰도 85% 이상 단어만 자동 선택
+          selected: false, // 신뢰도 85% 이상 단어만 자동 선택
         }));
 
         setDetectedWords(formattedWords);
@@ -74,17 +74,6 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
     onWordsSelected(selectedWords)
   }
 
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.9) return "bg-green-100 text-green-800"
-    if (confidence >= 0.8) return "bg-yellow-100 text-yellow-800"
-    return "bg-red-100 text-red-800"
-  }
-
-  const getConfidenceLabel = (confidence: number) => {
-    if (confidence >= 0.9) return "높음"
-    if (confidence >= 0.8) return "보통"
-    return "낮음"
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -165,9 +154,6 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="text-lg font-semibold text-foreground">{word.text}</h3>
-                          <Badge className={getConfidenceColor(word.confidence)}>
-                            {getConfidenceLabel(word.confidence)} {Math.round(word.confidence * 100)}%
-                          </Badge>
                           {word.selected && <CheckCircle size={16} className="text-primary" />}
                         </div>
                         {word.meaning && <p className="text-base text-muted-foreground">{word.meaning}</p>}
