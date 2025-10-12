@@ -219,7 +219,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
               <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="h-12 flex items-center justify-center gap-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={18} />직접 입력</Button>} />
               <Button variant="outline" className="h-12 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-medium" onClick={handlePhotoCaptureClick}><Camera size={18} />사진으로 추가</Button>
             </div>
-            <Button className="w-full h-12 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Play size={18} className="mr-2" />학습하기</Button>
           </div>
         </div>
       </div>

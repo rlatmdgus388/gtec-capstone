@@ -193,7 +193,8 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     setStudyResults(null);
     setSelectedMode(null);
     setSelectedWordbook("");
-    fetchRecentSessions(); // 확인 버튼 클릭 시 최근 기록 새로고침
+    fetchRecentSessions();
+    window.scrollTo(0, 0); // 화면을 맨 위로 스크롤
   }
 
   const formatRelativeTime = (dateString: string) => {
