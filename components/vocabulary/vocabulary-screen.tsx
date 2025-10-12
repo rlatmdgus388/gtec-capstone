@@ -149,16 +149,8 @@ export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                         <CreateWordbookDialog onCreateWordbook={handleCreateWordbook} />
-                        <Button
-                            variant="outline"
-                            className="h-12 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-medium"
-                            onClick={handlePhotoCaptureClick}
-                        >
-                            <Camera size={18} />
-                            사진으로 추가
-                        </Button>
                     </div>
                 </div>
             </div>
