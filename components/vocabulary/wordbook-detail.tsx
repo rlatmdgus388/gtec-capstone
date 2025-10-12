@@ -5,11 +5,20 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import { AddWordDialog } from "./add-word-dialog"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { ImageSelectionModal } from "@/components/camera/image-selection-modal"
-import { ArrowLeft, Search, MoreVertical, Edit, Trash2, Volume2, Play, Eye, EyeOff, Camera, ImageUp } from "lucide-react"
+import { ArrowLeft, Search, MoreVertical, Edit, Trash2, Volume2, Play, Eye, EyeOff, Camera, ImageUp, CheckCircle } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -49,13 +58,13 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   const [showImageSelection, setShowImageSelection] = useState(false);
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const [selectedImageData, setSelectedImageData] = useState<string | null>(null);
-  
+
   const [words, setWords] = useState<Word[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchWords = async () => {
     if (!wordbook.id) return;
-    
+
     setIsLoading(true);
     try {
       const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`);
@@ -94,15 +103,15 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   };
 
   const handleDeleteWord = async (wordId: string) => {
-     try {
-        await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words/${wordId}`, {
-            method: 'DELETE',
-        });
-        await fetchWords();
-        onUpdate();
+    try {
+      await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words/${wordId}`, {
+        method: 'DELETE',
+      });
+      await fetchWords();
+      onUpdate();
     } catch (error) {
-        console.error("단어 삭제 실패:", error);
-        alert("단어 삭제 중 오류가 발생했습니다.");
+      console.error("단어 삭제 실패:", error);
+      alert("단어 삭제 중 오류가 발생했습니다.");
     }
   };
 
@@ -147,38 +156,38 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
 
   const handleWordsAdded = async (addedWords: DetectedWord[]) => {
     if (!wordbook || !wordbook.id || addedWords.length === 0) {
-        setShowPhotoCapture(false);
-        return;
+      setShowPhotoCapture(false);
+      return;
     }
 
     try {
-        const wordsToAdd = addedWords.map(word => ({
-            word: word.text,
-            meaning: '뜻을 입력하세요', // 기본 의미 설정
-        }));
+      const wordsToAdd = addedWords.map(word => ({
+        word: word.text,
+        meaning: '뜻을 입력하세요', // 기본 의미 설정
+      }));
 
-        await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
-            method: 'POST',
-            body: JSON.stringify(wordsToAdd), // 배열로 한 번에 전송
-        });
+      await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
+        method: 'POST',
+        body: JSON.stringify(wordsToAdd), // 배열로 한 번에 전송
+      });
 
-        alert(`${wordsToAdd.length}개의 단어가 추가되었습니다.`);
-        await fetchWords(); // 현재 단어장 단어 목록 새로고침
-        onUpdate(); // 전체 단어장 목록 새로고침 (단어 개수 등)
+      alert(`${wordsToAdd.length}개의 단어가 추가되었습니다.`);
+      await fetchWords(); // 현재 단어장 단어 목록 새로고침
+      onUpdate(); // 전체 단어장 목록 새로고침 (단어 개수 등)
     } catch (error) {
-        console.error("사진으로 단어 추가 실패:", error);
-        alert("단어 추가 중 오류가 발생했습니다.");
+      console.error("사진으로 단어 추가 실패:", error);
+      alert("단어 추가 중 오류가 발생했습니다.");
     } finally {
-        setShowPhotoCapture(false);
+      setShowPhotoCapture(false);
     }
   };
 
   if (showPhotoCapture) {
     return (
-      <PhotoWordCapture 
-        imageData={selectedImageData} 
-        onClose={() => setShowPhotoCapture(false)} 
-        onWordsAdded={handleWordsAdded} 
+      <PhotoWordCapture
+        imageData={selectedImageData}
+        onClose={() => setShowPhotoCapture(false)}
+        onWordsAdded={handleWordsAdded}
       />
     );
   }
@@ -191,7 +200,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         onCameraSelect={handleCameraSelect}
         onGallerySelect={handleGallerySelect}
       />
-      
+
       <div className="bg-white border-b border-gray-100">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
@@ -202,13 +211,30 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
               <h1 className="text-xl font-bold text-gray-900">{wordbook.name}</h1>
               <p className="text-sm text-gray-600">{words.length}개 단어 • {wordbook.progress}% 완료</p>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="p-2"><MoreVertical size={20} className="text-gray-700" /></Button></DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem><Edit size={16} className="mr-2" />단어장 편집</DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive"><Trash2 size={16} className="mr-2" />단어장 삭제</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-2"><MoreVertical size={20} className="text-gray-700" /></Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <div className="mx-auto w-full max-w-sm">
+                  <div className="p-2">
+                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm">
+                      <Edit size={16} className="mr-2" />
+                      단어장 편집
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive">
+                      <Trash2 size={16} className="mr-2" />
+                      단어장 삭제
+                    </Button>
+                  </div>
+                  <DrawerFooter className="pt-2">
+                    <DrawerClose asChild>
+                      <Button variant="outline">취소</Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
           <div className="relative mb-4">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -230,7 +256,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
           <Button variant={hideMode === "meaning" ? "default" : "outline"} size="sm" onClick={handleHideMeanings} className="text-xs rounded-full"><EyeOff size={14} className="mr-1" />뜻 가리기</Button>
           <Button variant={hideMode === "none" ? "default" : "outline"} size="sm" onClick={handleShowAll} className="text-xs rounded-full"><Eye size={14} className="mr-1" />모두 보기</Button>
         </div>
-        
+
         {isLoading ? (
           <div className="space-y-3 pt-4">
             <Skeleton className="h-24 w-full rounded-lg" />
@@ -280,16 +306,34 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                         <p className="text-xs text-gray-400 mt-2">탭하여 보기</p>
                       )}
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                    <Drawer>
+                      <DrawerTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 -mr-2"><MoreVertical size={16} className="text-gray-500" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => toggleMastered(word.id)}>{word.mastered ? "암기 해제" : "암기 완료"}</DropdownMenuItem>
-                        <DropdownMenuItem>편집</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteWord(word.id)}>삭제</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </DrawerTrigger>
+                      <DrawerContent>
+                        <div className="mx-auto w-full max-w-sm">
+                          <div className="p-2">
+                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => toggleMastered(word.id)}>
+                              <CheckCircle size={16} className="mr-2" />
+                              {word.mastered ? "암기 해제" : "암기 완료"}
+                            </Button>
+                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm">
+                              <Edit size={16} className="mr-2" />
+                              편집
+                            </Button>
+                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive" onClick={() => handleDeleteWord(word.id)}>
+                              <Trash2 size={16} className="mr-2" />
+                              삭제
+                            </Button>
+                          </div>
+                          <DrawerFooter className="pt-2">
+                            <DrawerClose asChild>
+                              <Button variant="outline">취소</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </div>
+                      </DrawerContent>
+                    </Drawer>
                   </div>
                 </CardContent>
               </Card>
