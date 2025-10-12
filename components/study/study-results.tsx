@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Clock, Target, RotateCcw, Home, Share2 } from "lucide-react"
+import { Trophy, Clock, Target, RotateCcw, Home } from "lucide-react"
 
 interface StudyResultsProps {
   results: {
@@ -17,7 +17,7 @@ interface StudyResultsProps {
 }
 
 export function StudyResults({ results, mode, onRestart, onHome }: StudyResultsProps) {
-  const percentage = Math.round((results.correct / results.total) * 100)
+  const percentage = results.total > 0 ? Math.round((results.correct / results.total) * 100) : 0;
   const minutes = Math.floor(results.timeSpent / 60)
   const seconds = results.timeSpent % 60
 
@@ -107,28 +107,20 @@ export function StudyResults({ results, mode, onRestart, onHome }: StudyResultsP
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">평균 시간</span>
-              <span className="text-sm font-medium">{Math.round(results.timeSpent / results.total)}초/문제</span>
+              <span className="text-sm font-medium">{results.total > 0 ? Math.round(results.timeSpent / results.total) : 0}초/문제</span>
             </div>
           </CardContent>
         </Card>
 
         {/* Action Buttons */}
-        <div className="space-y-3">
-          <Button onClick={onRestart} className="w-full h-12 bg-primary hover:bg-primary/90">
+        <div className="space-y-3 pb-20">
+          <Button onClick={onHome} className="w-full h-12 bg-primary hover:bg-primary/90">
+            확인
+          </Button>
+          <Button variant="outline" onClick={onRestart} className="w-full h-12 bg-transparent">
             <RotateCcw size={18} className="mr-2" />
             다시 학습하기
           </Button>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" onClick={onHome} className="h-12 bg-transparent">
-              <Home size={18} className="mr-2" />
-              홈으로
-            </Button>
-            <Button variant="outline" className="h-12 bg-transparent">
-              <Share2 size={18} className="mr-2" />
-              결과 공유
-            </Button>
-          </div>
         </div>
       </div>
     </div>
