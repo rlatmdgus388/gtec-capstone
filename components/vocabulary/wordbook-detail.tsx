@@ -9,16 +9,13 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
-import { AddWordDialog } from "./add-word-dialog"
+import { WordEditScreen } from "./word-edit-screen"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { ImageSelectionModal } from "@/components/camera/image-selection-modal"
-import { ArrowLeft, Search, MoreVertical, Edit, Trash2, Volume2, Play, Eye, EyeOff, Camera, ImageUp, CheckCircle } from "lucide-react"
+import { ArrowLeft, Search, MoreVertical, Edit, Trash2, Eye, EyeOff, Camera, CheckCircle } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -41,14 +38,13 @@ interface WordbookDetailProps {
     category: string;
   };
   onBack: () => void;
-  onUpdate: () => void; // 단어장 목록 새로고침을 위한 함수
+  onUpdate: () => void;
 }
 
 interface DetectedWord {
   text: string;
   selected: boolean;
 }
-
 
 export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailProps) {
   // --- 상태 관리 ---
@@ -58,6 +54,8 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   const [showImageSelection, setShowImageSelection] = useState(false);
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const [selectedImageData, setSelectedImageData] = useState<string | null>(null);
+  const [isAddingWord, setIsAddingWord] = useState(false);
+  const [editingWord, setEditingWord] = useState<Word | null>(null); // 편집할 단어 상태 추가
 
   const [words, setWords] = useState<Word[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -92,13 +90,28 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     try {
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
         method: 'POST',
-        body: JSON.stringify([newWordData]), // 배열로 전송
+        body: JSON.stringify([newWordData]),
       });
       await fetchWords();
-      onUpdate(); // 단어장 목록의 단어 개수도 업데이트
+      onUpdate();
+      setIsAddingWord(false);
     } catch (error) {
       console.error("단어 추가에 실패했습니다:", error);
       alert("단어 추가 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleUpdateWord = async (wordId: string, updatedData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
+    try {
+      await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words/${wordId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updatedData),
+      });
+      await fetchWords(); // 단어 목록 새로고침
+      setEditingWord(null); // 편집 모드 종료 및 상세 화면으로 복귀
+    } catch (error) {
+      console.error("단어 수정 실패:", error);
+      alert("단어 수정 중 오류가 발생했습니다.");
     }
   };
 
@@ -163,17 +176,17 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     try {
       const wordsToAdd = addedWords.map(word => ({
         word: word.text,
-        meaning: '뜻을 입력하세요', // 기본 의미 설정
+        meaning: '뜻을 입력하세요',
       }));
 
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
         method: 'POST',
-        body: JSON.stringify(wordsToAdd), // 배열로 한 번에 전송
+        body: JSON.stringify(wordsToAdd),
       });
 
       alert(`${wordsToAdd.length}개의 단어가 추가되었습니다.`);
-      await fetchWords(); // 현재 단어장 단어 목록 새로고침
-      onUpdate(); // 전체 단어장 목록 새로고침 (단어 개수 등)
+      await fetchWords();
+      onUpdate();
     } catch (error) {
       console.error("사진으로 단어 추가 실패:", error);
       alert("단어 추가 중 오류가 발생했습니다.");
@@ -181,6 +194,27 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       setShowPhotoCapture(false);
     }
   };
+
+  if (isAddingWord) {
+    return (
+      <WordEditScreen
+        wordbookName={wordbook.name}
+        onBack={() => setIsAddingWord(false)}
+        onSave={handleAddWord}
+      />
+    );
+  }
+  
+  if (editingWord) {
+    return (
+      <WordEditScreen
+        wordbookName={wordbook.name}
+        initialData={editingWord}
+        onBack={() => setEditingWord(null)}
+        onSave={(data) => handleUpdateWord(editingWord.id, data)}
+      />
+    );
+  }
 
   if (showPhotoCapture) {
     return (
@@ -242,7 +276,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
           </div>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="h-12 flex items-center justify-center gap-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={18} />직접 입력</Button>} />
+              <Button onClick={() => setIsAddingWord(true)} className="h-12 flex items-center justify-center gap-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={18} />직접 입력</Button>
               <Button variant="outline" className="h-12 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-medium" onClick={handlePhotoCaptureClick}><Camera size={18} />사진으로 추가</Button>
             </div>
           </div>
@@ -250,7 +284,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       </div>
 
       <div className="px-4 py-4 space-y-4">
-        {/* 단어/뜻 가리기 버튼 */}
         <div className="flex justify-end gap-2">
           <Button variant={hideMode === "word" ? "default" : "outline"} size="sm" onClick={handleHideWords} className="text-xs rounded-full"><EyeOff size={14} className="mr-1" />단어 가리기</Button>
           <Button variant={hideMode === "meaning" ? "default" : "outline"} size="sm" onClick={handleHideMeanings} className="text-xs rounded-full"><EyeOff size={14} className="mr-1" />뜻 가리기</Button>
@@ -274,7 +307,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 {searchQuery ? "다른 검색어를 시도해보세요" : "첫 번째 단어를 추가해보세요"}
               </p>
               {!searchQuery && (
-                <AddWordDialog onAddWord={handleAddWord} trigger={<Button className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={16} className="mr-2" />단어 추가하기</Button>} />
+                 <Button onClick={() => setIsAddingWord(true)} className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={16} className="mr-2" />단어 추가하기</Button>
               )}
             </CardContent>
           </Card>
@@ -313,18 +346,24 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                       <DrawerContent>
                         <div className="mx-auto w-full max-w-sm">
                           <div className="p-2">
-                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => toggleMastered(word.id)}>
-                              <CheckCircle size={16} className="mr-2" />
-                              {word.mastered ? "암기 해제" : "암기 완료"}
-                            </Button>
-                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm">
-                              <Edit size={16} className="mr-2" />
-                              편집
-                            </Button>
-                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive" onClick={() => handleDeleteWord(word.id)}>
-                              <Trash2 size={16} className="mr-2" />
-                              삭제
-                            </Button>
+                             <DrawerClose asChild>
+                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => toggleMastered(word.id)}>
+                                  <CheckCircle size={16} className="mr-2" />
+                                  {word.mastered ? "암기 해제" : "암기 완료"}
+                                </Button>
+                             </DrawerClose>
+                             <DrawerClose asChild>
+                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => setEditingWord(word)}>
+                                  <Edit size={16} className="mr-2" />
+                                  편집
+                                </Button>
+                              </DrawerClose>
+                             <DrawerClose asChild>
+                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive" onClick={() => handleDeleteWord(word.id)}>
+                                  <Trash2 size={16} className="mr-2" />
+                                  삭제
+                                </Button>
+                             </DrawerClose>
                           </div>
                           <DrawerFooter className="pt-2">
                             <DrawerClose asChild>

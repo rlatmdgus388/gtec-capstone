@@ -2,18 +2,29 @@ import { NextResponse } from 'next/server';
 import { firestore } from '@/lib/firebase-admin';
 import admin from 'firebase-admin';
 
-// 특정 단어를 수정합니다 (예: 암기 여부).
+// 특정 단어를 수정합니다.
 export async function PUT(request: Request, { params }: { params: { wordbookId: string, wordId: string } }) {
   try {
     const { wordbookId, wordId } = params;
-    const { mastered } = await request.json();
+    const { word, meaning, example, pronunciation, mastered } = await request.json();
+
+    const updateData: { [key: string]: any } = {};
+    if (word !== undefined) updateData.word = word;
+    if (meaning !== undefined) updateData.meaning = meaning;
+    if (example !== undefined) updateData.example = example;
+    if (pronunciation !== undefined) updateData.pronunciation = pronunciation;
+    if (mastered !== undefined) updateData.mastered = mastered;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ message: '수정할 데이터가 없습니다.' }, { status: 400 });
+    }
 
     await firestore
       .collection('wordbooks')
       .doc(wordbookId)
       .collection('words')
       .doc(wordId)
-      .update({ mastered });
+      .update(updateData);
 
     return NextResponse.json({ message: '단어가 성공적으로 수정되었습니다.' });
   } catch (error) {
