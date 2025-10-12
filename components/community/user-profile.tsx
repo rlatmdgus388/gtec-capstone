@@ -1,170 +1,154 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, MoreHorizontal, Download } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ArrowLeft, UserPlus, MessageCircle, Heart, BookOpen, Star, Check } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export function UserProfile({
-  userId,
-  isOwnProfile = false,
-  onBack,
-}: { userId: string; isOwnProfile?: boolean; onBack?: () => void }) {
-  const [user, setUser] = useState({
-    id: userId,
-    name: "김영희",
-    username: "@younghee_kim",
-    avatar: "/korean-woman-profile.png",
-    bio: "영어 학습을 열심히 하고 있는 대학생입니다! 함께 공부해요 📚",
-    followers: 1247,
-    following: 892,
-    wordbooksCount: 15,
-    studyStreak: 23,
-    totalWords: 2847,
-    isFollowing: false,
-  })
+// --- 인터페이스 정의 ---
+interface UserProfileData {
+  uid: string; name: string; email?: string; photoURL?: string; bio: string;
+  followers: number; following: number;
+  sharedWordbooks: any[];
+  discussions: any[];
+}
 
-  const [activeTab, setActiveTab] = useState<"wordbooks" | "activity">("wordbooks")
+interface UserProfileProps {
+  userId: string
+  onBack: () => void
+}
+
+export function UserProfile({ userId, onBack }: UserProfileProps) {
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!userId) return;
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/users/${userId}/profile`);
+        if (!response.ok) throw new Error("Profile not found");
+        const data = await response.json();
+        setProfile(data);
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [userId]);
+
 
   const handleFollow = () => {
-    setUser((prev) => ({
-      ...prev,
-      isFollowing: !prev.isFollowing,
-      followers: prev.isFollowing ? prev.followers - 1 : prev.followers + 1,
-    }))
+    // TODO: 팔로우/언팔로우 API 연동
+    setIsFollowing(!isFollowing)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-4 space-y-6">
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return <div>사용자 정보를 찾을 수 없습니다.</div>
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="flex items-center justify-between p-4">
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="font-semibold text-gray-900">프로필</h1>
-          <Button variant="ghost" size="sm">
-            <MoreHorizontal className="h-5 w-5" />
-          </Button>
+          <div className="w-10"></div>
         </div>
       </div>
 
-      {/* Profile Info */}
-      <div className="bg-white p-6 border-b">
-        <div className="flex items-start gap-4">
-          <img
-            src={user.avatar || "/placeholder.svg"}
-            alt={user.name}
-            className="w-20 h-20 rounded-full object-cover border-2 border-orange-200"
-          />
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
-            <p className="text-gray-600 text-sm">{user.username}</p>
-            <p className="text-gray-700 text-sm mt-2 leading-relaxed">{user.bio}</p>
-          </div>
-        </div>
+      <div className="p-4 space-y-6">
+        {/* Profile Card */}
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center">
+            <Avatar className="w-20 h-20 mb-3">
+              <AvatarImage src={profile.photoURL} />
+              <AvatarFallback className="text-2xl bg-orange-100 text-orange-600">
+                {profile.name[0]}
+              </AvatarFallback>
+            </Avatar>
+            <h2 className="text-xl font-bold text-gray-900">{profile.name}</h2>
+            <p className="text-sm text-gray-600 mb-3">@{profile.email?.split('@')[0]}</p>
+            <p className="text-center text-sm text-gray-700 mb-4">{profile.bio || "소개가 없습니다."}</p>
 
-        {/* Stats */}
-        <div className="flex items-center gap-6 mt-4">
-          <div className="text-center">
-            <div className="font-bold text-gray-900">{user.followers.toLocaleString()}</div>
-            <div className="text-xs text-gray-600">팔로워</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-gray-900">{user.following.toLocaleString()}</div>
-            <div className="text-xs text-gray-600">팔로잉</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-gray-900">{user.wordbooksCount}</div>
-            <div className="text-xs text-gray-600">단어장</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-gray-900">{user.studyStreak}일</div>
-            <div className="text-xs text-gray-600">연속 학습</div>
-          </div>
-        </div>
+            <div className="flex gap-3 mb-4">
+              <Button onClick={handleFollow} className={`w-28 ${isFollowing ? "bg-gray-200 text-gray-800 hover:bg-gray-300" : "bg-orange-500 hover:bg-orange-600"}`}>
+                {isFollowing ? <><Check className="h-4 w-4 mr-1" /> 팔로잉</> : <><UserPlus className="h-4 w-4 mr-1" /> 팔로우</>}
+              </Button>
+            </div>
 
-        {/* Action Buttons */}
-        {!isOwnProfile && (
-          <div className="flex gap-3 mt-4">
-            <Button
-              onClick={handleFollow}
-              className={`flex-1 ${user.isFollowing ? "bg-gray-200 text-gray-700 hover:bg-gray-300" : "bg-orange-500 text-white hover:bg-orange-600"}`}
-            >
-              {user.isFollowing ? "팔로잉" : "팔로우"}
-            </Button>
-            <Button variant="outline" className="flex-1 bg-transparent">
-              메시지
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white border-b">
-        <div className="flex">
-          <button
-            onClick={() => setActiveTab("wordbooks")}
-            className={`flex-1 py-3 text-sm font-medium border-b-2 ${
-              activeTab === "wordbooks" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-600"
-            }`}
-          >
-            공개 단어장
-          </button>
-          <button
-            onClick={() => setActiveTab("activity")}
-            className={`flex-1 py-3 text-sm font-medium border-b-2 ${
-              activeTab === "activity" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-600"
-            }`}
-          >
-            활동
-          </button>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        {activeTab === "wordbooks" ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-lg p-4 shadow-sm border">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">일상 영어 표현 {i}</h3>
-                    <p className="text-sm text-gray-600 mt-1">자주 사용하는 영어 표현들을 모았습니다</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                      <span>단어 {45 + i * 10}개</span>
-                      <span>좋아요 {123 + i * 20}개</span>
-                      <span>다운로드 {89 + i * 15}회</span>
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
+            <div className="flex gap-6">
+              <div className="text-center">
+                <div className="font-bold text-lg text-gray-900">{profile.followers}</div>
+                <div className="text-xs text-gray-600">팔로워</div>
               </div>
+              <div className="text-center">
+                <div className="font-bold text-lg text-gray-900">{profile.following}</div>
+                <div className="text-xs text-gray-600">팔로잉</div>
+              </div>
+              <div className="text-center">
+                <div className="font-bold text-lg text-gray-900">{profile.sharedWordbooks.length}</div>
+                <div className="text-xs text-gray-600">공유 단어장</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Shared Wordbooks Section */}
+        <div>
+          <h3 className="text-lg font-semibold mb-3">공유 단어장 ({profile.sharedWordbooks.length})</h3>
+          <div className="space-y-3">
+            {profile.sharedWordbooks.map((wordbook: any) => (
+              <Card key={wordbook.id} className="cursor-pointer hover:shadow-sm">
+                <CardContent className="p-4">
+                  <h4 className="font-medium text-black">{wordbook.name}</h4>
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                    <span>{wordbook.wordCount}개 단어</span>
+                    <span className="flex items-center gap-1"><Heart size={14} /> {wordbook.likes}</span>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        ) : (
+        </div>
+
+        {/* Discussions Section */}
+        <div className="pt-4">
+          <h3 className="text-lg font-semibold mb-3">작성한 게시글 ({profile.discussions.length})</h3>
           <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white rounded-lg p-4 shadow-sm border">
-                <div className="flex items-start gap-3">
-                  <img
-                    src={user.avatar || "/placeholder.svg"}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-semibold">{user.name}</span>님이 새로운 단어장을 만들었습니다
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">{i}시간 전</p>
+            {profile.discussions.map((post: any) => (
+              <Card key={post.id} className="cursor-pointer hover:shadow-sm">
+                <CardContent className="p-4">
+                  <h4 className="font-medium text-black truncate">{post.title}</h4>
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                    <span>{timeAgo(post.createdAt)}</span>
+                    <span className="flex items-center gap-1"><Heart size={14} /> {post.likes}</span>
+                    <span className="flex items-center gap-1"><MessageCircle size={14} /> {post.replies}</span>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

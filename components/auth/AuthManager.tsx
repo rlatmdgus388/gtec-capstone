@@ -15,9 +15,8 @@ import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 
 export default function AuthManager() {
-  // 👇 *** 상태 관리 로직을 아래와 같이 수정했습니다 ***
-  const [isLoading, setIsLoading] = useState(true); // 1. 로딩 상태를 true로 시작합니다.
-  const [user, setUser] = useState<User | null>(null); // 2. 사용자 정보 자체를 상태로 관리합니다.
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
 
   const [authScreen, setAuthScreen] = useState<"main" | "email-login" | "signup">("main");
   const [activeTab, setActiveTab] = useState("home");
@@ -26,18 +25,16 @@ export default function AuthManager() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser); // 사용자 정보를 업데이트하고,
-      setIsLoading(false);  // 로딩 상태를 종료합니다.
+      setUser(currentUser);
+      setIsLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  // 👇 *** 렌더링 로직도 새로운 상태에 맞게 수정했습니다 ***
-  const isAuthenticated = !!user; // user 객체가 있으면 true, 없으면 false
+  const isAuthenticated = !!user;
   const isGoogleUser = user?.providerData.some(provider => provider.providerId === 'google.com') ?? false;
   const isEmailVerified = user?.emailVerified || isGoogleUser;
 
-  // 1. Firebase가 응답할 때까지 로딩 화면을 보여줍니다.
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -46,7 +43,6 @@ export default function AuthManager() {
     );
   }
 
-  // 2. 로그아웃 상태일 때 로그인 화면을 보여줍니다.
   if (!isAuthenticated) {
     switch (authScreen) {
       case "email-login":
@@ -63,12 +59,10 @@ export default function AuthManager() {
     }
   }
 
-  // 3. 로그인했지만 이메일 인증이 안 됐을 때 인증 화면을 보여줍니다.
   if (!isEmailVerified) {
     return <EmailVerificationScreen onLogout={() => auth.signOut()} />;
   }
-  
-  // (나머지 홈 화면 렌더링 로직은 기존과 동일)
+
   const handleLogout = () => {
     auth.signOut();
   };
@@ -83,24 +77,20 @@ export default function AuthManager() {
     setActiveTab("study");
   };
 
-  const handleBackToVocabularyList = () => {
-    setSelectedWordbookForDetail(null);
-  };
-
   const renderScreen = () => {
     switch (activeTab) {
       case "home":
         return <HomeScreen onWordbookSelect={handleWordbookSelect} />;
       case "vocabulary":
+        // VocabularyScreen이 받는 props에 맞게 수정
         return (
           <VocabularyScreen
-            onStartStudy={handleStartStudyWithWordbook}
-            selectedWordbook={selectedWordbookForDetail}
-            onBackToList={handleBackToVocabularyList}
+            selectedWordbookId={selectedWordbookForDetail?.id}
+            onNavigateToStudy={handleStartStudyWithWordbook}
           />
         );
       case "study":
-        return <StudyScreen selectedWordbook={selectedWordbookForStudy} />;
+        return <StudyScreen selectedWordbookId={selectedWordbookForStudy?.id} />;
       case "community":
         return <CommunityScreen />;
       case "settings":

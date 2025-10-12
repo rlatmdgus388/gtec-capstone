@@ -1,93 +1,144 @@
 "use client"
 
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Users, MessageCircle, Share2, Heart, BookOpen, ArrowLeft } from "lucide-react"
-import { useState } from "react"
-// ▼▼▼ [수정됨] 컴포넌트를 불러오는 경로를 수정합니다 ▼▼▼
-import { UserProfile } from "@/components/community/user-profile"
-import { SharedWordbookDetail } from "@/components/community/shared-wordbook-detail"
-import { CommunityBoard } from "@/components/community/CommunityBoard"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Users, MessageCircle, Heart, BookOpen, ArrowLeft, Search, Download, PlusCircle } from "lucide-react"
+import { UserProfile } from "./user-profile"
+import { SharedWordbookDetail } from "./shared-wordbook-detail"
+import { DiscussionDetailScreen } from "./discussion-detail-screen"
+import { Input } from "@/components/ui/input"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { Skeleton } from "@/components/ui/skeleton"
+import { CreatePostDialog } from "./create-post-dialog"
+
+// --- 인터페이스 정의 ---
+interface SharedWordbook {
+  id: string;
+  name: string;
+  author: { uid: string; name: string; };
+  wordCount: number;
+  likes: number;
+  downloads: number;
+  category: string;
+}
+
+interface DiscussionPost {
+  id: string;
+  title: string;
+  author: { uid: string; name: string; };
+  replies: number;
+  likes: number;
+  createdAt: string;
+  category: string;
+}
+
+const ALL_CATEGORIES = ["기초", "시험", "회화", "비즈니스", "여행", "학술", "전문", "기타"].sort();
+const FILTER_CATEGORIES = [{ label: "전체", value: "all" }, ...ALL_CATEGORIES.map(c => ({ label: c, value: c }))];
 
 export function CommunityScreen() {
-  const [currentView, setCurrentView] = useState<"main" | "profile" | "wordbook" | "community">("main")
-  const [selectedUserId, setSelectedUserId] = useState<string>("")
-  const [selectedWordbookId, setSelectedWordbookId] = useState<string>("")
+  const [currentView, setCurrentView] = useState<"main" | "profile" | "wordbook" | "discussion">("main");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedWordbookId, setSelectedWordbookId] = useState<string>("");
+  const [selectedPostId, setSelectedPostId] = useState<string>("");
 
-  const sharedWordbooks = [
-    {
-      id: 1,
-      name: "TOEFL 고득점 어휘",
-      author: "영어마스터",
-      wordCount: 200,
-      likes: 45,
-      downloads: 123,
-      category: "시험",
-    },
-    {
-      id: 2,
-      name: "여행 영어 필수 표현",
-      author: "여행러버",
-      wordCount: 89,
-      likes: 32,
-      downloads: 87,
-      category: "여행",
-    },
-    {
-      id: 3,
-      name: "IT 업계 전문 용어",
-      author: "개발자김씨",
-      wordCount: 156,
-      likes: 67,
-      downloads: 234,
-      category: "전문",
-    },
-  ]
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  const [sharedWordbooks, setSharedWordbooks] = useState<SharedWordbook[]>([]);
+  const [discussions, setDiscussions] = useState<DiscussionPost[]>([]);
+  const [isLoading, setIsLoading] = useState({ wordbooks: true, discussions: true });
+
+  const fetchSharedWordbooks = useCallback(async () => {
+    setIsLoading(prev => ({ ...prev, wordbooks: true }));
+    try {
+      const response = await fetch('/api/community/wordbooks');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      setSharedWordbooks(data);
+    } catch (error) {
+      console.error("공유 단어장 목록 조회 실패:", error);
+    } finally {
+      setIsLoading(prev => ({ ...prev, wordbooks: false }));
+    }
+  }, []);
+
+  const fetchDiscussions = useCallback(async () => {
+    setIsLoading(prev => ({ ...prev, discussions: true }));
+    try {
+      const response = await fetch('/api/community/discussions');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      setDiscussions(data);
+    } catch (error) {
+      console.error("게시글 목록 조회 실패:", error);
+    } finally {
+      setIsLoading(prev => ({ ...prev, discussions: false }));
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSharedWordbooks();
+    fetchDiscussions();
+  }, [fetchSharedWordbooks, fetchDiscussions]);
+
+  const filteredWordbooks = sharedWordbooks.filter((wordbook) => {
+    const matchesSearch = wordbook.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (wordbook.author && wordbook.author.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesCategory = selectedCategory === "all" || wordbook.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const timeAgo = (dateString: string) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const seconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + "년 전";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + "달 전";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + "일 전";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + "시간 전";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + "분 전";
+    return "방금 전";
+  };
 
   const handleViewProfile = (userId: string) => {
-    setSelectedUserId(userId)
-    setCurrentView("profile")
-  }
+    setSelectedUserId(userId);
+    setCurrentView("profile");
+  };
 
   const handleViewWordbook = (wordbookId: string) => {
-    setSelectedWordbookId(wordbookId)
-    setCurrentView("wordbook")
-  }
+    setSelectedWordbookId(wordbookId);
+    setCurrentView("wordbook");
+  };
 
-  const handleViewCommunity = () => {
-    setCurrentView("community")
-  }
+  const handleViewDiscussion = (postId: string) => {
+    setSelectedPostId(postId);
+    setCurrentView("discussion");
+  };
 
   const handleBackToMain = () => {
-    setCurrentView("main")
-  }
+    setCurrentView("main");
+    setSelectedPostId("");
+    setSelectedUserId("");
+    setSelectedWordbookId("");
+  };
 
   if (currentView === "profile") {
     return <UserProfile userId={selectedUserId} onBack={handleBackToMain} />
   }
-
   if (currentView === "wordbook") {
     return <SharedWordbookDetail wordbookId={selectedWordbookId} onBack={handleBackToMain} />
   }
-
-  if (currentView === "community") {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-          <div className="flex items-center justify-between p-4">
-            <Button variant="ghost" size="sm" onClick={handleBackToMain}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="font-semibold text-gray-900">커뮤니티 게시판</h1>
-            <div className="w-9"></div>
-          </div>
-        </div>
-        <div className="p-4">
-          <CommunityBoard />
-        </div>
-      </div>
-    )
+  if (currentView === "discussion") {
+    return <DiscussionDetailScreen postId={selectedPostId} onBack={handleBackToMain} />;
   }
 
   return (
@@ -105,74 +156,184 @@ export function CommunityScreen() {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button className="h-12 flex items-center gap-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white">
-              <Share2 size={18} />
-              단어장 공유하기
-            </Button>
-            <Button
-              variant="outline"
-              className="h-12 flex items-center gap-2 border-2 border-gray-200 hover:bg-gray-50 bg-white text-black"
-              onClick={handleViewCommunity}
-            >
-              <MessageCircle size={18} />
-              게시판
-            </Button>
+          <div className="relative mb-3">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Input
+              placeholder="단어장 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-11 h-11 bg-gray-50 border-0 rounded-lg text-sm placeholder:text-gray-500"
+            />
           </div>
+
+          <ScrollArea className="w-full whitespace-nowrap pb-2">
+            <div className="flex w-max space-x-2">
+              {FILTER_CATEGORIES.map((category) => (
+                <Badge
+                  key={category.value}
+                  variant={selectedCategory === category.value ? "default" : "secondary"}
+                  onClick={() => setSelectedCategory(category.value)}
+                  className={`cursor-pointer transition-colors text-sm px-3 py-1 ${selectedCategory === category.value
+                    ? "bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white border-0"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
+                    }`}
+                >
+                  {category.label}
+                </Badge>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </div>
       </div>
 
-      <div className="px-4 pt-6 space-y-6">
+      <div className="px-4 py-4 space-y-6">
         {/* Shared Wordbooks */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <BookOpen size={20} className="text-[#FF7A00]" />
-              공유 단어장
+              공유 단어장 ({filteredWordbooks.length}개)
             </h2>
-            <Button variant="ghost" size="sm" className="text-[#FF7A00] hover:bg-[#FF7A00]/10">
-              더보기
-            </Button>
           </div>
 
-          <div className="space-y-3">
-            {sharedWordbooks.map((wordbook) => (
-              <Card
-                key={wordbook.id}
-                className="hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200 rounded-xl"
-              >
-                <CardContent className="px-4 py-3" onClick={() => handleViewWordbook(wordbook.id.toString())}>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-black">{wordbook.name}</h3>
-                        <Badge variant="secondary" className="text-xs bg-[#FF7A00]/10 text-[#FF7A00] border-0">
-                          {wordbook.category}
-                        </Badge>
+          {isLoading.wordbooks ? (
+            <div className="space-y-3">
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+            </div>
+          ) : filteredWordbooks.length === 0 ? (
+            <Card className="text-center py-12 border border-gray-200 rounded-xl">
+              <CardContent>
+                <Search size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">결과가 없습니다</h3>
+                <p className="text-sm text-gray-600">검색어나 필터를 변경해보세요.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {filteredWordbooks.map((wordbook) => (
+                <Card
+                  key={wordbook.id}
+                  className="hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200 rounded-xl"
+                  onClick={() => handleViewWordbook(wordbook.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-black">{wordbook.name}</h3>
+                          <Badge variant="secondary" className="text-xs bg-[#FF7A00]/10 text-[#FF7A00] border-0">
+                            {wordbook.category}
+                          </Badge>
+                        </div>
+                        <p
+                          className="text-sm text-gray-600 cursor-pointer hover:text-[#FF7A00]"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewProfile(wordbook.author.uid);
+                          }}
+                        >
+                          by {wordbook.author.name}
+                        </p>
+                        <p className="text-sm text-gray-600">{wordbook.wordCount}개 단어</p>
                       </div>
-                      <p className="text-sm text-gray-600">by {wordbook.author}</p>
-                      <p className="text-sm text-gray-600">{wordbook.wordCount}개 단어</p>
                     </div>
-                    <Button size="sm" className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white">
-                      다운로드
-                    </Button>
-                  </div>
 
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <Heart size={14} />
-                      {wordbook.likes}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Share2 size={14} />
-                      {wordbook.downloads}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <span className="flex items-center gap-1">
+                        <Heart size={14} />
+                        {wordbook.likes}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Download size={14} />
+                        {wordbook.downloads}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Discussion Board */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <MessageCircle size={20} className="text-[#FF7A00]" />
+              토론 게시판
+            </h2>
+            <CreatePostDialog onPostCreated={fetchDiscussions}>
+              <Button variant="ghost" size="sm" className="text-[#FF7A00] hover:bg-[#FF7A00]/10">
+                <PlusCircle size={16} className="mr-2" />
+                글쓰기
+              </Button>
+            </CreatePostDialog>
           </div>
+
+          {isLoading.discussions ? (
+            <div className="space-y-3">
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+            </div>
+          ) : discussions.length === 0 ? (
+            <Card className="text-center py-12 border border-gray-200 rounded-xl">
+              <CardContent>
+                <MessageCircle size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">게시글이 없습니다</h3>
+                <p className="text-sm text-gray-600">첫 번째 게시글을 작성해보세요!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {discussions.map((discussion) => (
+                <Card
+                  key={discussion.id}
+                  className="hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200 rounded-xl"
+                  onClick={() => handleViewDiscussion(discussion.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="text-xs bg-[#FF7A00]/10 text-[#FF7A00]">
+                          {discussion.author.name[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-black text-sm">{discussion.title}</h3>
+                          <Badge variant="outline" className="text-xs border-gray-200">
+                            {discussion.category}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-gray-600">
+                          <span
+                            className="cursor-pointer hover:text-[#FF7A00]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewProfile(discussion.author.uid);
+                            }}
+                          >
+                            {discussion.author.name}
+                          </span>
+                          <span>{timeAgo(discussion.createdAt)}</span>
+                          <span className="flex items-center gap-1">
+                            <MessageCircle size={12} />
+                            {discussion.replies}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Heart size={12} />
+                            {discussion.likes}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

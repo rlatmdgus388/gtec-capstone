@@ -1,23 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, TrendingUp, Clock, Star, Home } from "lucide-react"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
+import { fetchWithAuth } from "@/lib/api"
+import { Skeleton } from "../ui/skeleton"
 
+// 인터페이스 수정: onWordbookSelect를 받도록 변경
 interface HomeScreenProps {
-  onNavigateToVocabulary?: (wordbookId?: number) => void
+  onWordbookSelect: (wordbook: any) => void;
 }
 
-export function HomeScreen({ onNavigateToVocabulary }: HomeScreenProps) {
+interface Wordbook {
+  id: number;
+  name: string;
+  wordCount: number;
+  progress: number;
+  lastStudied?: string; // lastStudied는 선택적 프로퍼티로 변경
+}
+
+
+export function HomeScreen({ onWordbookSelect }: HomeScreenProps) {
   const [showPhotoCapture, setShowPhotoCapture] = useState(false)
-  const [recentWordbooks] = useState([
-    { id: 1, name: "영어 기초 단어", wordCount: 45, progress: 78, lastStudied: "2시간 전" },
-    { id: 2, name: "TOEIC 필수 어휘", wordCount: 120, progress: 34, lastStudied: "1일 전" },
-    { id: 3, name: "일상 회화 표현", wordCount: 67, progress: 89, lastStudied: "3시간 전" },
-  ])
+  const [recentWordbooks, setRecentWordbooks] = useState<Wordbook[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [todayStats] = useState({
     wordsLearned: 12,
@@ -25,22 +34,35 @@ export function HomeScreen({ onNavigateToVocabulary }: HomeScreenProps) {
     streak: 7,
   })
 
-  const handlePhotoCapture = () => {
-    setShowPhotoCapture(true)
-  }
+  useEffect(() => {
+    const fetchRecentWordbooks = async () => {
+      setIsLoading(true);
+      try {
+        const allWordbooks = await fetchWithAuth('/api/wordbooks');
+        // createdAt 기준으로 최신 3개만 가져오도록 정렬 및 슬라이스
+        const sorted = allWordbooks.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setRecentWordbooks(sorted.slice(0, 3));
+      } catch (error) {
+        console.error("최근 단어장 로딩 실패:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRecentWordbooks();
+  }, []);
+
 
   const handleWordsAdded = (words: any[], wordbookId: number) => {
     console.log("Words added:", words, "to wordbook:", wordbookId)
   }
 
+  // 함수 이름도 역할에 맞게 변경
   const handleWordbookClick = (wordbook: any) => {
-    if (onNavigateToVocabulary) {
-      onNavigateToVocabulary(wordbook.id)
-    }
+    onWordbookSelect(wordbook);
   }
 
   if (showPhotoCapture) {
-    return <PhotoWordCapture onClose={() => setShowPhotoCapture(false)} onWordsAdded={handleWordsAdded} />
+    return <PhotoWordCapture imageData={null} onClose={() => setShowPhotoCapture(false)} onWordsAdded={handleWordsAdded} />
   }
 
   return (
@@ -95,63 +117,46 @@ export function HomeScreen({ onNavigateToVocabulary }: HomeScreenProps) {
               최근 단어장
             </h2>
           </div>
-
-          <div className="space-y-3">
-            {recentWordbooks.map((wordbook) => (
-              <Card
-                key={wordbook.id}
-                className="bg-white border border-gray-200 hover:shadow-md transition-all cursor-pointer rounded-xl"
-                onClick={() => handleWordbookClick(wordbook)}
-              >
-                <CardContent className=
-                  // "px-4 py-2">
-                  "p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-black text-base mb-1">{wordbook.name}</h3>
-                      <div className="flex items-center gap-4 text-xs text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <BookOpen size={14} />
-                          {wordbook.wordCount}개 단어
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock size={14} />
-                          {wordbook.lastStudied}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-base font-bold text-[#FF7A00] mb-1">{wordbook.progress}%</div>
-                      <div className="w-16 h-2 bg-gray-200 rounded-full">
-                        <div
-                          className="h-full bg-[#FF7A00] rounded-full transition-all"
-                          style={{ width: `${wordbook.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-        <Card className="bg-white border-2 border-[#FF7A00]/20 shadow-sm rounded-xl">
-          <CardContent className="px-4 py-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#FF7A00]/10 rounded-full flex items-center justify-center">
-                <Star size={20} className="text-[#FF7A00]" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-black text-base">추천 학습</h3>
-                <p className="text-gray-600 text-sm mt-0.5">영어 기초 단어 복습하기</p>
-              </div>
-              <Button className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white border-0 px-4 py-2 rounded-lg font-semibold text-sm">
-                시작
-              </Button>
+          {isLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
             </div>
-          </CardContent>
-        </Card>
-
+          ) : (
+            <div className="space-y-3">
+              {recentWordbooks.map((wordbook) => (
+                <Card
+                  key={wordbook.id}
+                  className="bg-white border border-gray-200 hover:shadow-md transition-all cursor-pointer rounded-xl"
+                  onClick={() => handleWordbookClick(wordbook)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-black text-base mb-1">{wordbook.name}</h3>
+                        <div className="flex items-center gap-4 text-xs text-gray-600">
+                          <span className="flex items-center gap-1">
+                            <BookOpen size={14} />
+                            {wordbook.wordCount}개 단어
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-base font-bold text-[#FF7A00] mb-1">{wordbook.progress}%</div>
+                        <div className="w-16 h-2 bg-gray-200 rounded-full">
+                          <div
+                            className="h-full bg-[#FF7A00] rounded-full transition-all"
+                            style={{ width: `${wordbook.progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
