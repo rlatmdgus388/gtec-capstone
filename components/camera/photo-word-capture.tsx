@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { CameraCapture } from "./camera-capture"
 import { OCRProcessing } from "./ocr-processing"
-import { AddToWordbookDialog } from "./add-to-wordbook-dialog"
+// AddToWordbookDialog는 더 이상 사용하지 않으므로 import에서 제거합니다.
 
 interface DetectedWord {
   text: string; confidence: number; meaning?: string; selected: boolean;
@@ -12,37 +12,30 @@ interface DetectedWord {
 interface PhotoWordCaptureProps {
   imageData: string | null;
   onClose: () => void
-  onWordsAdded: (words: any[], wordbookId: number) => void
+  onWordsAdded: (words: DetectedWord[]) => void // Props 변경: 단어 목록만 전달
 }
 
 export function PhotoWordCapture({ imageData, onClose, onWordsAdded }: PhotoWordCaptureProps) {
-  const [step, setStep] = useState<"capture" | "processing" | "wordbook">(
+  const [step, setStep] = useState<"capture" | "processing">(
     imageData ? "processing" : "capture"
   );
 
   const [capturedImage, setCapturedImage] = useState<string | null>(imageData);
-  const [detectedWords, setDetectedWords] = useState<DetectedWord[]>([]);
 
   const handleCapture = (newImageData: string) => {
     setCapturedImage(newImageData);
     setStep("processing");
   };
 
+  // 단어 인식이 완료되면 onWordsAdded를 호출하고 컴포넌트를 닫습니다.
   const handleWordsDetected = (words: DetectedWord[]) => {
-    setDetectedWords(words);
-    setStep("wordbook");
-  };
-
-  const handleWordsAddedToWordbook = (wordbookId: number) => {
-    onWordsAdded(detectedWords, wordbookId);
+    onWordsAdded(words);
     onClose();
   };
 
   const handleBack = () => {
     if (step === "processing") {
       imageData ? onClose() : setStep("capture");
-    } else if (step === "wordbook") {
-      setStep("processing");
     }
   };
 
@@ -56,8 +49,6 @@ export function PhotoWordCapture({ imageData, onClose, onWordsAdded }: PhotoWord
         return null;
       }
       return <OCRProcessing imageData={capturedImage} onWordsSelected={handleWordsDetected} onBack={handleBack} />;
-    case "wordbook":
-      return <AddToWordbookDialog words={detectedWords} onAddToWordbook={handleWordsAddedToWordbook} onBack={handleBack} />;
     default:
       return null;
   }

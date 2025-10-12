@@ -32,16 +32,16 @@ interface WordbookDetailProps {
     category: string;
   };
   onBack: () => void;
+  onUpdate: () => void; // 단어장 목록 새로고침을 위한 함수
 }
 
 interface DetectedWord {
   text: string;
-  meaning?: string;
   selected: boolean;
 }
 
 
-export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
+export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailProps) {
   // --- 상태 관리 ---
   const [searchQuery, setSearchQuery] = useState("");
   const [hideMode, setHideMode] = useState<"none" | "word" | "meaning">("none");
@@ -81,23 +81,34 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
 
   const handleAddWord = async (newWordData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
     try {
-      const newWord = await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
+      await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
         method: 'POST',
-        body: JSON.stringify(newWordData),
+        body: JSON.stringify([newWordData]), // 배열로 전송
       });
-      // 단어 추가 후 목록을 새로고침하여 즉시 반영
       await fetchWords();
+      onUpdate(); // 단어장 목록의 단어 개수도 업데이트
     } catch (error) {
       console.error("단어 추가에 실패했습니다:", error);
       alert("단어 추가 중 오류가 발생했습니다.");
     }
   };
 
-  const handleDeleteWord = (wordId: string) => {
-    setWords((prev) => prev.filter((word) => word.id !== wordId));
+  const handleDeleteWord = async (wordId: string) => {
+     try {
+        await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words/${wordId}`, {
+            method: 'DELETE',
+        });
+        await fetchWords();
+        onUpdate();
+    } catch (error) {
+        console.error("단어 삭제 실패:", error);
+        alert("단어 삭제 중 오류가 발생했습니다.");
+    }
   };
+
   const toggleMastered = (wordId: string) => {
     setWords((prev) => prev.map((word) => (word.id === wordId ? { ...word, mastered: !word.mastered } : word)));
+    // TODO: 서버에 암기 상태 업데이트 API 호출
   };
 
   const handleHideWords = () => { setHideMode("word"); setFlippedCards(new Set()); };
@@ -135,26 +146,30 @@ export function WordbookDetail({ wordbook, onBack }: WordbookDetailProps) {
   };
 
   const handleWordsAdded = async (addedWords: DetectedWord[]) => {
-    if (!wordbook || !wordbook.id) return;
+    if (!wordbook || !wordbook.id || addedWords.length === 0) {
+        setShowPhotoCapture(false);
+        return;
+    }
 
     try {
-      // Promise.all을 사용해 여러 단어를 동시에 추가 요청
-      await Promise.all(
-        addedWords.map(word => 
-          fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
+        const wordsToAdd = addedWords.map(word => ({
+            word: word.text,
+            meaning: '뜻을 입력하세요', // 기본 의미 설정
+        }));
+
+        await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
             method: 'POST',
-            body: JSON.stringify({ word: word.text, meaning: '뜻을 입력하세요' }), // 기본 의미 설정
-          })
-        )
-      );
-      // 모든 단어가 추가된 후, 단어 목록을 새로고침
-      await fetchWords();
-      alert(`${addedWords.length}개의 단어가 추가되었습니다.`);
+            body: JSON.stringify(wordsToAdd), // 배열로 한 번에 전송
+        });
+
+        alert(`${wordsToAdd.length}개의 단어가 추가되었습니다.`);
+        await fetchWords(); // 현재 단어장 단어 목록 새로고침
+        onUpdate(); // 전체 단어장 목록 새로고침 (단어 개수 등)
     } catch (error) {
-      console.error("OCR 단어 추가에 실패했습니다:", error);
-      alert("단어 추가 중 오류가 발생했습니다.");
+        console.error("사진으로 단어 추가 실패:", error);
+        alert("단어 추가 중 오류가 발생했습니다.");
     } finally {
-      setShowPhotoCapture(false); // 모달 닫기
+        setShowPhotoCapture(false);
     }
   };
 

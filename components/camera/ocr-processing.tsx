@@ -50,7 +50,7 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
         const formattedWords = detectedData.map((word: any) => ({
           ...word,
           meaning: '', // 뜻은 나중에 채울 수 있도록 비워둡니다.
-          selected: false, // 신뢰도 85% 이상 단어만 자동 선택
+          selected: false, // 신뢰도와 관계없이 항상 false로 설정
         }));
 
         setDetectedWords(formattedWords);
@@ -133,14 +133,19 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
                   {detectedWords.length}개 단어 발견 • {detectedWords.filter((w) => w.selected).length}개 선택됨
                 </p>
               </div>
-              <Button variant="outline" size="sm">
-                <Eye size={16} className="mr-2" />
-                미리보기
+              <Button
+                onClick={handleConfirm}
+                disabled={detectedWords.filter((w) => w.selected).length === 0}
+                size="sm"
+                className="bg-primary hover:bg-primary/90"
+              >
+                확인
               </Button>
             </div>
 
             {/* Detected Words */}
-            <div className="space-y-3">
+            {/* ▼▼▼ [수정됨] 하단 여백을 pb-6에서 pb-20으로 변경 ▼▼▼ */}
+            <div className="space-y-3 pb-20">
               {detectedWords.map((word, index) => (
                 <Card
                   key={index}
@@ -171,21 +176,6 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
                   </CardContent>
                 </Card>
               ))}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pb-6">
-              <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent">
-                다시 촬영
-              </Button>
-              <Button
-                onClick={handleConfirm}
-                disabled={detectedWords.filter((w) => w.selected).length === 0}
-                className="flex-1 bg-primary hover:bg-primary/90"
-              >
-                <Plus size={16} className="mr-2" />
-                {detectedWords.filter((w) => w.selected).length}개 단어 추가
-              </Button>
             </div>
           </>
         )}

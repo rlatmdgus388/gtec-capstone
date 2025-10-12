@@ -3,7 +3,7 @@ import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import admin from 'firebase-admin';
 
-// POST request handler to add a new word to a wordbook
+// POST request handler to add new words to a wordbook
 export async function POST(request: Request, { params }: { params: { wordbookId: string } }) {
   try {
     const headersList = headers();
@@ -24,37 +24,51 @@ export async function POST(request: Request, { params }: { params: { wordbookId:
       return NextResponse.json({ message: '단어장을 찾을 수 없거나 권한이 없습니다.' }, { status: 404 });
     }
 
-    const { word, meaning, example = '', pronunciation = '' } = await request.json();
+    const wordsToAdd = await request.json(); // 단어 배열을 받음
 
-    if (!word || !meaning) {
-      return NextResponse.json({ message: '단어와 뜻은 필수입니다.' }, { status: 400 });
+    if (!Array.isArray(wordsToAdd) || wordsToAdd.length === 0) {
+      return NextResponse.json({ message: '추가할 단어가 없습니다.' }, { status: 400 });
     }
 
-    const newWordRef = await wordbookRef.collection('words').add({
-      word,
-      meaning,
-      example,
-      pronunciation,
-      mastered: false,
-      createdAt: new Date().toISOString(),
-    });
+    const batch = firestore.batch();
+    const wordsCollectionRef = wordbookRef.collection('words');
+    const newWords = [];
 
-    // Update word count in the wordbook document
+    for (const wordData of wordsToAdd) {
+      if (!wordData.word || !wordData.meaning) {
+        // 유효하지 않은 데이터는 건너뜁니다.
+        console.warn('Invalid word data skipped:', wordData);
+        continue;
+      }
+      
+      const newWordRef = wordsCollectionRef.doc();
+      const wordPayload = {
+        word: wordData.word,
+        meaning: wordData.meaning,
+        example: wordData.example || '',
+        pronunciation: wordData.pronunciation || '',
+        mastered: false,
+        createdAt: new Date().toISOString(),
+      };
+      batch.set(newWordRef, wordPayload);
+      newWords.push({ id: newWordRef.id, ...wordPayload });
+    }
+    
+    if (newWords.length === 0) {
+      return NextResponse.json({ message: '유효한 단어가 없습니다.' }, { status: 400 });
+    }
+
+    // Firestore에 일괄 쓰기
+    await batch.commit();
+
+    // 단어장 문서의 wordCount 필드 업데이트
     await wordbookRef.update({
-      wordCount: admin.firestore.FieldValue.increment(1)
+      wordCount: admin.firestore.FieldValue.increment(newWords.length)
     });
 
-    const newWord = {
-      id: newWordRef.id,
-      word,
-      meaning,
-      example,
-      pronunciation,
-      mastered: false,
-      createdAt: new Date().toISOString(),
-    };
+    // 성공 응답 반환
+    return NextResponse.json({ message: `${newWords.length}개의 단어가 추가되었습니다.`, words: newWords }, { status: 201 });
 
-    return NextResponse.json(newWord, { status: 201 });
   } catch (error) {
     console.error("단어 추가 오류:", error);
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
