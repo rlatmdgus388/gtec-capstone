@@ -20,6 +20,7 @@ interface Wordbook {
   wordCount: number;
   progress: number;
   lastStudied?: string; // lastStudied는 선택적 프로퍼티로 변경
+  createdAt: string;
 }
 
 
@@ -39,11 +40,16 @@ export function HomeScreen({ onWordbookSelect }: HomeScreenProps) {
       setIsLoading(true);
       try {
         const allWordbooks = await fetchWithAuth('/api/wordbooks');
-        // createdAt 기준으로 최신 3개만 가져오도록 정렬 및 슬라이스
-        const sorted = allWordbooks.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setRecentWordbooks(sorted.slice(0, 3));
+        if (allWordbooks && allWordbooks.length > 0) {
+            // createdAt 기준으로 최신 3개만 가져오도록 정렬 및 슬라이스
+            const sorted = allWordbooks.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setRecentWordbooks(sorted.slice(0, 3));
+        } else {
+            setRecentWordbooks([]);
+        }
       } catch (error) {
         console.error("최근 단어장 로딩 실패:", error);
+        setRecentWordbooks([]);
       } finally {
         setIsLoading(false);
       }
@@ -87,13 +93,13 @@ export function HomeScreen({ onWordbookSelect }: HomeScreenProps) {
       <div className="px-6 py-4 space-y-6">
         <Card className="bg-white border border-gray-200 shadow-sm rounded-xl">
           <CardHeader className="pb-1">
-            <CardTitle className="text-2xl font-bold flex items-center gap-2 text-black">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2 text-black">
               <TrendingUp size={20} className="text-[#FF7A00]" />
               오늘의 학습 현황
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4 pt-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-[#FF7A00] mb-1">{todayStats.wordsLearned}</div>
                 <div className="text-xs text-gray-600 font-medium">학습한 단어</div>
@@ -122,6 +128,16 @@ export function HomeScreen({ onWordbookSelect }: HomeScreenProps) {
               <Skeleton className="h-20 w-full rounded-xl" />
               <Skeleton className="h-20 w-full rounded-xl" />
             </div>
+          ) : recentWordbooks.length === 0 ? (
+            <Card className="text-center py-12 border-dashed border-gray-300 rounded-xl">
+                <CardContent>
+                    <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">단어장이 없습니다</h3>
+                    <p className="text-sm text-gray-500">
+                        '단어장' 탭에서 첫 단어장을 추가해보세요!
+                    </p>
+                </CardContent>
+            </Card>
           ) : (
             <div className="space-y-3">
               {recentWordbooks.map((wordbook) => (
