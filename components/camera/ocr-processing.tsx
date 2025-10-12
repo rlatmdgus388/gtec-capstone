@@ -8,6 +8,7 @@ import { Loader2, Zap, CheckCircle, AlertCircle, Eye, Plus } from "lucide-react"
 
 interface DetectedWord {
   text: string
+  confidence: number
   meaning?: string
   selected: boolean
 }
@@ -27,13 +28,10 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
     const processImage = async () => {
       setIsProcessing(true)
       setError(null)
-
       try {
         const response = await fetch('/api/ocr', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image: imageData }),
         });
 
@@ -42,17 +40,14 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
         }
 
         const detectedData = await response.json();
-
         const formattedWords = detectedData.map((word: any) => ({
-          text: word.text,
+          ...word,
           meaning: '',
-          selected: true, // 신뢰도 구분이 없으므로 모든 단어를 기본 선택
+          selected: word.confidence > 0.85,
         }));
-
         setDetectedWords(formattedWords);
-
       } catch (err: any) {
-        setError(err.message || "텍스트 인식 중 오류가 발생했습니다. 다시 시도해주세요.");
+        setError(err.message || "텍스트 인식 중 오류가 발생했습니다.");
       } finally {
         setIsProcessing(false);
       }
@@ -72,55 +67,30 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-        <div className="px-4 py-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-              <Zap size={24} className="text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">텍스트 인식</h1>
-              <p className="text-sm text-muted-foreground">AI가 이미지에서 단어를 찾고 있습니다</p>
-            </div>
+      <div className="px-4 py-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+            <Zap size={24} className="text-primary" />
           </div>
-
-          {/* Captured Image Preview */}
-          <Card className="mb-4">
-            <CardContent className="p-3">
-              <img
-                src={imageData || "/placeholder.svg"}
-                alt="Captured"
-                className="w-full h-32 object-cover rounded-lg"
-              />
-            </CardContent>
-          </Card>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">텍스트 인식</h1>
+            <p className="text-sm text-muted-foreground">AI가 이미지에서 단어를 찾고 있습니다</p>
+          </div>
         </div>
+        <Card className="mb-4">
+          <CardContent className="p-3">
+            <img src={imageData} alt="Captured" className="w-full h-32 object-cover rounded-lg" />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="px-4 space-y-6">
         {isProcessing ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Loader2 size={48} className="mx-auto text-primary animate-spin mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">텍스트 분석 중...</h3>
-              <p className="text-sm text-muted-foreground">AI가 이미지에서 단어를 인식하고 있습니다</p>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="p-8 text-center"><Loader2 size={48} className="mx-auto text-primary animate-spin mb-4" /><h3 className="text-lg font-medium">텍스트 분석 중...</h3></CardContent></Card>
         ) : error ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <AlertCircle size={48} className="mx-auto text-destructive mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">인식 실패</h3>
-              <p className="text-sm text-muted-foreground mb-4">{error}</p>
-              <Button onClick={onBack} variant="outline">
-                다시 촬영하기
-              </Button>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="p-8 text-center"><AlertCircle size={48} className="mx-auto text-destructive mb-4" /><h3 className="text-lg font-medium mb-2">인식 실패</h3><p className="text-sm text-muted-foreground mb-4">{error}</p><Button onClick={onBack} variant="outline">다시 시도</Button></CardContent></Card>
         ) : (
           <>
-            {/* Results Header */}
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">인식된 단어</h2>
@@ -128,51 +98,25 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
                   {detectedWords.length}개 단어 발견 • {detectedWords.filter((w) => w.selected).length}개 선택됨
                 </p>
               </div>
-              <Button variant="outline" size="sm">
-                <Eye size={16} className="mr-2" />
-                미리보기
-              </Button>
             </div>
-
-            {/* Detected Words */}
             <div className="space-y-3">
               {detectedWords.map((word, index) => (
                 <Card
                   key={index}
-                  className={`cursor-pointer transition-all ${
-                    word.selected ? "ring-2 ring-primary bg-primary/5" : "hover:shadow-md"
-                  }`}
+                  className={`cursor-pointer transition-all ${word.selected ? "ring-2 ring-primary bg-primary/5" : "hover:shadow-md"}`}
                   onClick={() => toggleWordSelection(index)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-foreground">{word.text}</h3>
-                          {word.selected && <CheckCircle size={16} className="text-primary" />}
-                        </div>
-                        {word.meaning && <p className="text-base text-muted-foreground">{word.meaning}</p>}
-                      </div>
-                      <div className="ml-4">
-                        <div
-                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                            word.selected ? "bg-primary border-primary" : "border-muted-foreground"
-                          }`}
-                        >
-                          {word.selected && <CheckCircle size={16} className="text-primary-foreground" />}
-                        </div>
-                      </div>
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-foreground">{word.text}</h3>
                     </div>
+                    <Badge variant={word.confidence > 0.8 ? 'default' : 'secondary'}>{Math.round(word.confidence * 100)}%</Badge>
                   </CardContent>
                 </Card>
               ))}
             </div>
-
-            {/* Action Buttons */}
             <div className="flex gap-3 pb-6">
-              <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent">
-                다시 촬영
-              </Button>
+              <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent">이전</Button>
               <Button
                 onClick={handleConfirm}
                 disabled={detectedWords.filter((w) => w.selected).length === 0}

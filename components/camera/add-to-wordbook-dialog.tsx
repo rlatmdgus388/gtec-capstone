@@ -1,17 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, Plus, ArrowLeft } from "lucide-react"
+import { fetchWithAuth } from "@/lib/api"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface DetectedWord {
-  text: string
-  confidence: number
-  meaning?: string
-  selected: boolean
+  text: string;
+  selected: boolean;
+}
+
+interface Wordbook {
+  id: string;
+  name: string;
+  category: string;
 }
 
 interface AddToWordbookDialogProps {
@@ -22,110 +28,90 @@ interface AddToWordbookDialogProps {
 
 export function AddToWordbookDialog({ words, onAddToWordbook, onBack }: AddToWordbookDialogProps) {
   const [selectedWordbookId, setSelectedWordbookId] = useState<string>("")
+  const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock wordbooks data
-  const wordbooks = [
-    { id: 1, name: "영어 기초 단어", category: "기초" },
-    { id: 2, name: "TOEIC 필수 어휘", category: "시험" },
-    { id: 3, name: "일상 회화 표현", category: "회화" },
-    { id: 4, name: "비즈니스 영어", category: "비즈니스" },
-  ]
+  useEffect(() => {
+    const fetchMyWordbooks = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchWithAuth('/api/wordbooks');
+        setWordbooks(data || []);
+      } catch (error) {
+        console.error("내 단어장 목록 조회 실패:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMyWordbooks();
+  }, []);
 
-  const selectedWords = words.filter((word) => word.selected)
-
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (selectedWordbookId) {
-      onAddToWordbook(Number.parseInt(selectedWordbookId))
+      try {
+        const wordsToAdd = words.filter(w => w.selected).map(w => ({ word: w.text, meaning: "" }));
+        await fetchWithAuth(`/api/wordbooks/${selectedWordbookId}/words`, {
+          method: 'POST',
+          body: JSON.stringify(wordsToAdd)
+        });
+        alert(`${wordsToAdd.length}개의 단어가 추가되었습니다.`);
+        onAddToWordbook(Number(selectedWordbookId));
+      } catch (error) {
+        console.error("사진 단어 추가 실패:", error);
+        alert("단어 추가에 실패했습니다.");
+      }
     }
   }
 
+  const selectedWords = words.filter((word) => word.selected)
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-        <div className="px-4 py-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
-              <ArrowLeft size={18} />
-            </Button>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">단어장에 추가</h1>
-              <p className="text-sm text-muted-foreground">{selectedWords.length}개 단어를 어느 단어장에 추가할까요?</p>
-            </div>
+      <div className="px-4 py-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
+            <ArrowLeft size={18} />
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-foreground">단어장에 추가</h1>
+            <p className="text-sm text-muted-foreground">{selectedWords.length}개 단어를 추가합니다.</p>
           </div>
         </div>
       </div>
 
       <div className="px-4 space-y-6">
-        {/* Selected Words Preview */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Plus size={20} className="text-primary" />
-              추가할 단어 ({selectedWords.length}개)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+          <CardHeader><CardTitle className="text-lg">추가할 단어</CardTitle></CardHeader>
+          <CardContent className="max-h-48 overflow-y-auto">
             {selectedWords.map((word, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-foreground">{word.text}</h3>
-                  {word.meaning && <p className="text-sm text-muted-foreground">{word.meaning}</p>}
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  {Math.round(word.confidence * 100)}%
-                </Badge>
+              <div key={index} className="flex items-center justify-between p-2">
+                <h3 className="font-medium text-foreground">{word.text}</h3>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        {/* Wordbook Selection */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BookOpen size={20} className="text-primary" />
-              단어장 선택
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Select value={selectedWordbookId} onValueChange={setSelectedWordbookId}>
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder="단어장을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                {wordbooks.map((wordbook) => (
-                  <SelectItem key={wordbook.id} value={wordbook.id.toString()}>
-                    <div className="flex items-center gap-2">
-                      <span>{wordbook.name}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {wordbook.category}
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">또는</p>
-              <Button variant="outline" className="w-full bg-transparent">
-                <Plus size={16} className="mr-2" />새 단어장 만들기
-              </Button>
-            </div>
+          <CardHeader><CardTitle className="text-lg">단어장 선택</CardTitle></CardHeader>
+          <CardContent>
+            {isLoading ? <Skeleton className="h-12 w-full" /> : (
+              <Select value={selectedWordbookId} onValueChange={setSelectedWordbookId}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="단어장을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {wordbooks.map((wb) => (
+                    <SelectItem key={wb.id} value={wb.id.toString()}>{wb.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
         <div className="flex gap-3 pb-6">
-          <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent">
-            이전으로
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={!selectedWordbookId}
-            className="flex-1 bg-primary hover:bg-primary/90"
-          >
+          <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent">이전</Button>
+          <Button onClick={handleConfirm} disabled={!selectedWordbookId} className="flex-1 bg-primary hover:bg-primary/90">
             단어장에 추가
           </Button>
         </div>

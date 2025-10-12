@@ -1,63 +1,77 @@
 import { NextResponse } from 'next/server';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
+import { GoogleAuth } from 'google-auth-library';
+import serviceAccount from '../../../ocr-key.json';
 import dictionary from 'an-array-of-english-words';
+// @ts-ignore - 타입 정의가 없는 라이브러리를 위한 처리
 import stopwords from 'stopwords';
 
-// Vision 클라이언트 초기화
-const client = new ImageAnnotatorClient();
+// 최신 인증 방식 적용
+const auth = new GoogleAuth({
+  credentials: {
+    client_email: serviceAccount.client_email,
+    private_key: serviceAccount.private_key,
+  },
+  scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+});
+
+const client = new ImageAnnotatorClient({ auth: auth });
 
 // Set으로 변환하여 검색 속도를 높임
-const dictionarySet = new Set(dictionary.map(word => word.toLowerCase()));
-const stopwordsSet = new Set(stopwords.english.map(word => word.toLowerCase()));
+const dictionarySet = new Set(dictionary);
+// 'stopwords' 라이브러리에서 영어 불용어 목록을 가져오도록 수정
+const stopwordsSet = new Set(stopwords.english);
 
 export async function POST(request: Request) {
   try {
     const { image } = await request.json();
     if (!image) {
-      return NextResponse.json({ message: 'Image data is required' }, { status: 400 });
+      return NextResponse.json({ message: '이미지 데이터가 필요합니다.' }, { status: 400 });
     }
 
-    // Base64 접두사 제거 후 Buffer로 변환
     const imageBuffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), 'base64');
 
-    const [result] = await client.textDetection({ image: { content: imageBuffer } });
+    const [result] = await client.textDetection(imageBuffer);
     const detections = result.textAnnotations;
 
     if (!detections || detections.length === 0) {
       return NextResponse.json([]);
     }
 
-    // 첫 번째 전체 텍스트 제외, 개별 단어 처리
-    const originalWords = detections.slice(1).map(item => item.description);
+    const detectedWords = detections.slice(1);
 
-    const filteredWords = originalWords
-      .map(word => word.replace(/[^a-zA-Z]/g, '')) // 숫자, 특수문자 제거
-      .filter(word => {
-        if (!word) return false;
+    const filteredWords = detectedWords
+      .map(item => ({
+        // ▼▼▼ [수정됨] item.description이 없는 경우를 대비해 빈 문자열('')을 기본값으로 설정 ▼▼▼
+        original: item.description || '',
+        confidence: item.score || 1.0,
+      }))
+      .map(item => ({
+        ...item,
+        cleaned: item.original.replace(/[^a-zA-Z]/g, '').toLowerCase(),
+      }))
+      .filter(item => {
+        const { cleaned } = item;
+        if (!cleaned) return false;
+        if (cleaned.length <= 1 && cleaned !== 'a' && cleaned !== 'i') return false;
+        if (stopwordsSet.has(cleaned)) return false;
+        return dictionarySet.has(cleaned);
+      });
 
-        const lower = word.toLowerCase();
+    const uniqueWordsMap = new Map<string, { text: string; confidence: number }>();
+    filteredWords.forEach(item => {
+      if (!uniqueWordsMap.has(item.cleaned)) {
+        uniqueWordsMap.set(item.cleaned, { text: item.cleaned, confidence: item.confidence });
+      }
+    });
 
-        // 한 글자 단어 제거 (단, 'a', 'i' 허용)
-        if (lower.length <= 1 && lower !== 'a' && lower !== 'i') return false;
-
-        // 불용어 제거
-        if (stopwordsSet.has(lower)) return false;
-
-        // 첫 글자가 대문자면서 'I'가 아닌 경우 고유명사 제거
-        if (word[0] >= 'A' && word[0] <= 'Z' && word !== 'I') return false;
-
-        // 영어 단어 사전에 존재하는 단어만 통과
-        return dictionarySet.has(lower);
-      })
-      .map(word => word.toLowerCase());
-
-    // 중복 제거
-    const uniqueWords = Array.from(new Set(filteredWords)).map(text => ({ text }));
+    const uniqueWords = Array.from(uniqueWordsMap.values());
 
     return NextResponse.json(uniqueWords);
 
   } catch (error) {
-    console.error('Google Cloud Vision API Error:', error);
-    return NextResponse.json({ message: 'Error processing image' }, { status: 500 });
+    console.error('Google Cloud Vision API 오류:', error);
+    return NextResponse.json({ message: '이미지 처리 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }
+
