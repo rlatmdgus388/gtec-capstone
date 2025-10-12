@@ -35,14 +35,14 @@ export async function POST(request: Request) {
     const detections = result.textAnnotations;
 
     if (!detections || detections.length === 0) {
-      return NextResponse.json([]);
+      return NextResponse.json({ fullText: "", words: [] });
     }
 
+    const fullText = detections[0].description || "";
     const detectedWords = detections.slice(1);
 
     const filteredWords = detectedWords
       .map(item => ({
-        // ▼▼▼ [수정됨] item.description이 없는 경우를 대비해 빈 문자열('')을 기본값으로 설정 ▼▼▼
         original: item.description || '',
         confidence: item.score || 1.0,
       }))
@@ -67,11 +67,11 @@ export async function POST(request: Request) {
 
     const uniqueWords = Array.from(uniqueWordsMap.values());
 
-    return NextResponse.json(uniqueWords);
+    // fullText와 words를 함께 객체로 반환
+    return NextResponse.json({ fullText, words: uniqueWords });
 
   } catch (error) {
     console.error('Google Cloud Vision API 오류:', error);
     return NextResponse.json({ message: '이미지 처리 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }
-

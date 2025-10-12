@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Zap, CheckCircle, AlertCircle, Eye, Plus } from "lucide-react"
+import { Loader2, Zap, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react"
 
 interface DetectedWord {
   text: string
@@ -22,21 +22,17 @@ interface OCRProcessingProps {
 export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcessingProps) {
   const [isProcessing, setIsProcessing] = useState(true)
   const [detectedWords, setDetectedWords] = useState<DetectedWord[]>([])
+  const [fullText, setFullText] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
 
-  // Simulate OCR processing
   useEffect(() => {
     const processImage = async () => {
       setIsProcessing(true)
       setError(null)
-
       try {
-        // 1. 우리가 만든 백엔드 API(/api/ocr)에 이미지 데이터 전송
         const response = await fetch('/api/ocr', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image: imageData }),
         });
 
@@ -44,15 +40,15 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
           throw new Error('텍스트 인식에 실패했습니다.');
         }
 
-        const detectedData = await response.json();
+        const responseData = await response.json();
 
-        // 2. API로부터 받은 결과를 화면에 표시할 형태로 가공
-        const formattedWords = detectedData.map((word: any) => ({
+        const formattedWords = responseData.words.map((word: any) => ({
           ...word,
-          meaning: '', // 뜻은 나중에 채울 수 있도록 비워둡니다.
-          selected: false, // 신뢰도와 관계없이 항상 false로 설정
+          meaning: '',
+          selected: false,
         }));
 
+        setFullText(responseData.fullText);
         setDetectedWords(formattedWords);
 
       } catch (err: any) {
@@ -73,37 +69,61 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
     const selectedWords = detectedWords.filter((word) => word.selected)
     onWordsSelected(selectedWords)
   }
+  
+  const renderHighlightedText = () => {
+    if (!fullText) return null;
+    const detectedWordSet = new Set(detectedWords.map(w => w.text.toLowerCase()));
+    const parts = fullText.split(/(\s+)/);
+
+    return parts.map((part, index) => {
+      const cleanedPart = part.replace(/[^a-zA-Z]/g, '').toLowerCase();
+      if (detectedWordSet.has(cleanedPart)) {
+        return (
+          <span key={index} className="bg-orange-200 rounded-sm px-0.5">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
 
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-        <div className="px-4 py-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-              <Zap size={24} className="text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">텍스트 인식</h1>
+      <div className="border-b border-gray-100">
+        <div className="px-4 py-4">
+          <div className="flex items-center gap-3 mb-4">
+            <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2 self-center">
+              <ArrowLeft size={20} className="text-gray-700" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-foreground">텍스트 인식</h1>
               <p className="text-sm text-muted-foreground">AI가 이미지에서 단어를 찾고 있습니다</p>
             </div>
           </div>
-
-          {/* Captured Image Preview */}
-          <Card className="mb-4">
-            <CardContent className="p-3">
-              <img
-                src={imageData || "/placeholder.svg"}
-                alt="Captured"
-                className="w-full h-32 object-cover rounded-lg"
-              />
+          
+          {/* Captured Image Preview or Highlighted Text */}
+          <Card className="shadow-sm">
+            <CardContent className="p-0">
+              {isProcessing ? (
+                <img
+                  src={imageData || "/placeholder.svg"}
+                  alt="Captured"
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+              ) : (
+                <div className="w-full h-32 overflow-y-auto rounded-lg bg-white p-4 text-sm whitespace-pre-wrap leading-relaxed">
+                  {renderHighlightedText()}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
 
-      <div className="px-4 space-y-6">
+      <div className="px-4 space-y-6 mt-4">
         {isProcessing ? (
           <Card>
             <CardContent className="p-8 text-center">
@@ -144,7 +164,6 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
             </div>
 
             {/* Detected Words */}
-            {/* ▼▼▼ [수정됨] 하단 여백을 pb-6에서 pb-20으로 변경 ▼▼▼ */}
             <div className="space-y-3 pb-20">
               {detectedWords.map((word, index) => (
                 <Card
