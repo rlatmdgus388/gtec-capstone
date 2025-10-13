@@ -11,7 +11,7 @@ import { VocabularyScreen } from "@/components/vocabulary/vocabulary-screen";
 import { StudyScreen } from "@/components/study/study-screen";
 import { CommunityScreen } from "@/components/community/community-screen";
 import { SettingsScreen } from "@/components/settings/settings-screen";
-import { WordbookDetail } from "@/components/vocabulary/wordbook-detail"; // 1. 상세 페이지 컴포넌트 import
+import { WordbookDetail } from "@/components/vocabulary/wordbook-detail";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 
@@ -78,12 +78,10 @@ export default function AuthManager() {
     setActiveTab("study");
   };
 
-  // 2. 상세 페이지에서 목록으로 돌아오기 위한 함수
   const handleBackToVocabularyList = () => {
     setSelectedWordbookForDetail(null);
   };
 
-  // 3. 탭 변경 시 선택된 단어장 정보를 초기화하여 오류 방지
   const handleTabChange = (tab: string) => {
     if (tab !== 'vocabulary') {
       setSelectedWordbookForDetail(null);
@@ -94,26 +92,21 @@ export default function AuthManager() {
   const renderScreen = () => {
     switch (activeTab) {
       case "home":
-        // home-screen.tsx에 onStartStudy prop이 없으므로 제거
         return <HomeScreen onWordbookSelect={handleWordbookSelect} />;
 
       case "vocabulary":
-        // 4. ✨ 핵심 수정 ✨: 선택된 단어장이 있으면 상세 페이지를, 없으면 목록을 보여줌
         if (selectedWordbookForDetail) {
           return (
             <WordbookDetail
               wordbook={selectedWordbookForDetail}
               onBack={handleBackToVocabularyList}
-              // wordbook-detail.tsx는 onUpdate prop을 받으므로, 목록 새로고침을 위해 함수 전달
               onUpdate={handleBackToVocabularyList}
             />
           );
         }
-        // vocabulary-screen.tsx의 props에 맞게 전달
         return <VocabularyScreen onNavigateToStudy={handleStartStudyWithWordbook} />;
 
       case "study":
-        // study-screen.tsx의 props에 맞게 전달
         return <StudyScreen
           wordbook={selectedWordbookForStudy}
           onExit={() => {
@@ -139,10 +132,7 @@ export default function AuthManager() {
       <main className="flex-1 overflow-y-auto">
         {renderScreen()}
       </main>
-      {/* 학습 중일 때는 하단 바 숨기기 */}
-      {!(activeTab === 'study' && selectedWordbookForStudy) && (
-        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-      )}
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   );
 }
