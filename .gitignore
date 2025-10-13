@@ -29,3 +29,6 @@ next-env.d.ts
 # Google Cloud Service Account Keys
 api-key.json
 ocr-key.json
+
+# .DS_Store
+.DS_Store
