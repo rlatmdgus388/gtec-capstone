@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@google-cloud/translate':
+        specifier: ^9.2.1
+        version: 9.2.1
       '@google-cloud/vision':
         specifier: ^5.3.3
         version: 5.3.3
@@ -176,6 +179,9 @@ importers:
       vaul:
         specifier: latest
         version: 1.1.2(@types/react-dom@18.3.7(@types/react@18.3.25))(@types/react@18.3.25)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      wink-lemmatizer:
+        specifier: ^3.0.4
+        version: 3.0.4
       zod:
         specifier: 3.25.67
         version: 3.25.67
@@ -442,6 +448,10 @@ packages:
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
+  '@google-cloud/common@6.0.0':
+    resolution: {integrity: sha512-IXh04DlkLMxWgYLIUYuHHKXKOUwPDzDgke1ykkkJPe48cGIS9kkL2U/o0pm4ankHLlvzLF/ma1eO86n/bkumIA==}
+    engines: {node: '>=18'}
+
   '@google-cloud/firestore@7.11.6':
     resolution: {integrity: sha512-EW/O8ktzwLfyWBOsNuhRoMi8lrC3clHM5LVFhGvO1HCsLozCOOXRAlHrYBoE6HL42Sc8yYMuCb2XqcnJ4OOEpw==}
     engines: {node: '>=14.0.0'}
@@ -465,6 +475,10 @@ packages:
   '@google-cloud/storage@7.17.1':
     resolution: {integrity: sha512-2FMQbpU7qK+OtBPaegC6n+XevgZksobUGo6mGKnXNmeZpvLiAo1gTAE3oTKsrMGDV4VtL8Zzpono0YsK/Q7Iqg==}
     engines: {node: '>=14'}
+
+  '@google-cloud/translate@9.2.1':
+    resolution: {integrity: sha512-7/RWxkMd4fKX88Pzzhr2ly8yOjEepCW4ro4ZsdAUsf2Wo2ZLgp75yNZaQGKBBetgOc8yPVl8djr/2XFIHnWS3w==}
+    engines: {node: '>=18'}
 
   '@google-cloud/vision@5.3.3':
     resolution: {integrity: sha512-zByFQWEJiOcEDYjHLh6zzt3f8cW5k9f4yMF37TeBhPzaG/W0tKdmLHnFFIz1gKAhXgyvh2VNwotSbYlgH9iPGA==}
@@ -1857,6 +1871,10 @@ packages:
   html-entities@2.6.0:
     resolution: {integrity: sha512-kig+rMn/QOVRvr7c86gQ8lWXq+Hkv6CbAH1hLu+RG338StTpE8Z0b44SDVaqVu7HGKf27frdmUYEs9hTUX/cLQ==}
 
+  html-tags@3.3.1:
+    resolution: {integrity: sha512-ztqyC3kLto0e9WbNp0aeP+M3kTt+nbaIveGmUxAtZa+8iFgKLUOD4YKM5j+f3QD89bra7UeumolZHKuOXnTmeQ==}
+    engines: {node: '>=8'}
+
   http-parser-js@0.5.10:
     resolution: {integrity: sha512-Pysuw9XpUq5dVc/2SMHpuTY01RFl8fttgcyunjL7eEMhGM3cI4eOmiCycJDVCo/7O7ClfQD3SaI6ftDzqOXYMA==}
 
@@ -1893,6 +1911,10 @@ packages:
 
   is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
+    engines: {node: '>=8'}
+
+  is-html@2.0.0:
+    resolution: {integrity: sha512-S+OpgB5i7wzIue/YSE5hg0e5ZYfG3hhpNh9KGl6ayJ38p7ED6wxQLd1TV91xHpcTvw90KMJ9EwN3F/iNflHBVg==}
     engines: {node: '>=8'}
 
   is-stream@2.0.1:
@@ -2469,6 +2491,15 @@ packages:
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
 
+  wink-lemmatizer@3.0.4:
+    resolution: {integrity: sha512-EdLJfy1xLF2ze2cp9Z3qiEWjiq+V8ZVRWiWooCXTXR0AyPxY8ezm4E0puJ0yIj5szzED9tcXV2U7RboaGvboFw==}
+
+  wink-lexicon@2.2.0:
+    resolution: {integrity: sha512-QIuHS9r/HV6q3PCCz6pymg4gbsryW9wDk8CHdU+sDn0kJcHpECNDIcdY0Q/mZpqxtFLp9dzIw7pjcStLBbGZGg==}
+
+  wink-porter2-stemmer@2.0.1:
+    resolution: {integrity: sha512-0g+RkkqhRXFmSpJQStVXW5N/WsshWpJXsoDRW7DwVkGI2uDT6IBCoq3xdH5p6IHLaC6ygk7RWUsUx4alKxoagQ==}
+
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
@@ -2845,6 +2876,20 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
+  '@google-cloud/common@6.0.0':
+    dependencies:
+      '@google-cloud/projectify': 4.0.0
+      '@google-cloud/promisify': 4.0.0
+      arrify: 2.0.1
+      duplexify: 4.1.3
+      extend: 3.0.2
+      google-auth-library: 10.4.0
+      html-entities: 2.6.0
+      retry-request: 8.0.2
+      teeny-request: 10.1.0
+    transitivePeerDependencies:
+      - supports-color
+
   '@google-cloud/firestore@7.11.6':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -2863,11 +2908,9 @@ snapshots:
       extend: 3.0.2
     optional: true
 
-  '@google-cloud/projectify@4.0.0':
-    optional: true
+  '@google-cloud/projectify@4.0.0': {}
 
-  '@google-cloud/promisify@4.0.0':
-    optional: true
+  '@google-cloud/promisify@4.0.0': {}
 
   '@google-cloud/promisify@5.0.0': {}
 
@@ -2892,6 +2935,17 @@ snapshots:
       - encoding
       - supports-color
     optional: true
+
+  '@google-cloud/translate@9.2.1':
+    dependencies:
+      '@google-cloud/common': 6.0.0
+      '@google-cloud/promisify': 5.0.0
+      arrify: 2.0.1
+      extend: 3.0.2
+      google-gax: 5.0.4
+      is-html: 2.0.0
+    transitivePeerDependencies:
+      - supports-color
 
   '@google-cloud/vision@5.3.3':
     dependencies:
@@ -3915,8 +3969,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  arrify@2.0.1:
-    optional: true
+  arrify@2.0.1: {}
 
   async-retry@1.3.3:
     dependencies:
@@ -4387,8 +4440,9 @@ snapshots:
       function-bind: 1.1.2
     optional: true
 
-  html-entities@2.6.0:
-    optional: true
+  html-entities@2.6.0: {}
+
+  html-tags@3.3.1: {}
 
   http-parser-js@0.5.10: {}
 
@@ -4428,6 +4482,10 @@ snapshots:
   internmap@2.0.3: {}
 
   is-fullwidth-code-point@3.0.0: {}
+
+  is-html@2.0.0:
+    dependencies:
+      html-tags: 3.3.1
 
   is-stream@2.0.1: {}
 
@@ -4997,6 +5055,15 @@ snapshots:
     dependencies:
       tr46: 0.0.3
       webidl-conversions: 3.0.1
+
+  wink-lemmatizer@3.0.4:
+    dependencies:
+      wink-lexicon: 2.2.0
+      wink-porter2-stemmer: 2.0.1
+
+  wink-lexicon@2.2.0: {}
+
+  wink-porter2-stemmer@2.0.1: {}
 
   wrap-ansi@7.0.0:
     dependencies:
