@@ -1,29 +1,71 @@
-// components/community/create-post-dialog.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchWithAuth } from "@/lib/api"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, Edit } from "lucide-react"
+
+interface PostData {
+    id?: string;
+    title: string;
+    content: string;
+    category: string;
+}
 
 interface CreatePostDialogProps {
-    onPostCreated: () => void; // 글 작성 성공 시 호출될 함수
-    children: React.ReactNode;
+    onPostCreatedOrUpdated: () => void;
+    postToEdit?: PostData | null;
+    children?: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
 const CATEGORIES = ["학습팁", "질문", "자유"];
 
-export function CreatePostDialog({ onPostCreated, children }: CreatePostDialogProps) {
-    const [open, setOpen] = useState(false)
-    const [title, setTitle] = useState("")
-    const [content, setContent] = useState("")
-    const [category, setCategory] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
+export function CreatePostDialog({
+    onPostCreatedOrUpdated,
+    postToEdit,
+    children,
+    open: controlledOpen,
+    onOpenChange: setControlledOpen
+}: CreatePostDialogProps) {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const [title, setTitle] = useState("");
+    const [content, setContent] = useState("");
+    const [category, setCategory] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+
+    const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
+    const isEditMode = !!postToEdit;
+
+    const open = isControlled ? controlledOpen : internalOpen;
+    const setOpen = isControlled ? setControlledOpen : setInternalOpen;
+
+    useEffect(() => {
+        if (open && isEditMode) {
+            setTitle(postToEdit.title);
+            setContent(postToEdit.content);
+            setCategory(postToEdit.category);
+        }
+    }, [postToEdit, isEditMode, open]);
+
+    const resetForm = () => {
+        setTitle("");
+        setContent("");
+        setCategory("");
+    };
+
+    const handleOpenChange = (isOpen: boolean) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+            resetForm();
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,35 +75,41 @@ export function CreatePostDialog({ onPostCreated, children }: CreatePostDialogPr
         }
         setIsLoading(true);
         try {
-            await fetchWithAuth('/api/community/discussions', {
-                method: 'POST',
-                body: JSON.stringify({ title, content, category }),
-            });
-            alert("게시글이 성공적으로 등록되었습니다.");
-            // 상태 초기화 및 팝업 닫기
-            setTitle("");
-            setContent("");
-            setCategory("");
-            setOpen(false);
-            onPostCreated(); // 부모 컴포넌트에 알림
+            if (isEditMode && postToEdit?.id) {
+                await fetchWithAuth(`/api/community/discussions/${postToEdit.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ title, content, category }),
+                });
+                alert("게시글이 성공적으로 수정되었습니다.");
+            } else {
+                await fetchWithAuth('/api/community/discussions', {
+                    method: 'POST',
+                    body: JSON.stringify({ title, content, category }),
+                });
+                alert("게시글이 성공적으로 등록되었습니다.");
+            }
+            onPostCreatedOrUpdated();
+            handleOpenChange(false); // 성공 시 다이얼로그 닫기
         } catch (error) {
-            console.error("게시글 등록 실패:", error);
-            alert("게시글 등록에 실패했습니다.");
+            console.error("게시글 처리 실패:", error);
+            alert(`게시글 ${isEditMode ? '수정' : '등록'}에 실패했습니다.`);
         } finally {
             setIsLoading(false);
         }
-    }
+    };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                {children}
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            {children && (
+                <DialogTrigger asChild>
+                    {children}
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <PlusCircle className="text-primary" />
-                        새로운 게시글 작성
+                        {isEditMode ? <Edit className="text-primary" /> : <PlusCircle className="text-primary" />}
+                        {isEditMode ? "게시글 수정" : "새로운 게시글 작성"}
                     </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -85,13 +133,11 @@ export function CreatePostDialog({ onPostCreated, children }: CreatePostDialogPr
                         <Textarea id="content" value={content} onChange={(e) => setContent(e.target.value)} placeholder="내용을 입력하세요" required rows={5} />
                     </div>
                     <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">취소</Button>
-                        </DialogClose>
-                        <Button type="submit" disabled={isLoading}>{isLoading ? '등록 중...' : '등록하기'}</Button>
+                        <Button type="button" variant="secondary" onClick={() => handleOpenChange(false)}>취소</Button>
+                        <Button type="submit" disabled={isLoading}>{isLoading ? '저장 중...' : (isEditMode ? '수정하기' : '등록하기')}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
