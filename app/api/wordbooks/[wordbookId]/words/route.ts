@@ -40,7 +40,7 @@ export async function POST(request: Request, { params }: { params: { wordbookId:
         console.warn('Invalid word data skipped:', wordData);
         continue;
       }
-      
+
       const newWordRef = wordsCollectionRef.doc();
       const wordPayload = {
         word: wordData.word,
@@ -53,7 +53,7 @@ export async function POST(request: Request, { params }: { params: { wordbookId:
       batch.set(newWordRef, wordPayload);
       newWords.push({ id: newWordRef.id, ...wordPayload });
     }
-    
+
     if (newWords.length === 0) {
       return NextResponse.json({ message: '유효한 단어가 없습니다.' }, { status: 400 });
     }

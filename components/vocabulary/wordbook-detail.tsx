@@ -15,7 +15,7 @@ import {
 import { WordEditScreen } from "./word-edit-screen"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { ImageSelectionModal } from "@/components/camera/image-selection-modal"
-import { ArrowLeft, Search, MoreVertical, Edit, Trash2, Eye, EyeOff, Camera, CheckCircle } from "lucide-react"
+import { ArrowLeft, Search, MoreVertical, Edit, Trash2, Eye, EyeOff, Camera, CheckCircle, Share2 } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -36,6 +36,7 @@ interface WordbookDetailProps {
     wordCount: number;
     progress: number;
     category: string;
+    description?: string;
   };
   onBack: () => void;
   onUpdate: () => void;
@@ -78,6 +79,26 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   useEffect(() => {
     fetchWords();
   }, [wordbook.id]);
+
+  const handleShare = async () => {
+    try {
+      await fetchWithAuth('/api/community/wordbooks', {
+        method: 'POST',
+        body: JSON.stringify({
+          wordbookId: wordbook.id,
+          name: wordbook.name,
+          description: wordbook.description || '',
+          category: wordbook.category,
+          wordCount: words.length,
+          words: words,
+        }),
+      });
+      alert('단어장이 성공적으로 공유되었습니다.');
+    } catch (error) {
+      console.error("단어장 공유 실패:", error);
+      alert("단어장 공유에 실패했습니다.");
+    }
+  };
 
   // --- 함수들 ---
   const filteredWords = words.filter(
@@ -204,7 +225,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       />
     );
   }
-  
+
   if (editingWord) {
     return (
       <WordEditScreen
@@ -252,6 +273,10 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
               <DrawerContent>
                 <div className="mx-auto w-full max-w-sm">
                   <div className="p-2">
+                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={handleShare}>
+                      <Share2 size={16} className="mr-2" />
+                      공유하기
+                    </Button>
                     <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm">
                       <Edit size={16} className="mr-2" />
                       단어장 편집
@@ -307,7 +332,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 {searchQuery ? "다른 검색어를 시도해보세요" : "첫 번째 단어를 추가해보세요"}
               </p>
               {!searchQuery && (
-                 <Button onClick={() => setIsAddingWord(true)} className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={16} className="mr-2" />단어 추가하기</Button>
+                <Button onClick={() => setIsAddingWord(true)} className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium"><Edit size={16} className="mr-2" />단어 추가하기</Button>
               )}
             </CardContent>
           </Card>
@@ -346,24 +371,24 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                       <DrawerContent>
                         <div className="mx-auto w-full max-w-sm">
                           <div className="p-2">
-                             <DrawerClose asChild>
-                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => toggleMastered(word.id)}>
-                                  <CheckCircle size={16} className="mr-2" />
-                                  {word.mastered ? "암기 해제" : "암기 완료"}
-                                </Button>
-                             </DrawerClose>
-                             <DrawerClose asChild>
-                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => setEditingWord(word)}>
-                                  <Edit size={16} className="mr-2" />
-                                  편집
-                                </Button>
-                              </DrawerClose>
-                             <DrawerClose asChild>
-                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive" onClick={() => handleDeleteWord(word.id)}>
-                                  <Trash2 size={16} className="mr-2" />
-                                  삭제
-                                </Button>
-                             </DrawerClose>
+                            <DrawerClose asChild>
+                              <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => toggleMastered(word.id)}>
+                                <CheckCircle size={16} className="mr-2" />
+                                {word.mastered ? "암기 해제" : "암기 완료"}
+                              </Button>
+                            </DrawerClose>
+                            <DrawerClose asChild>
+                              <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => setEditingWord(word)}>
+                                <Edit size={16} className="mr-2" />
+                                편집
+                              </Button>
+                            </DrawerClose>
+                            <DrawerClose asChild>
+                              <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive" onClick={() => handleDeleteWord(word.id)}>
+                                <Trash2 size={16} className="mr-2" />
+                                삭제
+                              </Button>
+                            </DrawerClose>
                           </div>
                           <DrawerFooter className="pt-2">
                             <DrawerClose asChild>
