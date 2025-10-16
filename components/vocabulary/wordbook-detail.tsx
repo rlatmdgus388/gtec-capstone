@@ -44,6 +44,7 @@ interface WordbookDetailProps {
 interface DetectedWord {
   text: string;
   selected: boolean;
+  meaning?: string; // meaning 속성 추가
 }
 
 export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailProps) {
@@ -55,7 +56,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const [selectedImageData, setSelectedImageData] = useState<string | null>(null);
   const [isAddingWord, setIsAddingWord] = useState(false);
-  const [editingWord, setEditingWord] = useState<Word | null>(null); // 편집할 단어 상태 추가
+  const [editingWord, setEditingWord] = useState<Word | null>(null);
 
   const [words, setWords] = useState<Word[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,8 +108,8 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         method: 'PUT',
         body: JSON.stringify(updatedData),
       });
-      await fetchWords(); // 단어 목록 새로고침
-      setEditingWord(null); // 편집 모드 종료 및 상세 화면으로 복귀
+      await fetchWords();
+      setEditingWord(null);
     } catch (error) {
       console.error("단어 수정 실패:", error);
       alert("단어 수정 중 오류가 발생했습니다.");
@@ -167,6 +168,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     input.click();
   };
 
+  // ▼▼▼ [수정된 부분] ▼▼▼
   const handleWordsAdded = async (addedWords: DetectedWord[]) => {
     if (!wordbook || !wordbook.id || addedWords.length === 0) {
       setShowPhotoCapture(false);
@@ -174,10 +176,12 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     }
 
     try {
+      // '뜻을 입력하세요'로 덮어쓰는 대신, 전달받은 meaning 값을 사용합니다.
       const wordsToAdd = addedWords.map(word => ({
         word: word.text,
-        meaning: '뜻을 입력하세요',
+        meaning: word.meaning || '뜻을 입력하세요', // meaning이 없으면 기본값 사용
       }));
+      // ▲▲▲ [수정된 부분] ▲▲▲
 
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
         method: 'POST',
