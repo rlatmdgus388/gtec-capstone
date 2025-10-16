@@ -4,9 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Search, Camera } from "lucide-react"
-import { CreateWordbookDialog } from "./create-wordbook-dialog"
-import { WordbookDetail } from "./wordbook-detail"
+import { BookOpen, Search, Camera, Edit } from "lucide-react" // Edit 아이콘 추가
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { ImageSelectionModal } from "@/components/camera/image-selection-modal"
 import { fetchWithAuth } from "@/lib/api"
@@ -25,25 +23,26 @@ interface Wordbook {
 }
 
 interface VocabularyScreenProps {
-    onNavigateToStudy?: (wordbookId: string) => void
+    onWordbookSelect: (wordbook: Wordbook) => void;
+    onStartCreate: () => void; // 부모로부터 받을 새로 만들기 시작 함수
+    refreshKey: number;
+    onNavigateToStudy?: (wordbookId: string) => void;
 }
 
-export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
+export function VocabularyScreen({ onWordbookSelect, onStartCreate, refreshKey, onNavigateToStudy }: VocabularyScreenProps) {
     const [searchQuery, setSearchQuery] = useState("")
-    const [selectedWordbook, setSelectedWordbook] = useState<Wordbook | null>(null)
+    const [wordbooks, setWordbooks] = useState<Wordbook[]>([])
+    const [isLoading, setIsLoading] = useState(true);
+
     const [showPhotoCapture, setShowPhotoCapture] = useState(false)
     const [showImageSelection, setShowImageSelection] = useState(false)
     const [selectedImageData, setSelectedImageData] = useState<string | null>(null);
-
-    const [wordbooks, setWordbooks] = useState<Wordbook[]>([])
-    const [isLoading, setIsLoading] = useState(true);
 
     const fetchWordbooks = useCallback(async () => {
         setIsLoading(true);
         try {
             const data = await fetchWithAuth('/api/wordbooks');
             if (data) {
-                // 클라이언트 사이드에서 lastStudied 기준으로 정렬합니다.
                 const sorted = data.sort((a: any, b: any) => {
                     const dateA = new Date(a.lastStudied || a.createdAt).getTime();
                     const dateB = new Date(b.lastStudied || b.createdAt).getTime();
@@ -63,28 +62,11 @@ export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
 
     useEffect(() => {
         fetchWordbooks();
-    }, [fetchWordbooks]);
+    }, [fetchWordbooks, refreshKey]);
 
     const filteredWordbooks = wordbooks.filter((wordbook) =>
         wordbook.name.toLowerCase().includes(searchQuery.toLowerCase()),
     )
-
-    const handleCreateWordbook = async (newWordbookData: { name: string; description: string; category: string }) => {
-        try {
-            await fetchWithAuth('/api/wordbooks', {
-                method: 'POST',
-                body: JSON.stringify(newWordbookData)
-            });
-            fetchWordbooks(); // 목록 새로고침
-        } catch (error) {
-            console.error("단어장 생성 실패:", error);
-            alert("단어장 생성에 실패했습니다.");
-        }
-    }
-
-    const handleWordbookClick = (wordbook: Wordbook) => {
-        setSelectedWordbook(wordbook)
-    }
 
     const handlePhotoCaptureClick = () => {
         setShowImageSelection(true);
@@ -99,10 +81,9 @@ export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
     const handleGallerySelect = () => {
         setShowImageSelection(false);
         const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "image/*";
+        input.type = "file"; input.accept = "image/*";
         input.onchange = (e) => {
-            const file = (e.target as HTMLInputElement)?.files?.[0];
+            const file = (e.target as HTMLInputElement).files?.[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (readerEvent) => {
@@ -116,17 +97,12 @@ export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
         input.click();
     };
 
-    const handleWordsAdded = (words: any[], wordbookId: number) => {
-        console.log("추가된 단어:", words, "단어장 ID:", wordbookId);
+    const handleWordsAdded = () => {
         fetchWordbooks();
     }
 
     if (showPhotoCapture) {
         return <PhotoWordCapture imageData={selectedImageData} onClose={() => setShowPhotoCapture(false)} onWordsAdded={handleWordsAdded} />
-    }
-
-    if (selectedWordbook) {
-        return <WordbookDetail wordbook={selectedWordbook} onBack={() => setSelectedWordbook(null)} onUpdate={fetchWordbooks} />
     }
 
     return (
@@ -159,9 +135,13 @@ export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
                             className="pl-12 h-12 bg-gray-50 border-0 rounded-full text-base placeholder:text-gray-500"
                         />
                     </div>
-
-                    <div className="grid grid-cols-1 gap-3">
-                        <CreateWordbookDialog onCreateWordbook={handleCreateWordbook} />
+                    <div className="grid grid-cols-2 gap-3">
+                        <Button onClick={onStartCreate} className="h-12 flex items-center justify-center gap-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-lg font-medium">
+                            <Edit size={18} />새 단어장
+                        </Button>
+                        <Button variant="outline" className="h-12 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-medium" onClick={handlePhotoCaptureClick}>
+                            <Camera size={18} />사진으로 추가
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -185,7 +165,7 @@ export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
                             <Card
                                 key={wordbook.id}
                                 className="bg-white border border-gray-200 hover:shadow-md transition-all cursor-pointer rounded-xl"
-                                onClick={() => handleWordbookClick(wordbook)}
+                                onClick={() => onWordbookSelect(wordbook)}
                             >
                                 <CardContent className="p-4">
                                     <div className="flex items-start justify-between mb-1">
@@ -202,7 +182,6 @@ export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
                                             <p className="text-sm text-gray-600">{wordbook.wordCount}개 단어</p>
                                         </div>
                                     </div>
-
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1 mr-4">
                                             <div className="flex items-center justify-between text-sm mb-1">
