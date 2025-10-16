@@ -2,11 +2,24 @@
 import { NextResponse } from 'next/server';
 import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
+import type { Query } from 'firebase-admin/firestore'; // Query 타입 import
 
 // 공유된 모든 단어장 목록 가져오기
-export async function GET() {
+export async function GET(request: Request) {
     try {
-        const wordbooksSnapshot = await firestore.collection('communityWordbooks').orderBy('createdAt', 'desc').get();
+        const { searchParams } = new URL(request.url);
+        const sortBy = searchParams.get('sortBy') || 'createdAt'; // 기본 정렬: 생성일
+
+        // 'query' 변수의 타입을 명시적으로 Query로 지정
+        let query: Query = firestore.collection('communityWordbooks');
+
+        if (sortBy === 'downloads') {
+            query = query.orderBy('downloads', 'desc');
+        } else {
+            query = query.orderBy('createdAt', 'desc');
+        }
+
+        const wordbooksSnapshot = await query.get();
         const wordbooks = wordbooksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         return NextResponse.json(wordbooks);
     } catch (error) {
@@ -42,7 +55,9 @@ export async function POST(request: Request) {
                 photoURL: userDoc.photoURL || '',
             },
             likes: 0,
+            likedBy: [],
             downloads: 0,
+            views: 0, // 조회수 필드 추가
             createdAt: new Date().toISOString(),
         };
 
