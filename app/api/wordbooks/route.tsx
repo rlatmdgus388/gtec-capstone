@@ -13,6 +13,7 @@ export async function GET() {
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userId = decodedToken.uid;
 
+    // 정렬 기준을 다시 'createdAt'으로 변경합니다.
     const wordbooksSnapshot = await firestore.collection('wordbooks').where('userId', '==', userId).orderBy('createdAt', 'desc').get();
     const wordbooks = wordbooksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: '단어장 이름과 카테고리는 필수입니다.' }, { status: 400 });
     }
 
+    const currentTime = new Date().toISOString();
     const newWordbookRef = await firestore.collection('wordbooks').add({
       userId,
       name,
@@ -46,7 +48,8 @@ export async function POST(request: Request) {
       category,
       progress: 0,
       wordCount: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: currentTime,
+      lastStudied: currentTime, // lastStudied 필드는 그대로 유지합니다.
     });
 
     const newWordbook = {

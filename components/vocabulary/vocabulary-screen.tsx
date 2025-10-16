@@ -20,6 +20,7 @@ interface Wordbook {
     progress: number;
     category: string;
     createdAt: string;
+    lastStudied?: string;
     description?: string;
 }
 
@@ -41,7 +42,17 @@ export function VocabularyScreen({ onNavigateToStudy }: VocabularyScreenProps) {
         setIsLoading(true);
         try {
             const data = await fetchWithAuth('/api/wordbooks');
-            setWordbooks(data || []);
+            if (data) {
+                // 클라이언트 사이드에서 lastStudied 기준으로 정렬합니다.
+                const sorted = data.sort((a: any, b: any) => {
+                    const dateA = new Date(a.lastStudied || a.createdAt).getTime();
+                    const dateB = new Date(b.lastStudied || b.createdAt).getTime();
+                    return dateB - dateA;
+                });
+                setWordbooks(sorted);
+            } else {
+                setWordbooks([]);
+            }
         } catch (error) {
             console.error("단어장 목록을 불러오는데 실패했습니다:", error);
             setWordbooks([]);

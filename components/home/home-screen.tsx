@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,9 +9,9 @@ import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "../ui/skeleton"
 
-// 인터페이스 수정: onWordbookSelect를 받도록 변경
 interface HomeScreenProps {
   onWordbookSelect: (wordbook: any) => void;
+  activeTab: string;
 }
 
 interface Wordbook {
@@ -19,12 +19,12 @@ interface Wordbook {
   name: string;
   wordCount: number;
   progress: number;
-  lastStudied?: string; // lastStudied는 선택적 프로퍼티로 변경
+  lastStudied?: string;
   createdAt: string;
 }
 
 
-export function HomeScreen({ onWordbookSelect }: HomeScreenProps) {
+export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
   const [showPhotoCapture, setShowPhotoCapture] = useState(false)
   const [recentWordbooks, setRecentWordbooks] = useState<Wordbook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,34 +35,40 @@ export function HomeScreen({ onWordbookSelect }: HomeScreenProps) {
     streak: 7,
   })
 
-  useEffect(() => {
-    const fetchRecentWordbooks = async () => {
-      setIsLoading(true);
-      try {
-        const allWordbooks = await fetchWithAuth('/api/wordbooks');
-        if (allWordbooks && allWordbooks.length > 0) {
-            // createdAt 기준으로 최신 3개만 가져오도록 정렬 및 슬라이스
-            const sorted = allWordbooks.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            setRecentWordbooks(sorted.slice(0, 3));
-        } else {
-            setRecentWordbooks([]);
-        }
-      } catch (error) {
-        console.error("최근 단어장 로딩 실패:", error);
+  const fetchRecentWordbooks = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const allWordbooks = await fetchWithAuth('/api/wordbooks');
+      if (allWordbooks && allWordbooks.length > 0) {
+        // 클라이언트 사이드에서 lastStudied 기준으로 정렬합니다.
+        const sorted = allWordbooks.sort((a: any, b: any) => {
+          const dateA = new Date(a.lastStudied || a.createdAt).getTime();
+          const dateB = new Date(b.lastStudied || b.createdAt).getTime();
+          return dateB - dateA;
+        });
+        setRecentWordbooks(sorted.slice(0, 3));
+      } else {
         setRecentWordbooks([]);
-      } finally {
-        setIsLoading(false);
       }
-    };
-    fetchRecentWordbooks();
+    } catch (error) {
+      console.error("최근 단어장 로딩 실패:", error);
+      setRecentWordbooks([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'home') {
+      fetchRecentWordbooks();
+    }
+  }, [activeTab, fetchRecentWordbooks]);
 
 
   const handleWordsAdded = (words: any[], wordbookId: number) => {
     console.log("Words added:", words, "to wordbook:", wordbookId)
   }
 
-  // 함수 이름도 역할에 맞게 변경
   const handleWordbookClick = (wordbook: any) => {
     onWordbookSelect(wordbook);
   }
@@ -130,13 +136,13 @@ export function HomeScreen({ onWordbookSelect }: HomeScreenProps) {
             </div>
           ) : recentWordbooks.length === 0 ? (
             <Card className="text-center py-12 border-dashed border-gray-300 rounded-xl">
-                <CardContent>
-                    <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">단어장이 없습니다</h3>
-                    <p className="text-sm text-gray-500">
-                        '단어장' 탭에서 첫 단어장을 추가해보세요!
-                    </p>
-                </CardContent>
+              <CardContent>
+                <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">단어장이 없습니다</h3>
+                <p className="text-sm text-gray-500">
+                  '단어장' 탭에서 첫 단어장을 추가해보세요!
+                </p>
+              </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">

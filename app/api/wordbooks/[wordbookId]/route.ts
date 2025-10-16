@@ -14,13 +14,17 @@ export async function GET(request: Request, { params }: { params: { wordbookId: 
     const userId = decodedToken.uid;
     const wordbookId = params.wordbookId;
 
-    const wordbookDoc = await firestore.collection('wordbooks').doc(wordbookId).get();
+    const wordbookRef = firestore.collection('wordbooks').doc(wordbookId);
+    const wordbookDoc = await wordbookRef.get();
 
     if (!wordbookDoc.exists || wordbookDoc.data()?.userId !== userId) {
       return NextResponse.json({ message: '단어장을 찾을 수 없거나 권한이 없습니다.' }, { status: 404 });
     }
 
-    const wordsSnapshot = await firestore.collection('wordbooks').doc(wordbookId).collection('words').orderBy('createdAt', 'desc').get();
+    // lastStudied 필드를 현재 시간으로 업데이트합니다.
+    await wordbookRef.update({ lastStudied: new Date().toISOString() });
+
+    const wordsSnapshot = await wordbookRef.collection('words').orderBy('createdAt', 'desc').get();
     const words = wordsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     return NextResponse.json({ ...wordbookDoc.data(), id: wordbookDoc.id, words });

@@ -92,7 +92,7 @@ export default function AuthManager() {
   const renderScreen = () => {
     switch (activeTab) {
       case "home":
-        return <HomeScreen onWordbookSelect={handleWordbookSelect} />;
+        return <HomeScreen onWordbookSelect={handleWordbookSelect} activeTab={activeTab} />;
 
       case "vocabulary":
         if (selectedWordbookForDetail) {
@@ -108,7 +108,7 @@ export default function AuthManager() {
 
       case "study":
         return <StudyScreen
-          wordbook={selectedWordbookForStudy}
+          selectedWordbook={selectedWordbookForStudy}
           onExit={() => {
             setSelectedWordbookForStudy(null)
             setActiveTab('home')
@@ -123,7 +123,7 @@ export default function AuthManager() {
         return <SettingsScreen onLogout={handleLogout} />;
 
       default:
-        return <HomeScreen onWordbookSelect={handleWordbookSelect} />;
+        return <HomeScreen onWordbookSelect={handleWordbookSelect} activeTab={activeTab} />;
     }
   };
 
