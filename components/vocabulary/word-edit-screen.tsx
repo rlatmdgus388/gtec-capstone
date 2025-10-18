@@ -54,21 +54,21 @@ export function WordEditScreen({ wordbookName, onBack, onSave, initialData }: Wo
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="px-2 py-4">
+      <div className="px-2 py-4 bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">
-              <ArrowLeft size={22} className="text-gray-700" />
+              <ArrowLeft size={22} className="text-foreground" />
             </Button>
-            <h1 className="text-xl font-bold text-gray-900">{isEditMode ? "단어 편집" : "단어 추가"}</h1>
+            <h1 className="text-xl font-bold text-foreground">{isEditMode ? "단어 편집" : "단어 추가"}</h1>
           </div>
           <Button
             variant="ghost"
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="text-[#FF7A00] font-bold hover:bg-[#FF7A00]/10 text-base px-4"
+            className="text-primary font-bold hover:bg-primary/10 text-base px-4"
           >
             저장
           </Button>
@@ -79,52 +79,52 @@ export function WordEditScreen({ wordbookName, onBack, onSave, initialData }: Wo
       <div className="px-4 py-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="word" className="text-sm font-medium text-gray-600 px-1">
+            <Label htmlFor="word" className="text-sm font-medium text-muted-foreground px-1">
               단어
             </Label>
             <Input
               id="word"
               value={formData.word}
               onChange={(e) => setFormData((prev) => ({ ...prev, word: e.target.value }))}
-              className="h-12 text-base rounded-lg border-0 bg-gray-100 focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-white shadow-none"
+              className="h-12 text-base rounded-lg border-0 bg-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-card shadow-none"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="meaning" className="text-sm font-medium text-gray-600 px-1">
+            <Label htmlFor="meaning" className="text-sm font-medium text-muted-foreground px-1">
               뜻
             </Label>
             <Input
               id="meaning"
               value={formData.meaning}
               onChange={(e) => setFormData((prev) => ({ ...prev, meaning: e.target.value }))}
-              className="h-12 text-base rounded-lg border-0 bg-gray-100 focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-white shadow-none"
+              className="h-12 text-base rounded-lg border-0 bg-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-card shadow-none"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="example" className="text-sm font-medium text-gray-600 px-1">
+            <Label htmlFor="example" className="text-sm font-medium text-muted-foreground px-1">
               메모 / 설명 (선택)
             </Label>
             <Input
               id="example"
               value={formData.example}
               onChange={(e) => setFormData((prev) => ({ ...prev, example: e.target.value }))}
-              className="h-12 text-base rounded-lg border-0 bg-gray-100 focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-white shadow-none"
+              className="h-12 text-base rounded-lg border-0 bg-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-card shadow-none"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pronunciation" className="text-sm font-medium text-gray-600 px-1">
+            <Label htmlFor="pronunciation" className="text-sm font-medium text-muted-foreground px-1">
               발음 (선택)
             </Label>
             <Input
               id="pronunciation"
               value={formData.pronunciation}
               onChange={(e) => setFormData((prev) => ({ ...prev, pronunciation: e.target.value }))}
-              className="h-12 text-base rounded-lg border-0 bg-gray-100 focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-white shadow-none"
+              className="h-12 text-base rounded-lg border-0 bg-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-card shadow-none"
             />
           </div>
         </form>

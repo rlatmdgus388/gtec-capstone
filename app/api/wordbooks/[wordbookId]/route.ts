@@ -25,7 +25,8 @@ export async function GET(request: Request, { params }: { params: { wordbookId: 
     await wordbookRef.update({ lastStudied: new Date().toISOString() });
 
     const wordsSnapshot = await wordbookRef.collection('words').orderBy('createdAt', 'desc').get();
-    const words = wordsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // [수정] 올바른 문서 ID를 보장하기 위해 spread operator 순서를 변경합니다.
+    const words = wordsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
     return NextResponse.json({ ...wordbookDoc.data(), id: wordbookDoc.id, words });
   } catch (error) {

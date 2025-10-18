@@ -21,7 +21,8 @@ export async function GET(request: Request, { params }: { params: { postId: stri
         });
 
         const commentsSnapshot = await postRef.collection('comments').orderBy('createdAt', 'asc').get();
-        const comments = commentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // [수정] 올바른 문서 ID를 보장하기 위해 spread operator 순서를 변경합니다.
+        const comments = commentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
         const postData = postDoc.data();
         const post = {

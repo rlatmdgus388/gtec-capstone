@@ -50,6 +50,7 @@ import {
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
+import { cn } from "@/lib/utils"
 
 // --- 인터페이스 정의 ---
 interface Word {
@@ -62,7 +63,7 @@ interface Word {
   createdAt: string
 }
 interface Wordbook {
-  id: number
+  id: string
   name: string
   wordCount: number
   progress: number
@@ -281,7 +282,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       setIsFetchingWordbooks(false)
     }
   };
-  const handleConfirmMove = async (destinationWordbookId: number) => {
+  const handleConfirmMove = async (destinationWordbookId: string) => {
     setIsMoveDrawerOpen(false)
     try {
       await fetchWithAuth("/api/wordbooks/move-words", {
@@ -588,11 +589,9 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       </div>
 
       <div className="px-4 py-4 space-y-4">
-        {/* --- [수정] 모든 버튼을 한 줄 + 스크롤 --- */}
         {!isEditMode && (
-          <ScrollArea className="w-full whitespace-nowrap pb-2"> {/* pb-2 스크롤바 공간 */}
+          <ScrollArea className="w-full whitespace-nowrap pb-2">
             <div className="flex justify-end gap-2 mb-4">
-              {/* 암기 완료 필터 토글 버튼 */}
               <Button
                 variant="outline"
                 size="sm"
@@ -602,8 +601,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 {filterMastered === 'all' ? <Filter size={14} className="mr-1" /> : <X size={14} className="mr-1 text-red-500" />}
                 {filterMastered === 'all' ? '전체' : '미암기'}
               </Button>
-
-              {/* 정렬 순서 토글 버튼 */}
               <Button
                 variant="outline"
                 size="sm"
@@ -613,8 +610,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 {sortOrder === 'random' ? <Shuffle size={14} className="mr-1" /> : <ListFilter size={14} className="mr-1" />}
                 {sortOrder === 'random' ? '랜덤' : '기본'}
               </Button>
-
-              {/* 기존 가리기/보기 버튼 그룹 */}
               <Button
                 variant={hideMode === "word" ? "default" : "outline"}
                 size="sm"
@@ -645,7 +640,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
             <ScrollBar orientation="horizontal" className="h-2" />
           </ScrollArea>
         )}
-        {/* --- [수정] 여기까지 --- */}
 
         <div className={`space-y-3 ${isEditMode ? "pb-24" : ""}`}>
           {isLoading ? (
@@ -686,14 +680,31 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                   <div className="flex items-start justify-between">
                     {isEditMode && <Checkbox checked={selectedWords.has(word.id)} className="mr-4 mt-1" />}
                     <div className="flex-1 cursor-pointer" onClick={() => !isEditMode && handleCardFlip(word.id)}>
-                      <div className="flex items-center gap-2 mb-1">
-                        {hideMode === "word" && !flippedCards.has(word.id) && !isEditMode ? (
-                          <div className="h-7 w-32 bg-muted rounded animate-pulse" />
-                        ) : (
-                          <h3 className="text-lg font-semibold text-foreground">{word.word}</h3>
-                        )}
-                        {word.mastered && (
-                          <Badge className="bg-green-100 text-green-700 border-0 rounded-full">암기완료</Badge>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          {hideMode === "word" && !flippedCards.has(word.id) && !isEditMode ? (
+                            <div className="h-7 w-32 bg-muted rounded animate-pulse" />
+                          ) : (
+                            <h3 className="text-lg font-semibold text-foreground">{word.word}</h3>
+                          )}
+                        </div>
+                        {!isEditMode && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMastered(word);
+                            }}
+                            className={cn(
+                              "text-xs font-semibold rounded-full px-3 py-1 h-auto",
+                              word.mastered
+                                ? "text-green-700 bg-green-100 hover:bg-green-200"
+                                : "text-muted-foreground bg-muted hover:bg-muted/80"
+                            )}
+                          >
+                            {word.mastered ? "암기 완료" : "암기 미완료"}
+                          </Button>
                         )}
                       </div>
                       {hideMode === "meaning" && !flippedCards.has(word.id) && !isEditMode ? (
@@ -705,7 +716,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                     {!isEditMode && (
                       <Drawer>
                         <DrawerTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 -mr-2">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 -ml-2">
                             <MoreVertical size={16} className="text-muted-foreground" />
                           </Button>
                         </DrawerTrigger>
@@ -713,16 +724,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                           <DrawerTitle className="sr-only">단어 옵션</DrawerTitle>
                           <div className="mx-auto w-full max-w-sm">
                             <div className="p-2">
-                              <DrawerClose asChild>
-                                <Button
-                                  variant="ghost"
-                                  className="w-full justify-start p-2 h-12 text-sm"
-                                  onClick={() => toggleMastered(word)}
-                                >
-                                  <CheckCircle size={16} className="mr-2" />
-                                  {word.mastered ? "암기 해제" : "암기 완료"}
-                                </Button>
-                              </DrawerClose>
                               <DrawerClose asChild>
                                 <Button
                                   variant="ghost"

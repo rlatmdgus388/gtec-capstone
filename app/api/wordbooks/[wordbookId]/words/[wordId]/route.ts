@@ -28,7 +28,8 @@ export async function PUT(request: Request, { params }: { params: { wordbookId: 
     // --- 단어장 소유권 확인 (트랜잭션 외부에서 수행) ---
     const wordbookDocInitial = await wordbookRef.get();
     if (!wordbookDocInitial.exists || wordbookDocInitial.data()?.userId !== userId) {
-      return NextResponse.json({ message: '단어장을 찾을 수 없거나 수정 권한이 없습니다.' }, { status: 403 });
+      // 오류 메시지에 wordbookId 포함
+      return NextResponse.json({ message: `단어장(ID: ${wordbookId})을 찾을 수 없거나 수정 권한이 없습니다.` }, { status: 403 });
     }
     // --- 소유권 확인 끝 ---
 
@@ -37,7 +38,8 @@ export async function PUT(request: Request, { params }: { params: { wordbookId: 
       // --- 모든 읽기 작업 먼저 수행 ---
       const wordDoc = await transaction.get(wordRef);
       if (!wordDoc.exists) {
-        throw new Error("수정하려는 단어를 찾을 수 없습니다.");
+        // <<--- 수정된 오류 메시지: wordId 포함 --- >>
+        throw new Error(`단어장(ID: ${wordbookId})에서 ID '${wordId}'를 가진 단어를 찾을 수 없습니다.`);
       }
 
       let newProgress = wordbookDocInitial.data()?.progress ?? 0; // 기본값 설정
@@ -77,6 +79,7 @@ export async function PUT(request: Request, { params }: { params: { wordbookId: 
   } catch (error) {
     console.error("단어 수정 및 진행률 업데이트 오류:", error);
     const errorMessage = error instanceof Error ? error.message : '서버 오류가 발생했습니다.';
+    // <<--- 오류 메시지를 그대로 클라이언트에 전달 --- >>
     return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
@@ -101,7 +104,8 @@ export async function DELETE(request: Request, { params }: { params: { wordbookI
     // --- 단어장 소유권 확인 (트랜잭션 외부에서 수행) ---
     const wordbookDocInitial = await wordbookRef.get();
     if (!wordbookDocInitial.exists || wordbookDocInitial.data()?.userId !== userId) {
-      return NextResponse.json({ message: '단어장을 찾을 수 없거나 삭제 권한이 없습니다.' }, { status: 403 });
+      // <<--- 수정된 오류 메시지: wordbookId 포함 --- >>
+      return NextResponse.json({ message: `단어장(ID: ${wordbookId})을 찾을 수 없거나 삭제 권한이 없습니다.` }, { status: 403 });
     }
     // --- 소유권 확인 끝 ---
 
@@ -109,7 +113,8 @@ export async function DELETE(request: Request, { params }: { params: { wordbookI
       // --- 모든 읽기 작업 먼저 수행 ---
       const wordDoc = await transaction.get(wordRef);
       if (!wordDoc.exists) {
-        throw new Error("삭제하려는 단어를 찾을 수 없습니다.");
+        // <<--- 수정된 오류 메시지: wordId 포함 --- >>
+        throw new Error(`단어장(ID: ${wordbookId})에서 ID '${wordId}'를 가진 단어를 찾을 수 없습니다.`);
       }
 
       // 삭제 후 진행률 계산을 위해 모든 단어 읽기
@@ -146,6 +151,7 @@ export async function DELETE(request: Request, { params }: { params: { wordbookI
   } catch (error) {
     console.error("단어 삭제 및 진행률 업데이트 오류:", error);
     const errorMessage = error instanceof Error ? error.message : '서버 오류가 발생했습니다.';
+    // <<--- 오류 메시지를 그대로 클라이언트에 전달 --- >>
     return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
