@@ -11,7 +11,7 @@ interface BottomNavProps {
 const tabs = [
   { id: "home", label: "홈", icon: Home },
   { id: "vocabulary", label: "단어장", icon: BookOpen },
-  { id: "study", label: "시험", icon: GraduationCap },
+  { id: "study", label: "학습", icon: GraduationCap },
   { id: "community", label: "커뮤니티", icon: Users },
   { id: "settings", label: "설정", icon: Settings },
 ]

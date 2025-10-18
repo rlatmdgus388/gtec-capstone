@@ -17,7 +17,7 @@ export async function GET() {
         .collection('studySessions')
         .where('userId', '==', userId)
         .orderBy('completedAt', 'desc')
-        .limit(5)
+        //.limit(5)
         .get();
         
     const sessions = sessionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    const { wordbookId, wordbookName, mode, score, duration } = await request.json();
+    const { wordbookId, wordbookName, mode, score, duration, correctWords, incorrectWords } = await request.json(); // 1. correctWords, incorrectWords 추가
     if (!wordbookId || !wordbookName || !mode || score === undefined || !duration) {
       return NextResponse.json({ message: '필수 데이터가 누락되었습니다.' }, { status: 400 });
     }
@@ -53,6 +53,8 @@ export async function POST(request: Request) {
       score,
       duration,
       completedAt: new Date().toISOString(),
+      correctWords: correctWords || [], // 2. 데이터 추가
+      incorrectWords: incorrectWords || [], // 2. 데이터 추가
     };
 
     await firestore.collection('studySessions').add(newSession);
