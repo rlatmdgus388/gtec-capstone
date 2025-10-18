@@ -5,20 +5,11 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-<<<<<<< HEAD
-    "lint": "next lint",
-    "start": "next start"
-  },
-  "dependencies": {
-    "@google-cloud/translate": "^9.2.1",
-    "@google-cloud/vision": "^5.3.3",
-=======
     "lint": "eslint .",
     "start": "next start"
   },
   "dependencies": {
     "@google-cloud/vision": "latest",
->>>>>>> db7745a (다크모드, 프로필 설정)
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
@@ -48,30 +39,13 @@
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
     "@vercel/analytics": "latest",
-<<<<<<< HEAD
-    "an-array-of-english-words": "^2.0.0",
-=======
     "an-array-of-english-words": "latest",
->>>>>>> db7745a (다크모드, 프로필 설정)
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "latest",
     "date-fns": "4.1.0",
     "embla-carousel-react": "latest",
-<<<<<<< HEAD
-    "firebase": "^12.3.0",
-    "firebase-admin": "^13.5.0",
-    "geist": "latest",
-    "google-auth-library": "^10.4.0",
-    "input-otp": "latest",
-    "lucide-react": "^0.454.0",
-    "next": "^14.2.33",
-    "next-themes": "latest",
-    "react": "^18",
-    "react-day-picker": "latest",
-    "react-dom": "^18",
-=======
     "firebase": "latest",
     "firebase-admin": "latest",
     "geist": "latest",
@@ -83,44 +57,25 @@
     "react": "^19",
     "react-day-picker": "latest",
     "react-dom": "^19",
->>>>>>> db7745a (다크모드, 프로필 설정)
     "react-hook-form": "latest",
     "react-resizable-panels": "latest",
     "recharts": "latest",
     "sonner": "latest",
-<<<<<<< HEAD
-    "stopwords": "^0.0.9",
-    "tailwind-merge": "^2.5.5",
-    "tailwindcss-animate": "^1.0.7",
-    "vaul": "latest",
-    "wink-lemmatizer": "^3.0.4",
-    "zod": "3.25.67"
-=======
     "stopwords": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "latest",
     "wink-lemmatizer": "latest",
     "zod": "3.25.76"
->>>>>>> db7745a (다크모드, 프로필 설정)
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
     "@types/node": "^22",
-<<<<<<< HEAD
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-=======
     "@types/react": "^19",
     "@types/react-dom": "^19",
->>>>>>> db7745a (다크모드, 프로필 설정)
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> db7745a (다크모드, 프로필 설정)
