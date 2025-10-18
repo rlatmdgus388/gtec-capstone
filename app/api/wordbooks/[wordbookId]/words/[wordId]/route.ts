@@ -55,8 +55,4 @@ export async function DELETE(request: Request, { params }: { params: { wordbookI
         console.error("단어 삭제 오류:", error);
         return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> db7745a (다크모드, 프로필 설정)

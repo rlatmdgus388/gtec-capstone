@@ -165,7 +165,3 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
     </div>
   )
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> db7745a (다크모드, 프로필 설정)

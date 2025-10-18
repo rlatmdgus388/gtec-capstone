@@ -52,8 +52,4 @@ export function PhotoWordCapture({ imageData, onClose, onWordsAdded }: PhotoWord
     default:
       return null;
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> db7745a (다크모드, 프로필 설정)

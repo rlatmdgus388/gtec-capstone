@@ -17,8 +17,4 @@ const app = initializeApp(firebaseConfig);
 
 // Firebase 서비스 내보내기
 export const auth = getAuth(app);
-<<<<<<< HEAD
 export const db = getFirestore(app);
-=======
-export const db = getFirestore(app);
->>>>>>> db7745a (다크모드, 프로필 설정)

@@ -10,31 +10,6 @@ import { auth } from "@/lib/firebase"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface Word {
-<<<<<<< HEAD
-  id: string;
-  word: string;
-  meaning: string;
-}
-
-interface SharedWordbook {
-  id: string;
-  name: string;
-  description: string;
-  author: {
-    uid: string;
-    name: string;
-  };
-  wordCount: number;
-  likes: number;
-  likedBy: string[];
-  downloads: number;
-  views: number;
-  category: string;
-  words: Word[];
-}
-
-export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: string; onBack: () => void; }) {
-=======
   id: string
   word: string
   meaning: string
@@ -58,29 +33,10 @@ interface SharedWordbook {
 }
 
 export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: string; onBack: () => void }) {
->>>>>>> db7745a (다크모드, 프로필 설정)
   const [wordbook, setWordbook] = useState<SharedWordbook | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isLiked, setIsLiked] = useState(false)
   const currentUser = auth.currentUser
-<<<<<<< HEAD
-  const fetchInitiated = useRef(false); // API 호출 여부를 추적하는 ref
-
-  const fetchWordbook = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await fetchWithAuth(`/api/community/wordbooks/${wordbookId}`);
-      setWordbook(data);
-      if (currentUser && data.likedBy?.includes(currentUser.uid)) {
-        setIsLiked(true);
-      }
-    } catch (error) {
-      console.error("공유 단어장 상세 조회 실패:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [wordbookId, currentUser]);
-=======
   const fetchInitiated = useRef(false) // API 호출 여부를 추적하는 ref
 
   const fetchWordbook = useCallback(async () => {
@@ -97,56 +53,10 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
       setIsLoading(false)
     }
   }, [wordbookId, currentUser])
->>>>>>> db7745a (다크모드, 프로필 설정)
 
   useEffect(() => {
     // ref를 확인하여 fetch가 시작되지 않았을 경우에만 API 호출 (StrictMode 중복 실행 방지)
     if (wordbookId && !fetchInitiated.current) {
-<<<<<<< HEAD
-      fetchInitiated.current = true; // 호출 시작으로 표시
-      fetchWordbook();
-    }
-  }, [wordbookId, fetchWordbook]);
-
-
-  const handleLike = async () => {
-    if (!currentUser || !wordbook) {
-      alert("로그인이 필요합니다.");
-      return;
-    }
-
-    try {
-      await fetchWithAuth(`/api/community/wordbooks/${wordbook.id}/like`, { method: 'POST' });
-      setIsLiked(!isLiked);
-      setWordbook(prev => prev ? { ...prev, likes: isLiked ? prev.likes - 1 : prev.likes + 1 } : null);
-    } catch (error) {
-      console.error("좋아요 처리 실패:", error);
-      alert("요청 처리에 실패했습니다.");
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!currentUser || !wordbook) {
-      alert("로그인이 필요합니다.");
-      return;
-    }
-    try {
-      await fetchWithAuth(`/api/community/wordbooks/${wordbook.id}/download`, { method: 'POST' });
-      alert(`'${wordbook.name}' 단어장을 다운로드했습니다!`);
-      setWordbook(prev => prev ? { ...prev, downloads: prev.downloads + 1 } : null);
-    } catch (error) {
-      console.error("다운로드 실패:", error);
-      alert("단어장 다운로드에 실패했습니다.");
-    }
-  };
-
-  return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10 p-4 flex items-center">
-        <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8"><ArrowLeft className="h-5 w-5" /></Button>
-        <h1 className="font-semibold text-gray-900 text-lg truncate">{wordbook?.name || "단어장 정보"}</h1>
-=======
       fetchInitiated.current = true // 호출 시작으로 표시
       fetchWordbook()
     }
@@ -191,7 +101,6 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="font-semibold text-foreground text-lg truncate">{wordbook?.name || "단어장 정보"}</h1>
->>>>>>> db7745a (다크모드, 프로필 설정)
       </div>
 
       <div className="p-4">
@@ -204,18 +113,6 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
           <div className="space-y-4">
             <Card>
               <CardHeader>
-<<<<<<< HEAD
-                <Badge variant="outline" className="mb-2 w-fit">{wordbook.category}</Badge>
-                <h2 className="text-2xl font-bold">{wordbook.name}</h2>
-                <p className="text-sm text-gray-500">by {wordbook.author.name}</p>
-                <p className="text-sm text-gray-600 mt-2">{wordbook.description}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-6 text-sm text-gray-600">
-                  <span className="flex items-center gap-1.5"><Heart size={14} /> 좋아요 {wordbook.likes}</span>
-                  <span className="flex items-center gap-1.5"><Download size={14} /> 다운로드 {wordbook.downloads}</span>
-                  <span className="flex items-center gap-1.5"><Eye size={14} /> 조회수 {wordbook.views}</span>
-=======
                 <Badge variant="outline" className="mb-2 w-fit">
                   {wordbook.category}
                 </Badge>
@@ -234,22 +131,16 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
                   <span className="flex items-center gap-1.5">
                     <Eye size={14} /> 조회수 {wordbook.views}
                   </span>
->>>>>>> db7745a (다크모드, 프로필 설정)
                 </div>
               </CardContent>
               <CardContent>
                 <div className="flex gap-2">
-<<<<<<< HEAD
-                  <Button className="flex-1" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> 내 단어장에 추가</Button>
-                  <Button variant={isLiked ? "destructive" : "outline"} onClick={handleLike}><Heart className="mr-2 h-4 w-4" /> {isLiked ? '좋아요 취소' : '좋아요'}</Button>
-=======
                   <Button className="flex-1" onClick={handleDownload}>
                     <Download className="mr-2 h-4 w-4" /> 내 단어장에 추가
                   </Button>
                   <Button variant={isLiked ? "destructive" : "outline"} onClick={handleLike}>
                     <Heart className="mr-2 h-4 w-4" /> {isLiked ? "좋아요 취소" : "좋아요"}
                   </Button>
->>>>>>> db7745a (다크모드, 프로필 설정)
                 </div>
               </CardContent>
             </Card>
@@ -261,15 +152,9 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
               <CardContent>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {wordbook.words.map((word) => (
-<<<<<<< HEAD
-                    <div key={word.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <span className="font-medium text-sm">{word.word}</span>
-                      <span className="text-sm text-gray-600">{word.meaning}</span>
-=======
                     <div key={word.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
                       <span className="font-medium text-sm">{word.word}</span>
                       <span className="text-sm text-muted-foreground">{word.meaning}</span>
->>>>>>> db7745a (다크모드, 프로필 설정)
                     </div>
                   ))}
                 </div>
@@ -281,10 +166,5 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
         )}
       </div>
     </div>
-<<<<<<< HEAD
-  );
-}
-=======
   )
 }
->>>>>>> db7745a (다크모드, 프로필 설정)

@@ -55,8 +55,4 @@ function ScrollBar({
   )
 }
 
-<<<<<<< HEAD
 export { ScrollArea, ScrollBar }
-=======
-export { ScrollArea, ScrollBar }
->>>>>>> db7745a (다크모드, 프로필 설정)

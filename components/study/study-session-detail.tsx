@@ -194,8 +194,4 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview, isPer
       </div>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> db7745a (다크모드, 프로필 설정)

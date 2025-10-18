@@ -51,8 +51,4 @@ export async function GET(request: Request, { params }: { params: { sessionId: s
     console.error("학습 기록 상세 조회 오류:", error);
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> db7745a (다크모드, 프로필 설정)

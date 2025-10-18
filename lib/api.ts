@@ -26,8 +26,4 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   }
 
   return response.json();
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> db7745a (다크모드, 프로필 설정)
