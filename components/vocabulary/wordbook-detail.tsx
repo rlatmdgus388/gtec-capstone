@@ -1,6 +1,7 @@
+// components/vocabulary/wordbook-detail.tsx
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -27,6 +28,7 @@ import {
 import { WordEditScreen } from "./word-edit-screen"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { ImageSelectionModal } from "@/components/camera/image-selection-modal"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // ScrollArea import 추가
 import {
   ArrowLeft,
   Search,
@@ -39,6 +41,11 @@ import {
   CheckCircle,
   FolderInput,
   BookCopy,
+  Filter, // 필터 아이콘 (전체 보기 상태)
+  ListFilter, // 정렬 아이콘 (기본)
+  Check, // 선택 표시 아이콘
+  Shuffle, // 랜덤 아이콘
+  X // '미암기' 아이콘
 } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -67,8 +74,9 @@ interface WordbookDetailProps {
   onUpdate: () => void
 }
 interface DetectedWord {
-  text: string
-  selected: boolean
+  text: string;
+  selected: boolean;
+  meaning?: string;
 }
 
 export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailProps) {
@@ -78,6 +86,10 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   const [searchQuery, setSearchQuery] = useState("")
   const [hideMode, setHideMode] = useState<"none" | "word" | "meaning">("none")
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set())
+
+  const [filterMastered, setFilterMastered] = useState<'all' | 'exclude'>('all');
+  const [sortOrder, setSortOrder] = useState<'default' | 'random'>('default');
+  const [shuffledWords, setShuffledWords] = useState<Word[]>([]);
 
   const [showImageSelection, setShowImageSelection] = useState(false)
   const [showPhotoCapture, setShowPhotoCapture] = useState(false)
@@ -97,12 +109,15 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   const [movableWordbooks, setMovableWordbooks] = useState<Wordbook[]>([])
   const [isFetchingWordbooks, setIsFetchingWordbooks] = useState(false)
 
+
   const fetchWords = useCallback(async () => {
     if (!wordbook.id) return
     setIsLoading(true)
     try {
       const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`)
-      setWords(data.words || [])
+      const fetchedWords = data.words || [];
+      setWords(fetchedWords);
+      setShuffledWords([...fetchedWords].sort(() => Math.random() - 0.5));
     } catch (error) {
       console.error("단어 목록 로딩 실패:", error)
       setWords([])
@@ -113,23 +128,60 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
 
   useEffect(() => {
     fetchWords()
-  }, [fetchWords])
+  }, [fetchWords]);
+
   useEffect(() => {
     setSelectedWords(new Set())
-  }, [isEditMode])
+  }, [isEditMode]);
 
-  const filteredWords = words.filter(
-    (word) =>
-      word.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      word.meaning.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  const filteredAndSortedWords = useMemo(() => {
+    let processedWords = words;
 
-  const handleAddWord = async (newWordData: {
-    word: string
-    meaning: string
-    example?: string
-    pronunciation?: string
-  }) => {
+    if (searchQuery) {
+      processedWords = processedWords.filter(
+        (word) =>
+          word.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          word.meaning.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+    }
+
+    if (filterMastered === 'exclude') {
+      processedWords = processedWords.filter((word) => !word.mastered);
+    }
+
+    if (sortOrder === 'random') {
+      const currentFilteredIds = new Set(processedWords.map(w => w.id));
+      processedWords = shuffledWords.filter(w => currentFilteredIds.has(w.id));
+    }
+
+    return processedWords;
+  }, [words, searchQuery, filterMastered, sortOrder, shuffledWords]);
+
+
+  // 필터 토글 핸들러
+  const handleFilterToggle = () => {
+    setFilterMastered((prevFilter) => {
+      const newFilter = prevFilter === 'all' ? 'exclude' : 'all';
+      if (sortOrder === 'random') {
+        setShuffledWords([...words].sort(() => Math.random() - 0.5));
+      }
+      return newFilter;
+    });
+  };
+
+  // 정렬 토글 핸들러
+  const handleSortToggle = () => {
+    setSortOrder((prevOrder) => {
+      const newOrder = prevOrder === 'default' ? 'random' : 'default';
+      if (newOrder === 'random') {
+        setShuffledWords([...words].sort(() => Math.random() - 0.5));
+      }
+      return newOrder;
+    });
+  };
+
+  // --- 나머지 핸들러 함수들 (이전과 동일) ---
+  const handleAddWord = async (newWordData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
     try {
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
         method: "POST",
@@ -142,12 +194,8 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       console.error("단어 추가에 실패했습니다:", error)
       alert("단어 추가 중 오류가 발생했습니다.")
     }
-  }
-
-  const handleUpdateWord = async (
-    wordId: string,
-    updatedData: { word: string; meaning: string; example?: string; pronunciation?: string },
-  ) => {
+  };
+  const handleUpdateWord = async (wordId: string, updatedData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
     try {
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words/${wordId}`, {
         method: "PUT",
@@ -159,8 +207,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       console.error("단어 수정 실패:", error)
       alert("단어 수정 중 오류가 발생했습니다.")
     }
-  }
-
+  };
   const confirmWordDelete = async () => {
     if (!wordToDelete) return
     try {
@@ -173,8 +220,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     } finally {
       setWordToDelete(null)
     }
-  }
-
+  };
   const handleDeleteSelectedWords = async () => {
     try {
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
@@ -190,8 +236,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     } finally {
       setIsDeleteDialogOpen(false)
     }
-  }
-
+  };
   const handleDeleteWordbook = async () => {
     try {
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}`, { method: "DELETE" })
@@ -203,23 +248,25 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     } finally {
       setIsDeleteWordbookDialogOpen(false)
     }
-  }
-
+  };
   const toggleMastered = async (wordToToggle: Word) => {
     try {
       const updatedWord = { ...wordToToggle, mastered: !wordToToggle.mastered }
-      setWords((prev) => prev.map((word) => (word.id === wordToToggle.id ? updatedWord : word)))
+      setWords((prev) => prev.map((word) => (word.id === wordToToggle.id ? updatedWord : word)));
+      setShuffledWords((prev) => prev.map((word) => (word.id === wordToToggle.id ? updatedWord : word)));
+
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words/${wordToToggle.id}`, {
         method: "PUT",
         body: JSON.stringify({ mastered: updatedWord.mastered }),
-      })
+      });
+      onUpdate();
     } catch (error) {
-      console.error("암기 상태 업데이트 실패:", error)
-      setWords((prev) => prev.map((word) => (word.id === wordToToggle.id ? wordToToggle : word)))
-      alert("암기 상태 변경에 실패했습니다.")
+      console.error("암기 상태 업데이트 실패:", error);
+      setWords((prev) => prev.map((word) => (word.id === wordToToggle.id ? wordToToggle : word)));
+      setShuffledWords((prev) => prev.map((word) => (word.id === wordToToggle.id ? wordToToggle : word)));
+      alert("암기 상태 변경에 실패했습니다.");
     }
-  }
-
+  };
   const handleMoveWordsClick = async () => {
     setIsFetchingWordbooks(true)
     setIsMoveDrawerOpen(true)
@@ -233,8 +280,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     } finally {
       setIsFetchingWordbooks(false)
     }
-  }
-
+  };
   const handleConfirmMove = async (destinationWordbookId: number) => {
     setIsMoveDrawerOpen(false)
     try {
@@ -254,8 +300,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       console.error("단어 이동 실패:", error)
       alert("단어 이동에 실패했습니다.")
     }
-  }
-
+  };
   const handleWordSelection = (wordId: string) => {
     setSelectedWords((prev) => {
       const newSelection = new Set(prev)
@@ -266,26 +311,17 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       }
       return newSelection
     })
-  }
+  };
   const handleSelectAll = () => {
-    if (selectedWords.size === filteredWords.length) {
+    if (selectedWords.size === filteredAndSortedWords.length && filteredAndSortedWords.length > 0) {
       setSelectedWords(new Set())
     } else {
-      setSelectedWords(new Set(filteredWords.map((w) => w.id)))
+      setSelectedWords(new Set(filteredAndSortedWords.map((w) => w.id)))
     }
-  }
-  const handleHideWords = () => {
-    setHideMode("word")
-    setFlippedCards(new Set())
-  }
-  const handleHideMeanings = () => {
-    setHideMode("meaning")
-    setFlippedCards(new Set())
-  }
-  const handleShowAll = () => {
-    setHideMode("none")
-    setFlippedCards(new Set())
-  }
+  };
+  const handleHideWords = () => { setHideMode("word"); setFlippedCards(new Set()); };
+  const handleHideMeanings = () => { setHideMode("meaning"); setFlippedCards(new Set()); };
+  const handleShowAll = () => { setHideMode("none"); setFlippedCards(new Set()); };
   const handleCardFlip = (wordId: string) => {
     if (hideMode !== "none")
       setFlippedCards((prev) => {
@@ -293,18 +329,14 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         newSet.has(wordId) ? newSet.delete(wordId) : newSet.add(wordId)
         return newSet
       })
-  }
-  const handlePhotoCaptureClick = () => setShowImageSelection(true)
-  const handleCameraSelect = () => {
-    setShowImageSelection(false)
-    setSelectedImageData(null)
-    setShowPhotoCapture(true)
-  }
+  };
+  const handlePhotoCaptureClick = () => { setShowImageSelection(true); };
+  const handleCameraSelect = () => { setShowImageSelection(false); setSelectedImageData(null); setShowPhotoCapture(true); };
   const handleGallerySelect = () => {
-    setShowImageSelection(false)
-    const input = document.createElement("input")
-    input.type = "file"
-    input.accept = "image/*"
+    setShowImageSelection(false);
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
@@ -316,16 +348,16 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         }
         reader.readAsDataURL(file)
       }
-    }
-    input.click()
-  }
+    };
+    input.click();
+  };
   const handleWordsAdded = async (addedWords: DetectedWord[]) => {
     if (!wordbook || !wordbook.id || addedWords.length === 0) {
       setShowPhotoCapture(false)
       return
     }
     try {
-      const wordsToAdd = addedWords.map((word) => ({ word: word.text, meaning: "뜻을 입력하세요" }))
+      const wordsToAdd = addedWords.map((word) => ({ word: word.text, meaning: word.meaning || "뜻을 입력하세요" }));
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, { method: "POST", body: JSON.stringify(wordsToAdd) })
       alert(`${wordsToAdd.length}개의 단어가 추가되었습니다.`)
       await fetchWords()
@@ -335,7 +367,8 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     } finally {
       setShowPhotoCapture(false)
     }
-  }
+  };
+
 
   if (isAddingWord)
     return <WordEditScreen wordbookName={wordbook.name} onBack={() => setIsAddingWord(false)} onSave={handleAddWord} />
@@ -446,7 +479,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
 
       <div className="bg-card border-b border-border sticky top-0 z-10">
         <div className="px-4 py-4">
-          {isEditMode /* 편집 모드 헤더 */ ? (
+          {isEditMode ? (
             <div className="flex items-center gap-3 mb-4 h-10">
               <Button variant="ghost" size="sm" onClick={() => setIsEditMode(false)} className="p-2 -ml-2">
                 <ArrowLeft size={20} className="text-foreground" />
@@ -454,7 +487,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="select-all"
-                  checked={selectedWords.size > 0 && selectedWords.size === filteredWords.length}
+                  checked={selectedWords.size > 0 && selectedWords.size === filteredAndSortedWords.length && filteredAndSortedWords.length > 0}
                   onCheckedChange={handleSelectAll}
                 />
                 <label htmlFor="select-all" className="text-lg font-bold text-foreground">
@@ -465,10 +498,11 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 variant="link"
                 onClick={() => setSelectedWords(new Set())}
                 className="ml-auto text-primary p-0 h-auto"
+                disabled={selectedWords.size === 0}
               >
                 선택 취소 ({selectedWords.size})
               </Button>
-            </div> /* 일반 모드 헤더 */
+            </div>
           ) : (
             <>
               <div className="flex items-center gap-3 mb-4">
@@ -488,7 +522,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                     </Button>
                   </DrawerTrigger>
                   <DrawerContent>
-                    {/* --- ⚠️ 수정된 부분 1 --- */}
                     <DrawerTitle className="sr-only">단어장 설정</DrawerTitle>
                     <div className="mx-auto w-full max-w-sm">
                       <div className="p-2">
@@ -555,36 +588,65 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       </div>
 
       <div className="px-4 py-4 space-y-4">
+        {/* --- [수정] 모든 버튼을 한 줄 + 스크롤 --- */}
         {!isEditMode && (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant={hideMode === "word" ? "default" : "outline"}
-              size="sm"
-              onClick={handleHideWords}
-              className="text-xs rounded-full"
-            >
-              <EyeOff size={14} className="mr-1" />
-              단어 가리기
-            </Button>
-            <Button
-              variant={hideMode === "meaning" ? "default" : "outline"}
-              size="sm"
-              onClick={handleHideMeanings}
-              className="text-xs rounded-full"
-            >
-              <EyeOff size={14} className="mr-1" />뜻 가리기
-            </Button>
-            <Button
-              variant={hideMode === "none" ? "default" : "outline"}
-              size="sm"
-              onClick={handleShowAll}
-              className="text-xs rounded-full"
-            >
-              <Eye size={14} className="mr-1" />
-              모두 보기
-            </Button>
-          </div>
+          <ScrollArea className="w-full whitespace-nowrap pb-2"> {/* pb-2 스크롤바 공간 */}
+            <div className="flex justify-end gap-2 mb-4">
+              {/* 암기 완료 필터 토글 버튼 */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs rounded-full flex-shrink-0"
+                onClick={handleFilterToggle}
+              >
+                {filterMastered === 'all' ? <Filter size={14} className="mr-1" /> : <X size={14} className="mr-1 text-red-500" />}
+                {filterMastered === 'all' ? '전체' : '미암기'}
+              </Button>
+
+              {/* 정렬 순서 토글 버튼 */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs rounded-full flex-shrink-0"
+                onClick={handleSortToggle}
+              >
+                {sortOrder === 'random' ? <Shuffle size={14} className="mr-1" /> : <ListFilter size={14} className="mr-1" />}
+                {sortOrder === 'random' ? '랜덤' : '기본'}
+              </Button>
+
+              {/* 기존 가리기/보기 버튼 그룹 */}
+              <Button
+                variant={hideMode === "word" ? "default" : "outline"}
+                size="sm"
+                onClick={handleHideWords}
+                className="text-xs rounded-full flex-shrink-0"
+              >
+                <EyeOff size={14} className="mr-1" />
+                단어
+              </Button>
+              <Button
+                variant={hideMode === "meaning" ? "default" : "outline"}
+                size="sm"
+                onClick={handleHideMeanings}
+                className="text-xs rounded-full flex-shrink-0"
+              >
+                <EyeOff size={14} className="mr-1" />뜻
+              </Button>
+              <Button
+                variant={hideMode === "none" ? "default" : "outline"}
+                size="sm"
+                onClick={handleShowAll}
+                className="text-xs rounded-full flex-shrink-0"
+              >
+                <Eye size={14} className="mr-1" />
+                모두 보기
+              </Button>
+            </div>
+            <ScrollBar orientation="horizontal" className="h-2" />
+          </ScrollArea>
         )}
+        {/* --- [수정] 여기까지 --- */}
+
         <div className={`space-y-3 ${isEditMode ? "pb-24" : ""}`}>
           {isLoading ? (
             <div className="space-y-3 pt-4">
@@ -592,15 +654,15 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
               <Skeleton className="h-24 w-full rounded-lg" />
               <Skeleton className="h-24 w-full rounded-lg" />
             </div>
-          ) : filteredWords.length === 0 ? (
+          ) : filteredAndSortedWords.length === 0 ? (
             <Card className="text-center py-12 border border-border rounded-lg">
               <CardContent>
                 <Edit size={48} className="mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {searchQuery ? "검색 결과가 없습니다" : "단어가 없습니다"}
+                  {searchQuery ? "검색 결과가 없습니다" : filterMastered === 'exclude' ? "조건에 맞는 단어가 없습니다" : "단어가 없습니다"}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {searchQuery ? "다른 검색어를 시도해보세요" : "첫 번째 단어를 추가해보세요"}
+                  {searchQuery ? "다른 검색어를 시도해보세요" : filterMastered === 'exclude' ? "필터를 변경하거나 단어를 추가하세요" : "첫 번째 단어를 추가해보세요"}
                 </p>
                 {!searchQuery && (
                   <Button
@@ -614,7 +676,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
               </CardContent>
             </Card>
           ) : (
-            filteredWords.map((word) => (
+            filteredAndSortedWords.map((word) => (
               <Card
                 key={word.id}
                 className={`transition-all rounded-lg bg-card ${selectedWords.has(word.id) ? "border-primary ring-2 ring-primary" : "border border-border"}`}
@@ -638,7 +700,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                         <div className="h-6 w-24 bg-muted rounded animate-pulse mb-1" />
                       ) : (
                         <p className="text-base text-foreground mb-1">{word.meaning}</p>
-
                       )}
                     </div>
                     {!isEditMode && (
@@ -649,7 +710,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                           </Button>
                         </DrawerTrigger>
                         <DrawerContent>
-                          {/* --- ⚠️ 수정된 부분 2 --- */}
                           <DrawerTitle className="sr-only">단어 옵션</DrawerTitle>
                           <div className="mx-auto w-full max-w-sm">
                             <div className="p-2">
@@ -701,6 +761,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         </div>
       </div>
 
+      {/* --- 하단 편집 모드 버튼들 --- */}
       {isEditMode && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-20 p-4">
           <div className="flex flex-col items-end gap-4" style={{ marginBottom: "5rem" }}>
