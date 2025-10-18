@@ -2,18 +2,26 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerFooter,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import { GraduationCap, Play, Clock, BookOpen, PenTool, Brain } from "lucide-react"
 import { FlashcardMode } from "./flashcard-mode"
 import { QuizMode } from "./quiz-mode"
 import { WritingMode } from "./writing-mode"
 import { AutoplayMode } from "./autoplay-mode"
 import { StudyResults } from "./study-results"
+import { StudyHistoryScreen } from "./study-history-screen"
+import { StudySessionDetailScreen } from "./study-session-detail"
 import { fetchWithAuth } from "@/lib/api"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "../ui/skeleton"
 import { Loader2 } from "lucide-react"
 
-// --- 인터페이스 정의 ---
 interface Word {
   id: string;
   word: string;
@@ -37,14 +45,24 @@ interface StudySession {
     completedAt: string;
 }
 
+interface WordResult {
+  id: string; // 타입을 string으로 통일
+  word: string;
+  meaning: string;
+}
+
 interface StudyScreenProps {
   selectedWordbookId?: string | null;
 }
 
 export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
   const [selectedMode, setSelectedMode] = useState<string | null>(null)
+  const [writingModeType, setWritingModeType] = useState<'word' | 'meaning'>('word');
   const [selectedWordbook, setSelectedWordbook] = useState<string>("")
   const [studyResults, setStudyResults] = useState<any>(null)
+  const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+  const [reviewWords, setReviewWords] = useState<any[] | null>(null);
+  const [selectedSession, setSelectedSession] = useState<StudySession | null>(null);
 
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
   const [words, setWords] = useState<Word[]>([]);
@@ -131,10 +149,22 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     setSelectedMode(modeId)
   }
 
-  const handleStudyComplete = async (results: { correct: number; total: number; timeSpent: number }) => {
+  const handleStudyComplete = async (results: {
+    correct: number;
+    total: number;
+    timeSpent: number;
+    correctWords?: string[];
+    incorrectWords?: string[];
+  }) => {
+    if (reviewWords) {
+        setStudyResults({ ...results, mode: selectedMode, isReview: true });
+        setSelectedMode(null);
+        return;
+    }
+
     const currentWordbook = wordbooks.find(wb => wb.id === selectedWordbook);
     const modeName = studyModes.find(m => m.id === selectedMode)?.name || "학습";
-    
+
     setStudyResults({ ...results, mode: selectedMode });
     setSelectedMode(null);
 
@@ -148,9 +178,11 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
             mode: modeName,
             score: Math.round((results.correct / results.total) * 100),
             duration: results.timeSpent,
+            correctWords: results.correctWords || [],
+            incorrectWords: results.incorrectWords || [],
           }),
         });
-        fetchRecentSessions(); // 완료 후 목록 새로고침
+        fetchRecentSessions();
       } catch (error) {
         console.error("학습 기록 저장 실패:", error);
       }
@@ -158,7 +190,15 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
   }
 
   const handleAutoplayComplete = async () => {
-    const timeSpent = words.length * 3; // (단어 개수 * 시간)으로 대략적인 시간 계산
+    const wordsToUse = reviewWords || words;
+    const timeSpent = wordsToUse.length * 3;
+
+    if (reviewWords) {
+        setStudyResults({ correct: wordsToUse.length, total: wordsToUse.length, timeSpent, mode: "autoplay", isReview: true });
+        setSelectedMode(null);
+        return;
+    }
+
     const currentWordbook = wordbooks.find(wb => wb.id === selectedWordbook);
     const modeName = "자동재생";
 
@@ -175,6 +215,8 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                     mode: modeName,
                     score: 100,
                     duration: timeSpent,
+                    correctWords: words.map(w => w.id),
+                    incorrectWords: [],
                 }),
             });
             fetchRecentSessions();
@@ -186,6 +228,9 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
 
   const handleRestart = () => {
     setStudyResults(null)
+    if(studyResults.isReview) {
+        setReviewWords(reviewWords);
+    }
     setSelectedMode(studyResults.mode)
   }
 
@@ -193,8 +238,11 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     setStudyResults(null);
     setSelectedMode(null);
     setSelectedWordbook("");
+    setReviewWords(null);
+    setIsHistoryVisible(false);
+    setSelectedSession(null);
     fetchRecentSessions();
-    window.scrollTo(0, 0); // 화면을 맨 위로 스크롤
+    window.scrollTo(0, 0);
   }
 
   const formatRelativeTime = (dateString: string) => {
@@ -211,24 +259,41 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     return `${diffInDays}일 전`;
   }
 
-  // Render study modes
+  const handleStartReview = (mode: string, wordsToReview: WordResult[]) => {
+    setReviewWords(wordsToReview);
+    setSelectedMode(mode);
+    setIsHistoryVisible(false);
+    setSelectedSession(null);
+  };
+
+  if (selectedSession) {
+      return <StudySessionDetailScreen session={selectedSession} onBack={() => setSelectedSession(null)} onStartReview={handleStartReview} />;
+  }
+
+  if (isHistoryVisible) {
+    return <StudyHistoryScreen onBack={() => setIsHistoryVisible(false)} onStartReview={handleStartReview} />;
+  }
+
+  const wordsForSession = reviewWords || words;
+
   if (selectedMode) {
-    if (isLoading.words) {
+    if (isLoading.words && !reviewWords) {
       return <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
     }
     switch (selectedMode) {
-      case "flashcard": return <FlashcardMode words={words} onComplete={handleStudyComplete} onBack={() => setSelectedMode(null)} />
-      case "quiz": return <QuizMode words={words} onComplete={handleStudyComplete} onBack={() => setSelectedMode(null)} />
-      case "writing": return <WritingMode words={words} onComplete={handleStudyComplete} onBack={() => setSelectedMode(null)} />
-      case "autoplay": return <AutoplayMode words={words} onComplete={handleAutoplayComplete} onBack={() => setSelectedMode(null)} />
+      case "flashcard": return <FlashcardMode words={wordsForSession} onComplete={handleStudyComplete} onBack={() => { setSelectedMode(null); setReviewWords(null); }} />
+      case "quiz": return <QuizMode words={wordsForSession} onComplete={handleStudyComplete} onBack={() => { setSelectedMode(null); setReviewWords(null); }} />
+      case "writing": return <WritingMode words={wordsForSession} onComplete={handleStudyComplete} onBack={() => { setSelectedMode(null); setReviewWords(null); }} type={writingModeType} />
+      case "autoplay": return <AutoplayMode words={wordsForSession} onComplete={handleAutoplayComplete} onBack={() => { setSelectedMode(null); setReviewWords(null); }} />
     }
   }
 
-  // Render results
   if (studyResults) {
     const modeName = studyModes.find((m) => m.id === studyResults.mode)?.name || "학습"
     return <StudyResults results={studyResults} mode={modeName} onRestart={handleRestart} onHome={handleHome} />
   }
+
+  const selectedWordbookName = wordbooks.find(wb => wb.id === selectedWordbook)?.name || "학습할 단어장을 선택하세요";
 
   return (
     <div className="flex-1 overflow-y-auto pb-20 bg-white">
@@ -249,22 +314,39 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
               <BookOpen size={18} className="text-[#FF7A00]" />
               <span className="text-base font-medium text-black">단어장 선택</span>
             </div>
-            {isLoading.wordbooks ? <Skeleton className="h-10 w-full" /> : (
-              <Select value={selectedWordbook} onValueChange={setSelectedWordbook}>
-                <SelectTrigger className="h-10 border border-gray-200 bg-white rounded-lg">
-                  <SelectValue placeholder="학습할 단어장을 선택하세요" />
-                </SelectTrigger>
-                <SelectContent>
-                  {wordbooks.map((wordbook) => (
-                    <SelectItem key={wordbook.id} value={wordbook.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{wordbook.name}</span>
-                        <span className="text-xs text-gray-500 ml-2">{wordbook.wordCount}개</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {isLoading.wordbooks ? <Skeleton className="h-12 w-full rounded-lg" /> : (
+              <Drawer>
+                <DrawerTrigger asChild>
+                  <Button variant="outline" className="h-12 w-full justify-start text-left font-normal border-gray-200 bg-white rounded-lg">
+                    <span className="truncate">{selectedWordbookName}</span>
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <div className="mx-auto w-full max-w-sm">
+                    <div className="p-2">
+                      {wordbooks.map((wordbook) => (
+                        <DrawerClose asChild key={wordbook.id}>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start p-2 h-12 text-sm"
+                            onClick={() => setSelectedWordbook(wordbook.id)}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                                <span>{wordbook.name}</span>
+                                <span className="text-xs text-gray-500 ml-2">{wordbook.wordCount}개</span>
+                            </div>
+                          </Button>
+                        </DrawerClose>
+                      ))}
+                    </div>
+                    <DrawerFooter className="pt-2">
+                      <DrawerClose asChild>
+                        <Button variant="outline">취소</Button>
+                      </DrawerClose>
+                    </DrawerFooter>
+                  </div>
+                </DrawerContent>
+              </Drawer>
             )}
           </div>
         </div>
@@ -276,6 +358,44 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
           <div className="grid grid-cols-2 gap-3">
             {studyModes.map((mode) => {
               const Icon = mode.icon
+              if (mode.id === 'writing') {
+                return (
+                  <Drawer key={mode.id}>
+                    <DrawerTrigger asChild>
+                      <button
+                        className="aspect-square bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
+                      >
+                        <div className={`w-14 h-14 ${mode.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                          <Icon size={34} className="text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-black mb-0.5 text-base">{mode.name}</h3>
+                          <p className="text-sm text-gray-600 leading-tight">{mode.description}</p>
+                        </div>
+                      </button>
+                    </DrawerTrigger>
+                    <DrawerContent>
+                      <div className="mx-auto w-full max-w-sm">
+                        <div className="p-2">
+                            <DrawerClose asChild>
+                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => { setWritingModeType('word'); handleModeSelect('writing'); }}>
+                                    뜻 보고 단어 쓰기
+                                </Button>
+                            </DrawerClose>
+                            <DrawerClose asChild>
+                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => { setWritingModeType('meaning'); handleModeSelect('writing'); }}>
+                                    단어 보고 뜻 쓰기
+                                </Button>
+                            </DrawerClose>
+                        </div>
+                        <DrawerFooter className="pt-2">
+                            <DrawerClose asChild><Button variant="outline">취소</Button></DrawerClose>
+                        </DrawerFooter>
+                      </div>
+                    </DrawerContent>
+                  </Drawer>
+                )
+              }
               return (
                 <button
                   key={mode.id}
@@ -296,7 +416,12 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
         </div>
 
         <div>
-          <h2 className="text-base font-semibold mb-3 text-black">최근 학습 기록</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-black">최근 학습 기록</h2>
+            <Button variant="ghost" size="sm" onClick={() => setIsHistoryVisible(true)}>
+              더보기
+            </Button>
+          </div>
           <div className="space-y-2">
             {isLoading.sessions ? (
                 <div className="space-y-2">
@@ -310,8 +435,12 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                     </CardContent>
                 </Card>
             ) : (
-                recentSessions.map((session) => (
-                  <Card key={session.id} className="hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 shadow-sm bg-white rounded-xl">
+                recentSessions.slice(0, 5).map((session) => (
+                  <Card
+                    key={session.id}
+                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 shadow-sm bg-white rounded-xl"
+                    onClick={() => setSelectedSession(session)}
+                  >
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
