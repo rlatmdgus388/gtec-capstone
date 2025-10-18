@@ -247,4 +247,7 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
     </div>
   )
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> db7745a (다크모드, 프로필 설정)

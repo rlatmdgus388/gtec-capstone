@@ -178,4 +178,8 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
       )}
     </div>
   )
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> db7745a (다크모드, 프로필 설정)

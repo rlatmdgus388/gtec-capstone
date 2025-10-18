@@ -74,4 +74,8 @@ export async function POST(request: Request) {
         const errorMessage = error instanceof Error ? error.message : '서버 오류가 발생했습니다.';
         return NextResponse.json({ message: errorMessage }, { status: 500 });
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> db7745a (다크모드, 프로필 설정)

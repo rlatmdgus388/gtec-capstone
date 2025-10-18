@@ -24,6 +24,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+<<<<<<< HEAD
 next-env.d.ts
 
 # Google Cloud Service Account Keys
@@ -34,3 +35,6 @@ ocr-key.json
 .DS_Store
 
 #ddd
+=======
+next-env.d.ts
+>>>>>>> db7745a (다크모드, 프로필 설정)

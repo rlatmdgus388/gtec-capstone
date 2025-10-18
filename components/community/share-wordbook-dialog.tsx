@@ -131,4 +131,8 @@ export function ShareWordbookDialog({ open, onOpenChange, onShared }: ShareWordb
             </DialogContent>
         </Dialog>
     );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> db7745a (다크모드, 프로필 설정)
