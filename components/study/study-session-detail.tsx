@@ -15,8 +15,6 @@ interface StudySession {
     score: number;
     duration: number;
     completedAt: string;
-    correctWords?: { wordbookId: string, wordId: string }[] | string[];
-    incorrectWords?: { wordbookId: string, wordId: string }[] | string[];
 }
 
 interface WordResult {
@@ -29,10 +27,9 @@ interface StudySessionDetailScreenProps {
   session: StudySession;
   onBack: () => void;
   onStartReview: (mode: string, words: WordResult[], writingType?: 'word' | 'meaning') => void;
-  isPeriodDetail?: boolean;
 }
 
-export function StudySessionDetailScreen({ session, onBack, onStartReview, isPeriodDetail = false }: StudySessionDetailScreenProps) {
+export function StudySessionDetailScreen({ session, onBack, onStartReview }: StudySessionDetailScreenProps) {
   const [correctWords, setCorrectWords] = useState<WordResult[]>([]);
   const [incorrectWords, setIncorrectWords] = useState<WordResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,44 +45,19 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview, isPer
   const fetchSessionDetails = useCallback(async () => {
     setIsLoading(true);
     try {
-        let correctWordDetails: WordResult[] = [];
-        let incorrectWordDetails: WordResult[] = [];
-
-        if (isPeriodDetail) {
-            // 기간별 상세 페이지: API 호출 대신 props 데이터를 사용
-            const correctIds = session.correctWords as { wordbookId: string, wordId: string }[];
-            const incorrectIds = session.incorrectWords as { wordbookId: string, wordId: string }[];
-
-            if (correctIds.length > 0) {
-                correctWordDetails = await fetchWithAuth('/api/word', {
-                    method: 'POST', body: JSON.stringify(correctIds),
-                });
-            }
-            if (incorrectIds.length > 0) {
-                incorrectWordDetails = await fetchWithAuth('/api/word', {
-                    method: 'POST', body: JSON.stringify(incorrectIds),
-                });
-            }
-        } else {
-            // 기존 세션 상세 페이지: API 호출
-            const data = await fetchWithAuth(`/api/study-sessions/${session.id}`);
-            correctWordDetails = data.correctWords || [];
-            incorrectWordDetails = data.incorrectWords || [];
-        }
-
-        setCorrectWords(correctWordDetails);
-        setIncorrectWords(incorrectWordDetails);
+        const data = await fetchWithAuth(`/api/study-sessions/${session.id}`);
+        setCorrectWords(data.correctWords || []);
+        setIncorrectWords(data.incorrectWords || []);
     } catch (error) {
         console.error("학습 상세 기록 로딩 실패:", error);
     } finally {
         setIsLoading(false);
     }
-  }, [session, isPeriodDetail]);
+  }, [session.id]);
 
   useEffect(() => {
     fetchSessionDetails();
   }, [fetchSessionDetails]);
-
 
   const handleReview = (mode: string, writingType?: 'word' | 'meaning') => {
     if (incorrectWords.length > 0) {
@@ -102,7 +74,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview, isPer
           <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
             <ArrowLeft size={18} className="text-gray-600" />
           </Button>
-          <h1 className="text-xl font-bold text-gray-900">{session.wordbookName}</h1>
+          <h1 className="text-xl font-bold text-gray-900">학습 결과 상세</h1>
         </div>
       </div>
       <div className="p-4">
@@ -111,7 +83,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview, isPer
                 <Loader2 className="animate-spin h-8 w-8 text-primary" />
             </div>
         ) : (
-            <Tabs defaultValue="incorrect" className="w-full">
+            <Tabs defaultValue="correct" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="correct">정답 ({correctWords.length})</TabsTrigger>
                 <TabsTrigger value="incorrect">오답 ({incorrectWords.length})</TabsTrigger>
