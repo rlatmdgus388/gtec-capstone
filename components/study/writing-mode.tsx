@@ -1,3 +1,5 @@
+// 10_16_7/components/study/writing-mode.tsx
+
 "use client"
 
 import type React from "react"
@@ -36,7 +38,6 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
   const [correctWordIds, setCorrectWordIds] = useState<string[]>([]);
   const [incorrectWordIds, setIncorrectWordIds] = useState<string[]>([]);
 
-  // --- ⬇️ 수정된 부분 ⬇️ ---
   if (!words || words.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -50,7 +51,6 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
       </div>
     );
   }
-  // --- ⬆️ 수정된 부분 ⬆️ ---
 
   const currentWord = words[currentIndex];
 
@@ -66,8 +66,11 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
   }
   
   const progress = ((currentIndex + 1) / words.length) * 100
-  const question = type === 'word' ? currentWord.meaning : currentWord.word;
-  const answer = type === 'word' ? currentWord.word : currentWord.meaning;
+  
+  const question = type === 'meaning' ? currentWord.word : currentWord.meaning;
+  const answer = type === 'meaning' ? currentWord.meaning : currentWord.word;
+  const placeholder = type === 'meaning' ? "단어의 뜻을 입력하세요" : "영어 단어를 입력하세요";
+
   const isCorrectOnResult = showResult && userAnswer.toLowerCase().trim() === answer.toLowerCase()
 
   const createBlanks = (text: string) => {
@@ -128,7 +131,9 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-primary mb-4">{question}</h2>
             <div className="mb-4">
-              <p className="text-lg text-muted-foreground mb-2">빈칸을 채워 단어를 완성하세요</p>
+              <p className="text-lg text-muted-foreground mb-2">
+                {type === 'meaning' ? '단어에 맞는 뜻을 입력하세요' : '뜻에 맞는 단어를 입력하세요'}
+              </p>
               <div className="text-3xl font-mono font-bold text-foreground tracking-tight">{blankedWord}</div>
             </div>
           </CardContent>
@@ -138,7 +143,7 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">답안 입력</label>
-                <Input value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} onKeyPress={handleKeyPress} placeholder={type === 'word' ? "영어 단어를 입력하세요" : "단어의 뜻을 입력하세요"} className="h-12 text-lg text-center" disabled={showResult} />
+                <Input value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} onKeyPress={handleKeyPress} placeholder={placeholder} className="h-12 text-lg text-center" disabled={showResult} />
               </div>
               {!showResult ? (
                 <Button onClick={checkAnswer} disabled={!userAnswer.trim()} className="w-full h-12 bg-primary hover:bg-primary/90">확인</Button>

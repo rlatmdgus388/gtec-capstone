@@ -137,7 +137,7 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     },
   ]
 
-  const handleModeSelect = (modeId: string) => {
+  const handleModeSelect = (modeId: string, wType: 'word' | 'meaning' = 'word') => {
     if (!selectedWordbook) {
       alert("먼저 단어장을 선택해주세요.")
       return
@@ -145,6 +145,9 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     if (words.length === 0 && !isLoading.words) {
       alert("학습할 단어가 없습니다. 단어를 추가해주세요.");
       return;
+    }
+    if (modeId === 'writing') {
+        setWritingModeType(wType);
     }
     setSelectedMode(modeId)
   }
@@ -156,16 +159,18 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     correctWords?: string[];
     incorrectWords?: string[];
   }) => {
-    if (reviewWords) {
-        setStudyResults({ ...results, mode: selectedMode, isReview: true });
+    const isReviewSession = !!reviewWords;
+    if (isReviewSession) {
+        setStudyResults({ ...results, mode: selectedMode, isReview: true, reviewWords: reviewWords });
         setSelectedMode(null);
+        setReviewWords(null);
         return;
     }
 
     const currentWordbook = wordbooks.find(wb => wb.id === selectedWordbook);
     const modeName = studyModes.find(m => m.id === selectedMode)?.name || "학습";
 
-    setStudyResults({ ...results, mode: selectedMode });
+    setStudyResults({ ...results, mode: selectedMode, isReview: false });
     setSelectedMode(null);
 
     if (currentWordbook && results.total > 0) {
@@ -192,17 +197,19 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
   const handleAutoplayComplete = async () => {
     const wordsToUse = reviewWords || words;
     const timeSpent = wordsToUse.length * 3;
+    const isReviewSession = !!reviewWords;
 
-    if (reviewWords) {
-        setStudyResults({ correct: wordsToUse.length, total: wordsToUse.length, timeSpent, mode: "autoplay", isReview: true });
+    if (isReviewSession) {
+        setStudyResults({ correct: wordsToUse.length, total: wordsToUse.length, timeSpent, mode: "autoplay", isReview: true, reviewWords: reviewWords });
         setSelectedMode(null);
+        setReviewWords(null);
         return;
     }
 
     const currentWordbook = wordbooks.find(wb => wb.id === selectedWordbook);
     const modeName = "자동재생";
 
-    setStudyResults({ correct: words.length, total: words.length, timeSpent, mode: "autoplay" });
+    setStudyResults({ correct: words.length, total: words.length, timeSpent, mode: "autoplay", isReview: false });
     setSelectedMode(null);
 
     if (currentWordbook) {
@@ -227,23 +234,28 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
   }
 
   const handleRestart = () => {
+    const results = studyResults;
     setStudyResults(null)
-    if(studyResults.isReview) {
-        setReviewWords(reviewWords);
+    if(results.isReview) {
+        setReviewWords(results.reviewWords);
     }
-    setSelectedMode(studyResults.mode)
+    setSelectedMode(results.mode)
   }
 
-  const handleHome = () => {
+  const handleHomeFromResults = () => {
+    const wasReviewing = studyResults?.isReview;
     setStudyResults(null);
-    setSelectedMode(null);
-    setSelectedWordbook("");
-    setReviewWords(null);
-    setIsHistoryVisible(false);
-    setSelectedSession(null);
+    if (wasReviewing) {
+      setIsHistoryVisible(true);
+    }
     fetchRecentSessions();
     window.scrollTo(0, 0);
-  }
+  };
+  
+  const handleBackFromStudy = () => {
+    setSelectedMode(null);
+    setReviewWords(null);
+  };
 
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -259,12 +271,32 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     return `${diffInDays}일 전`;
   }
 
-  const handleStartReview = (mode: string, wordsToReview: WordResult[]) => {
+  const handleStartReview = (mode: string, wordsToReview: WordResult[], writingType?: 'word' | 'meaning') => {
+    if (mode === 'writing' && writingType) {
+      setWritingModeType(writingType);
+    }
     setReviewWords(wordsToReview);
     setSelectedMode(mode);
-    setIsHistoryVisible(false);
-    setSelectedSession(null);
   };
+  
+  const wordsForSession = reviewWords || words;
+
+  if (selectedMode) {
+    if (isLoading.words && !reviewWords) {
+      return <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
+    }
+    switch (selectedMode) {
+      case "flashcard": return <FlashcardMode words={wordsForSession} onComplete={handleStudyComplete} onBack={handleBackFromStudy} />
+      case "quiz": return <QuizMode words={wordsForSession} onComplete={handleStudyComplete} onBack={handleBackFromStudy} />
+      case "writing": return <WritingMode words={wordsForSession} onComplete={handleStudyComplete} onBack={handleBackFromStudy} type={writingModeType} />
+      case "autoplay": return <AutoplayMode words={wordsForSession} onComplete={handleAutoplayComplete} onBack={handleBackFromStudy} />
+    }
+  }
+
+  if (studyResults) {
+    const modeName = studyModes.find((m) => m.id === studyResults.mode)?.name || "학습"
+    return <StudyResults results={studyResults} mode={modeName} onRestart={handleRestart} onHome={handleHomeFromResults} />
+  }
 
   if (selectedSession) {
       return <StudySessionDetailScreen session={selectedSession} onBack={() => setSelectedSession(null)} onStartReview={handleStartReview} />;
@@ -274,24 +306,6 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
     return <StudyHistoryScreen onBack={() => setIsHistoryVisible(false)} onStartReview={handleStartReview} />;
   }
 
-  const wordsForSession = reviewWords || words;
-
-  if (selectedMode) {
-    if (isLoading.words && !reviewWords) {
-      return <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-    }
-    switch (selectedMode) {
-      case "flashcard": return <FlashcardMode words={wordsForSession} onComplete={handleStudyComplete} onBack={() => { setSelectedMode(null); setReviewWords(null); }} />
-      case "quiz": return <QuizMode words={wordsForSession} onComplete={handleStudyComplete} onBack={() => { setSelectedMode(null); setReviewWords(null); }} />
-      case "writing": return <WritingMode words={wordsForSession} onComplete={handleStudyComplete} onBack={() => { setSelectedMode(null); setReviewWords(null); }} type={writingModeType} />
-      case "autoplay": return <AutoplayMode words={wordsForSession} onComplete={handleAutoplayComplete} onBack={() => { setSelectedMode(null); setReviewWords(null); }} />
-    }
-  }
-
-  if (studyResults) {
-    const modeName = studyModes.find((m) => m.id === studyResults.mode)?.name || "학습"
-    return <StudyResults results={studyResults} mode={modeName} onRestart={handleRestart} onHome={handleHome} />
-  }
 
   const selectedWordbookName = wordbooks.find(wb => wb.id === selectedWordbook)?.name || "학습할 단어장을 선택하세요";
 
@@ -378,12 +392,12 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                       <div className="mx-auto w-full max-w-sm">
                         <div className="p-2">
                             <DrawerClose asChild>
-                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => { setWritingModeType('word'); handleModeSelect('writing'); }}>
+                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleModeSelect('writing', 'word')}>
                                     뜻 보고 단어 쓰기
                                 </Button>
                             </DrawerClose>
                             <DrawerClose asChild>
-                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => { setWritingModeType('meaning'); handleModeSelect('writing'); }}>
+                                <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleModeSelect('writing', 'meaning')}>
                                     단어 보고 뜻 쓰기
                                 </Button>
                             </DrawerClose>

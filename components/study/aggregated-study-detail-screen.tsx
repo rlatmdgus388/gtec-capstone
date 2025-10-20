@@ -1,8 +1,8 @@
-// components/study/study-session-detail.tsx
+// components/study/aggregated-study-detail-screen.tsx
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,11 +12,9 @@ import { fetchWithAuth } from "@/lib/api";
 
 interface StudySession {
     id: string;
-    wordbookName: string;
-    mode: string;
-    score: number;
-    duration: number;
-    completedAt: string;
+    wordbookId: string;
+    correctWords?: string[];
+    incorrectWords?: string[];
 }
 
 interface WordResult {
@@ -25,13 +23,14 @@ interface WordResult {
   meaning: string;
 }
 
-interface StudySessionDetailScreenProps {
-  session: StudySession;
+interface AggregatedStudyDetailScreenProps {
+  periodTitle: string;
+  sessions: StudySession[];
   onBack: () => void;
   onStartReview: (mode: string, words: WordResult[], writingType?: 'word' | 'meaning') => void;
 }
 
-export function StudySessionDetailScreen({ session, onBack, onStartReview }: StudySessionDetailScreenProps) {
+export function AggregatedStudyDetailScreen({ periodTitle, sessions, onBack, onStartReview }: AggregatedStudyDetailScreenProps) {
   const [correctWords, setCorrectWords] = useState<WordResult[]>([]);
   const [incorrectWords, setIncorrectWords] = useState<WordResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,22 +43,43 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
     { id: "quiz", name: "객관식 퀴즈", icon: Brain },
   ];
 
-  const fetchSessionDetails = useCallback(async () => {
-    setIsLoading(true);
-    try {
-        const data = await fetchWithAuth(`/api/study-sessions/${session.id}`);
-        setCorrectWords(data.correctWords || []);
-        setIncorrectWords(data.incorrectWords || []);
-    } catch (error) {
-        console.error("학습 상세 기록 로딩 실패:", error);
-    } finally {
-        setIsLoading(false);
-    }
-  }, [session.id]);
-
   useEffect(() => {
-    fetchSessionDetails();
-  }, [fetchSessionDetails]);
+    const fetchWordDetails = async () => {
+      if (sessions.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+
+      const correctWordIdMap = new Map<string, { wordbookId: string, wordId: string }>();
+      const incorrectWordIdMap = new Map<string, { wordbookId: string, wordId: string }>();
+
+      sessions.forEach(session => {
+        session.correctWords?.forEach(wordId => {
+          correctWordIdMap.set(`${session.wordbookId}-${wordId}`, { wordbookId: session.wordbookId, wordId });
+        });
+        session.incorrectWords?.forEach(wordId => {
+          incorrectWordIdMap.set(`${session.wordbookId}-${wordId}`, { wordbookId: session.wordbookId, wordId });
+        });
+      });
+
+      try {
+        const [correct, incorrect] = await Promise.all([
+          correctWordIdMap.size > 0 ? fetchWithAuth('/api/word', { method: 'POST', body: JSON.stringify(Array.from(correctWordIdMap.values())) }) : Promise.resolve([]),
+          incorrectWordIdMap.size > 0 ? fetchWithAuth('/api/word', { method: 'POST', body: JSON.stringify(Array.from(incorrectWordIdMap.values())) }) : Promise.resolve([]),
+        ]);
+        setCorrectWords(correct || []);
+        setIncorrectWords(incorrect || []);
+      } catch (error) {
+        console.error("단어 상세 정보 로딩 실패:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWordDetails();
+  }, [sessions]);
+
 
   const handleReview = (mode: string, writingType?: 'word' | 'meaning') => {
     if (incorrectWords.length > 0) {
@@ -70,13 +90,13 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
   };
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-white">
-      <div className="px-4 py-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+    <div className="flex-1 overflow-y-auto pb-20 bg-white dark:bg-zinc-900">
+      <div className="px-4 py-6 border-b border-border sticky top-0 bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm z-10">
         <div className="relative flex items-center justify-center">
           <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
-            <ArrowLeft size={18} className="text-gray-600" />
+            <ArrowLeft size={18} className="text-muted-foreground" />
           </Button>
-          <h1 className="text-xl font-bold text-gray-900">학습 결과 상세</h1>
+          <h1 className="text-xl font-bold text-foreground">{periodTitle}</h1>
         </div>
       </div>
       <div className="p-4">
@@ -94,8 +114,8 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
                 <div className="space-y-2">
                 {correctWords.map((item) => (
                     <Card key={item.id}><CardContent className="p-3">
-                    <div className="font-semibold text-gray-900">{item.word}</div>
-                    <div className="text-sm text-gray-600 mt-1">{item.meaning}</div>
+                    <div className="font-semibold text-foreground">{item.word}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
                     </CardContent></Card>
                 ))}
                 </div>
@@ -104,8 +124,8 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
                 <div className="space-y-2">
                 {incorrectWords.map((item) => (
                     <Card key={item.id}><CardContent className="p-3">
-                    <div className="font-semibold text-gray-900">{item.word}</div>
-                    <div className="text-sm text-gray-600 mt-1">{item.meaning}</div>
+                    <div className="font-semibold text-foreground">{item.word}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
                     </CardContent></Card>
                 ))}
                 </div>
@@ -117,7 +137,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
       <div className="p-4 mt-4">
          <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent('modes')}>
             <DrawerTrigger asChild>
-                <Button className="w-full h-12 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-xl font-medium" disabled={incorrectWords.length === 0 || isLoading}>
+                <Button className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium" disabled={incorrectWords.length === 0 || isLoading}>
                     오답 단어 복습하기
                 </Button>
             </DrawerTrigger>
