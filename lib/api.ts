@@ -27,3 +27,14 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
   return response.json();
 };
+
+/**
+ * [추가된 부분]
+ * study-history-screen에서 사용할 학습 세션 목록을 가져오는 함수입니다.
+ * /api/study-sessions 엔드포인트를 GET 방식으로 호출합니다.
+ */
+export const fetchStudySessions = async () => {
+  return fetchWithAuth('/api/study-sessions', {
+    method: 'GET',
+  });
+};
