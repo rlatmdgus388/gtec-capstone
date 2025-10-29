@@ -3,19 +3,19 @@ import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import admin from 'firebase-admin';
 
-// POST: 단어 추가 (기존 코드)
-export async function POST(request: Request, { params }: { params: { wordbookId: string } }) {
+// POST: 단어 추가
+export async function POST(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
   try {
-    const headersList = headers();
-    const token = headersList.get('Authorization')?.split('Bearer ')[1];
+    const { wordbookId } = await params; // ✅ params await
+    const headersList = await headers(); // ✅ headers await
 
+    const token = headersList.get('Authorization')?.split('Bearer ')[1];
     if (!token) {
       return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
     }
 
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userId = decodedToken.uid;
-    const { wordbookId } = params;
 
     const wordbookRef = firestore.collection('wordbooks').doc(wordbookId);
     const wordbookDoc = await wordbookRef.get();
@@ -25,7 +25,6 @@ export async function POST(request: Request, { params }: { params: { wordbookId:
     }
 
     const wordsToAdd = await request.json();
-
     if (!Array.isArray(wordsToAdd) || wordsToAdd.length === 0) {
       return NextResponse.json({ message: '추가할 단어가 없습니다.' }, { status: 400 });
     }
@@ -35,10 +34,7 @@ export async function POST(request: Request, { params }: { params: { wordbookId:
     const newWords = [];
 
     for (const wordData of wordsToAdd) {
-      if (!wordData.word || !wordData.meaning) {
-        console.warn('Invalid word data skipped:', wordData);
-        continue;
-      }
+      if (!wordData.word || !wordData.meaning) continue;
 
       const newWordRef = wordsCollectionRef.doc();
       const wordPayload = {
@@ -49,6 +45,7 @@ export async function POST(request: Request, { params }: { params: { wordbookId:
         mastered: false,
         createdAt: new Date().toISOString(),
       };
+
       batch.set(newWordRef, wordPayload);
       newWords.push({ id: newWordRef.id, ...wordPayload });
     }
@@ -71,19 +68,21 @@ export async function POST(request: Request, { params }: { params: { wordbookId:
   }
 }
 
-// DELETE: 여러 단어 삭제 (새로 추가)
-export async function DELETE(request: Request, { params }: { params: { wordbookId: string } }) {
+// DELETE: 여러 단어 삭제
+export async function DELETE(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
   try {
-    const headersList = headers();
+    const { wordbookId } = await params; // ✅ params await
+    const headersList = await headers(); // ✅ headers await
+
     const token = headersList.get('Authorization')?.split('Bearer ')[1];
     if (!token) {
       return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
     }
+
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userId = decodedToken.uid;
-    const { wordbookId } = params;
-    const { wordIds } = await request.json();
 
+    const { wordIds } = await request.json();
     if (!Array.isArray(wordIds) || wordIds.length === 0) {
       return NextResponse.json({ message: '삭제할 단어 ID가 필요합니다.' }, { status: 400 });
     }
@@ -98,13 +97,9 @@ export async function DELETE(request: Request, { params }: { params: { wordbookI
     const batch = firestore.batch();
     const wordsCollectionRef = wordbookRef.collection('words');
 
-    wordIds.forEach(id => {
-      batch.delete(wordsCollectionRef.doc(id));
-    });
-
+    wordIds.forEach(id => batch.delete(wordsCollectionRef.doc(id)));
     await batch.commit();
 
-    // 단어장 wordCount 업데이트
     await wordbookRef.update({
       wordCount: admin.firestore.FieldValue.increment(-wordIds.length)
     });

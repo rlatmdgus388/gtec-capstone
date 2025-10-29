@@ -3,16 +3,19 @@ import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 
 // 특정 단어장 정보와 포함된 단어 목록을 가져옵니다.
-export async function GET(request: Request, { params }: { params: { wordbookId: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
   try {
-    const headersList = headers();
+    const { wordbookId } = await params; // ✅ params await
+
+    const headersList = await headers(); // ✅ headers await
     const token = headersList.get('Authorization')?.split('Bearer ')[1];
+
     if (!token) {
       return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
     }
+
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userId = decodedToken.uid;
-    const wordbookId = params.wordbookId;
 
     const wordbookRef = firestore.collection('wordbooks').doc(wordbookId);
     const wordbookDoc = await wordbookRef.get();
@@ -25,10 +28,9 @@ export async function GET(request: Request, { params }: { params: { wordbookId: 
     await wordbookRef.update({ lastStudied: new Date().toISOString() });
 
     const wordsSnapshot = await wordbookRef.collection('words').orderBy('createdAt', 'desc').get();
-    // [수정] 올바른 문서 ID를 보장하기 위해 spread operator 순서를 변경합니다.
-    const words = wordsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    const words = wordsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    return NextResponse.json({ ...wordbookDoc.data(), id: wordbookDoc.id, words });
+    return NextResponse.json({ id: wordbookDoc.id, ...wordbookDoc.data(), words });
   } catch (error) {
     console.error("단어장 상세 조회 오류:", error);
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
@@ -36,9 +38,9 @@ export async function GET(request: Request, { params }: { params: { wordbookId: 
 }
 
 // 특정 단어장 정보를 수정합니다.
-export async function PUT(request: Request, { params }: { params: { wordbookId: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
   try {
-    const wordbookId = params.wordbookId;
+    const { wordbookId } = await params; // ✅ params await
     const { name, description, category } = await request.json();
     await firestore.collection('wordbooks').doc(wordbookId).update({ name, description, category });
     return NextResponse.json({ message: '단어장이 성공적으로 수정되었습니다.' });
@@ -49,16 +51,16 @@ export async function PUT(request: Request, { params }: { params: { wordbookId: 
 }
 
 // 특정 단어장을 삭제합니다.
-export async function DELETE(request: Request, { params }: { params: { wordbookId: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
   try {
-    const wordbookId = params.wordbookId;
+    const { wordbookId } = await params; // ✅ params await
     const wordsRef = firestore.collection('wordbooks').doc(wordbookId).collection('words');
     const wordsSnapshot = await wordsRef.get();
+
     const batch = firestore.batch();
-    wordsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
+    wordsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
+
     await firestore.collection('wordbooks').doc(wordbookId).delete();
     return new Response(null, { status: 204 });
   } catch (error) {
