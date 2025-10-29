@@ -311,27 +311,34 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
 
   return (
     <div className="flex-1 overflow-y-auto pb-20 bg-background">
-      <div className="bg-card border-b border-gray-100">
+      {/* [수정]
+        - border-gray-100 -> border-border
+        - text-white -> text-foreground
+        - text-gray-600 -> text-muted-foreground
+      */}
+      <div className="bg-card border-b border-border">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#FF7A00]/10 rounded-xl flex items-center justify-center">
               <GraduationCap size={24} className="text-[#FF7A00]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">학습하기</h1>
-              <p className="text-sm text-gray-600">다양한 방법으로 단어를 학습하세요</p>
+              <h1 className="text-2xl font-bold text-foreground">학습하기</h1>
+              <p className="text-sm text-muted-foreground">다양한 방법으로 단어를 학습하세요</p>
             </div>
           </div>
 
           <div className="space-y-2 mb-2">
             <div className="flex items-center gap-2">
               <BookOpen size={18} className="text-[#FF7A00]" />
-              <span className="text-base font-medium text-white">단어장 선택</span>
+              {/* [수정] text-white -> text-foreground */}
+              <span className="text-base font-medium text-foreground">단어장 선택</span>
             </div>
             {isLoading.wordbooks ? <Skeleton className="h-12 w-full rounded-lg" /> : (
               <Drawer>
                 <DrawerTrigger asChild>
-                  <Button variant="outline" className="h-12 w-full justify-start text-left font-normal border-gray-200 bg-background rounded-lg">
+                  {/* [수정] border-gray-200 -> border-border */}
+                  <Button variant="outline" className="h-12 w-full justify-start text-left font-normal border-border bg-background rounded-lg">
                     <span className="truncate">{selectedWordbookName}</span>
                   </Button>
                 </DrawerTrigger>
@@ -347,7 +354,8 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                           >
                             <div className="flex items-center justify-between w-full">
                                 <span>{wordbook.name}</span>
-                                <span className="text-xs text-gray-500 ml-2">{wordbook.wordCount}개</span>
+                                {/* [수정] text-gray-500 -> text-muted-foreground */}
+                                <span className="text-xs text-muted-foreground ml-2">{wordbook.wordCount}개</span>
                             </div>
                           </Button>
                         </DrawerClose>
@@ -368,7 +376,8 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
 
       <div className="px-4 pt-4 space-y-6">
         <div>
-          <h2 className="text-xl font-semibold mb-3 text-black">학습 모드</h2>
+          {/* [수정] text-black -> text-foreground */}
+          <h2 className="text-xl font-semibold mb-3 text-foreground">학습 모드</h2>
           <div className="grid grid-cols-2 gap-3">
             {studyModes.map((mode) => {
               const Icon = mode.icon
@@ -376,15 +385,21 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                 return (
                   <Drawer key={mode.id}>
                     <DrawerTrigger asChild>
+                      {/* [수정] (Fix 1: 받아쓰기 버튼 배경)
+                        - bg-background -> bg-card
+                        - border-gray-200 -> border-border
+                      */}
                       <button
-                        className="aspect-square bg-background border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
+                        className="aspect-square bg-card border border-border rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
                       >
                         <div className={`w-14 h-14 ${mode.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
                           <Icon size={34} className="text-white" />
                         </div>
                         <div>
-                          <h3 className="font-medium text-black mb-0.5 text-base">{mode.name}</h3>
-                          <p className="text-sm text-gray-600 leading-tight">{mode.description}</p>
+                          {/* [수정] text-black -> text-foreground */}
+                          <h3 className="font-medium text-foreground mb-0.5 text-base">{mode.name}</h3>
+                          {/* [수정] text-gray-600 -> text-muted-foreground */}
+                          <p className="text-sm text-muted-foreground leading-tight">{mode.description}</p>
                         </div>
                       </button>
                     </DrawerTrigger>
@@ -413,15 +428,18 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
               return (
                 <button
                   key={mode.id}
-                  className="aspect-square bg-card border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
+                  /* [수정] border-gray-200 -> border-border */
+                  className="aspect-square bg-card border border-border rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
                   onClick={() => handleModeSelect(mode.id)}
                 >
                   <div className={`w-14 h-14 ${mode.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
                     <Icon size={34} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-black mb-0.5 text-base">{mode.name}</h3>
-                    <p className="text-sm text-gray-600 leading-tight">{mode.description}</p>
+                    {/* [수정] text-black -> text-foreground */}
+                    <h3 className="font-medium text-foreground mb-0.5 text-base">{mode.name}</h3>
+                    {/* [수정] text-gray-600 -> text-muted-foreground */}
+                    <p className="text-sm text-muted-foreground leading-tight">{mode.description}</p>
                   </div>
                 </button>
               )
@@ -431,7 +449,8 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
 
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-black">최근 학습 기록</h2>
+            {/* [수정] text-black -> text-foreground */}
+            <h2 className="text-base font-semibold text-foreground">최근 학습 기록</h2>
             <Button variant="ghost" size="sm" onClick={() => setIsHistoryVisible(true)}>
               더보기
             </Button>
@@ -443,8 +462,9 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                     <Skeleton className="h-20 w-full rounded-xl" />
                 </div>
             ) : recentSessions.length === 0 ? (
-                <Card className="border border-gray-200 rounded-xl">
-                    <CardContent className="p-6 text-center text-gray-500">
+                /* [수정] border-gray-200 -> border-border, text-gray-500 -> text-muted-foreground */
+                <Card className="border border-border rounded-xl">
+                    <CardContent className="p-6 text-center text-muted-foreground">
                         최근 학습 기록이 없습니다.
                     </CardContent>
                 </Card>
@@ -452,14 +472,20 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                 recentSessions.slice(0, 5).map((session) => (
                   <Card
                     key={session.id}
-                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 shadow-sm bg-background rounded-xl"
+                    /* [수정] (Fix 2: 최근 학습 기록 배경)
+                      - border-gray-200 -> border-border
+                      - bg-background -> bg-card
+                    */
+                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-border shadow-sm bg-card rounded-xl"
                     onClick={() => setSelectedSession(session)}
                   >
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <h3 className="font-medium text-black mb-0.5 text-base">{session.wordbookName}</h3>
-                          <div className="flex items-center gap-3 text-sm text-gray-600">
+                          {/* [수정] text-black -> text-foreground */}
+                          <h3 className="font-medium text-foreground mb-0.5 text-base">{session.wordbookName}</h3>
+                          {/* [수정] text-gray-600 -> text-muted-foreground */}
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
                             <span>{session.mode}</span>
                             <span className="flex items-center gap-1">
                               <Clock size={12} />
@@ -470,7 +496,8 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-[#FF7A00]">{session.score}%</div>
-                          <div className="text-[16px] text-gray-500">점수</div>
+                          {/* [수정] text-gray-500 -> text-muted-foreground */}
+                          <div className="text-[16px] text-muted-foreground">점수</div>
                         </div>
                       </div>
                     </CardContent>
