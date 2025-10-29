@@ -5,11 +5,13 @@ import { headers } from 'next/headers';
 // 특정 학습 세션의 상세 정보를 가져옵니다.
 export async function GET(request: Request, { params }: { params: { sessionId: string } }) {
   try {
-    const headersList = headers();
+    const headersList = await headers(); // ✅ await 추가
     const token = headersList.get('Authorization')?.split('Bearer ')[1];
+
     if (!token) {
       return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
     }
+
     await adminAuth.verifyIdToken(token);
 
     const { sessionId } = params;
@@ -21,7 +23,7 @@ export async function GET(request: Request, { params }: { params: { sessionId: s
 
     const sessionData = sessionDoc.data();
     if (!sessionData) {
-        return NextResponse.json({ message: '학습 기록 데이터가 없습니다.' }, { status: 404 });
+      return NextResponse.json({ message: '학습 기록 데이터가 없습니다.' }, { status: 404 });
     }
 
     const { wordbookId, correctWords: correctWordIds, incorrectWords: incorrectWordIds } = sessionData;
@@ -32,7 +34,6 @@ export async function GET(request: Request, { params }: { params: { sessionId: s
       if (!ids || ids.length === 0) return [];
       const wordPromises = ids.map(id => wordsRef.doc(id).get());
       const wordDocs = await Promise.all(wordPromises);
-      // ⬇️ 수정된 부분: 존재하지 않는 단어는 목록에서 제외합니다. ⬇️
       return wordDocs
         .filter(doc => doc.exists)
         .map(doc => ({ id: doc.id, ...doc.data() }));
