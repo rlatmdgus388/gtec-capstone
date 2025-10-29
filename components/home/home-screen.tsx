@@ -119,12 +119,12 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50/50 pb-20">
+    <div className="flex-1 overflow-y-auto bg-background pb-20">
       <div className="p-4 space-y-6">
         {/* 환영 메시지 (이전 디자인 유지) */}
         <div className="px-2">
-            <h1 className="text-2xl font-bold text-gray-800">안녕하세요! 👋</h1>
-            <p className="text-gray-500">오늘도 즐겁게 단어를 학습해 보세요.</p>
+            <h1 className="text-2xl font-bold text-foreground">안녕하세요! 👋</h1>
+            <p className="text-muted-foreground">오늘도 즐겁게 단어를 학습해 보세요.</p>
         </div>
 
         {/* Today's Learning Status Card - 클릭 가능하게 변경 */}
