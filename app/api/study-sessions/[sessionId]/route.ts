@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 
-// 특정 학습 세션의 상세 정보를 가져옵니다.
-export async function GET(request: Request, { params }: { params: { sessionId: string } }) {
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ sessionId: string }> }
+) {
   try {
-    const headersList = await headers(); // ✅ await 추가
+    const headersList = await headers();
     const token = headersList.get('Authorization')?.split('Bearer ')[1];
 
     if (!token) {
@@ -14,7 +16,7 @@ export async function GET(request: Request, { params }: { params: { sessionId: s
 
     await adminAuth.verifyIdToken(token);
 
-    const { sessionId } = params;
+    const { sessionId } = await context.params;
 
     const sessionDoc = await firestore.collection('studySessions').doc(sessionId).get();
     if (!sessionDoc.exists) {
@@ -22,25 +24,17 @@ export async function GET(request: Request, { params }: { params: { sessionId: s
     }
 
     const sessionData = sessionDoc.data();
-    if (!sessionData) {
-      return NextResponse.json({ message: '학습 기록 데이터가 없습니다.' }, { status: 404 });
-    }
-
-    const { wordbookId, correctWords: correctWordIds, incorrectWords: incorrectWordIds } = sessionData;
+    const { wordbookId, correctWords: correctIds = [], incorrectWords: incorrectIds = [] } = sessionData!;
 
     const wordsRef = firestore.collection('wordbooks').doc(wordbookId).collection('words');
 
-    const fetchWordsByIds = async (ids: string[]) => {
-      if (!ids || ids.length === 0) return [];
-      const wordPromises = ids.map(id => wordsRef.doc(id).get());
-      const wordDocs = await Promise.all(wordPromises);
-      return wordDocs
-        .filter(doc => doc.exists)
-        .map(doc => ({ id: doc.id, ...doc.data() }));
+    const fetchWords = async (ids: string[]) => {
+      const wordDocs = await Promise.all(ids.map(id => wordsRef.doc(id).get()));
+      return wordDocs.filter(doc => doc.exists).map(doc => ({ id: doc.id, ...doc.data() }));
     };
 
-    const correctWords = await fetchWordsByIds(correctWordIds || []);
-    const incorrectWords = await fetchWordsByIds(incorrectWordIds || []);
+    const correctWords = await fetchWords(correctIds);
+    const incorrectWords = await fetchWords(incorrectIds);
 
     return NextResponse.json({
       ...sessionData,

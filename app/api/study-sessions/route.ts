@@ -2,10 +2,9 @@ import { NextResponse } from 'next/server';
 import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 
-// 사용자의 최근 학습 기록 가져오기
 export async function GET() {
   try {
-    const headersList = await headers(); // ✅ await 추가
+    const headersList = await headers();
     const token = headersList.get('Authorization')?.split('Bearer ')[1];
 
     if (!token) {
@@ -21,7 +20,10 @@ export async function GET() {
       .orderBy('completedAt', 'desc')
       .get();
 
-    const sessions = sessionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const sessions = sessionsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
     return NextResponse.json(sessions);
   } catch (error) {
@@ -30,10 +32,10 @@ export async function GET() {
   }
 }
 
-// 새로운 학습 기록 저장
+
 export async function POST(request: Request) {
   try {
-    const headersList = await headers(); // ✅ await 추가
+    const headersList = await headers();
     const token = headersList.get('Authorization')?.split('Bearer ')[1];
 
     if (!token) {
@@ -43,7 +45,15 @@ export async function POST(request: Request) {
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    const { wordbookId, wordbookName, mode, score, duration, correctWords, incorrectWords } = await request.json();
+    const {
+      wordbookId,
+      wordbookName,
+      mode,
+      score,
+      duration,
+      correctWords = [],
+      incorrectWords = []
+    } = await request.json();
 
     if (!wordbookId || !wordbookName || !mode || score === undefined || !duration) {
       return NextResponse.json({ message: '필수 데이터가 누락되었습니다.' }, { status: 400 });
@@ -57,13 +67,14 @@ export async function POST(request: Request) {
       score,
       duration,
       completedAt: new Date().toISOString(),
-      correctWords: correctWords || [],
-      incorrectWords: incorrectWords || [],
+      correctWords,
+      incorrectWords,
     };
 
     await firestore.collection('studySessions').add(newSession);
 
     return NextResponse.json(newSession, { status: 201 });
+
   } catch (error) {
     console.error("학습 기록 저장 오류:", error);
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
