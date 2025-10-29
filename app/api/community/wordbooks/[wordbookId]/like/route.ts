@@ -6,7 +6,7 @@ import admin from 'firebase-admin';
 
 export async function POST(request: Request, { params }: { params: { wordbookId: string } }) {
     try {
-        const headersList = headers();
+        const headersList = await headers();
         const token = headersList.get('Authorization')?.split('Bearer ')[1];
         if (!token) {
             return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });

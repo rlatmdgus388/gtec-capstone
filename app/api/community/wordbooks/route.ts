@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 // 새로운 단어장 공유하기
 export async function POST(request: Request) {
     try {
-        const headersList = headers();
+        const headersList = await headers();
         const token = headersList.get('Authorization')?.split('Bearer ')[1];
         if (!token) {
             return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });

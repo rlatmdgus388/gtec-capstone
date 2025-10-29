@@ -43,7 +43,7 @@ export async function GET(request: Request, { params }: { params: { postId: stri
 // 게시글 수정
 export async function PUT(request: Request, { params }: { params: { postId: string } }) {
     try {
-        const headersList = headers();
+        const headersList = await headers();
         const token = headersList.get('Authorization')?.split('Bearer ')[1];
         if (!token) {
             return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
@@ -81,7 +81,7 @@ export async function PUT(request: Request, { params }: { params: { postId: stri
 // 게시글 삭제
 export async function DELETE(request: Request, { params }: { params: { postId: string } }) {
     try {
-        const headersList = headers();
+        const headersList = await headers();
         const token = headersList.get('Authorization')?.split('Bearer ')[1];
         if (!token) {
             return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });

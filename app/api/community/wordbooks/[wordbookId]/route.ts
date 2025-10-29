@@ -34,7 +34,7 @@ export async function GET(request: Request, { params }: { params: { wordbookId: 
 // 공유 단어장 삭제
 export async function DELETE(request: Request, { params }: { params: { wordbookId: string } }) {
     try {
-        const headersList = headers();
+        const headersList = await headers();
         const token = headersList.get('Authorization')?.split('Bearer ')[1];
         if (!token) {
             return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
