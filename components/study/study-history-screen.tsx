@@ -1,242 +1,132 @@
-// components/study/study-history-screen.tsx
+"use client";
 
-"use client"
-
-import { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchStudySessions } from "@/lib/api"; // API 함수 임포트
+import { StudySession } from "@/lib/types"; // 타입 임포트
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen, Brain, PenTool, Play } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { fetchWithAuth } from "@/lib/api";
-import { StudyPeriodSummaryCard } from "./study-period-summary-card";
-import { AggregatedStudyDetailScreen } from "./aggregated-study-detail-screen";
-import { Drawer, DrawerClose, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, History, ChevronRight, CheckCircle, XCircle } from "lucide-react";
 
-// ... (인터페이스 정의는 이전과 동일) ...
-interface StudySession {
-    id: string;
-    wordbookName: string;
-    mode: string;
-    score: number;
-    duration: number;
-    completedAt: string;
-    wordbookId: string;
-    correctWords?: string[];
-    incorrectWords?: string[];
-}
-
-interface WordResult {
-  id: string;
-  word: string;
-  meaning: string;
-}
-
-interface StudyHistoryScreenProps {
-  onBack: () => void;
-  onStartReview: (mode: string, words: WordResult[], writingType?: 'word' | 'meaning') => void;
-}
-
-type Period = 'today' | '7days' | '30days';
-
-
-export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreenProps) {
-  const [view, setView] = useState<'main' | 'detail'>('main');
-  const [selectedPeriod, setSelectedPeriod] = useState<{ period: Period, title: string } | null>(null);
-
+const StudyHistoryScreen = () => {
+  const router = useRouter();
   const [sessions, setSessions] = useState<StudySession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerContent, setDrawerContent] = useState<'modes' | 'writingOptions'>('modes');
-  const [allIncorrectWords, setAllIncorrectWords] = useState<WordResult[]>([]);
-
-  const studyModes = [
-    { id: "flashcard", name: "플래시카드", icon: BookOpen },
-    { id: "autoplay", name: "자동재생", icon: Play },
-    { id: "writing", name: "받아쓰기", icon: PenTool },
-    { id: "quiz", name: "객관식 퀴즈", icon: Brain },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAllSessions = async () => {
-      setIsLoading(true);
+    const getSessions = async () => {
       try {
-        const sessionsData: StudySession[] = await fetchWithAuth('/api/study-sessions');
-        const processedSessions = sessionsData.map(s => ({
-          ...s,
-          correctWords: s.correctWords || [],
-          incorrectWords: s.incorrectWords || [],
-        }));
-        setSessions(processedSessions || []);
-      } catch (error) {
-        console.error("전체 학습 기록 로딩 실패:", error);
+        setLoading(true);
+        const data = await fetchStudySessions();
+        setSessions(data);
+        setError(null);
+      } catch (err) {
+        console.error("학습 세션 목록 조회 실패:", err);
+        setError("학습 기록을 불러오는 데 실패했습니다.");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    fetchAllSessions();
+    getSessions();
   }, []);
 
-  const stats = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const sevenDaysAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
-    const thirtyDaysAgo = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
+  const getAccuracy = (correct: number, incorrect: number) => {
+    const total = correct + incorrect;
+    if (total === 0) return 0;
+    return Math.round((correct / total) * 100);
+  };
 
-    const periodStats = {
-      today: { correctCount: 0, incorrectCount: 0, sessions: [] as StudySession[] },
-      '7days': { correctCount: 0, incorrectCount: 0, sessions: [] as StudySession[] },
-      '30days': { correctCount: 0, incorrectCount: 0, sessions: [] as StudySession[] },
-    };
+  const formatDuration = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}분 ${s}초`;
+  };
 
-    const incorrectWordIdMap = new Map<string, { wordbookId: string, wordId: string }>();
+  const handleSessionClick = (sessionId: string) => {
+    router.push(`/study/session-detail?sessionId=${sessionId}`);
+  };
 
-    for (const session of sessions) {
-      const completedAt = new Date(session.completedAt);
-      const correct = session.correctWords?.length || 0;
-      const incorrect = session.incorrectWords?.length || 0;
-      
-      session.incorrectWords?.forEach(wordId => {
-        incorrectWordIdMap.set(`${session.wordbookId}-${wordId}`, { wordbookId: session.wordbookId, wordId });
-      });
-
-      if (completedAt >= today) {
-        periodStats.today.correctCount += correct;
-        periodStats.today.incorrectCount += incorrect;
-        periodStats.today.sessions.push(session);
-      }
-      if (completedAt >= sevenDaysAgo) {
-        periodStats['7days'].correctCount += correct;
-        periodStats['7days'].incorrectCount += incorrect;
-        periodStats['7days'].sessions.push(session);
-      }
-      if (completedAt >= thirtyDaysAgo) {
-        periodStats['30days'].correctCount += correct;
-        periodStats['30days'].incorrectCount += incorrect;
-        periodStats['30days'].sessions.push(session);
-      }
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="space-y-4">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      );
     }
 
-    if (incorrectWordIdMap.size > 0 && allIncorrectWords.length === 0) {
-        fetchWithAuth('/api/word', { method: 'POST', body: JSON.stringify(Array.from(incorrectWordIdMap.values())) })
-            .then(words => setAllIncorrectWords(words || []))
-            .catch(err => console.error("전체 오답 단어 로딩 실패:", err));
+    if (error) {
+      return <div className="text-center p-8 text-destructive">{error}</div>;
     }
 
+    if (sessions.length === 0) {
+      return (
+        <div className="text-center p-8 bg-card rounded-lg">
+          <History className="w-12 h-12 mx-auto text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold text-foreground">
+            학습 기록이 없습니다
+          </h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            학습을 완료하면 여기에 기록이 표시됩니다.
+          </p>
+        </div>
+      );
+    }
 
-    return periodStats;
-  }, [sessions, allIncorrectWords.length]);
-
-
-  const handlePeriodClick = (period: Period, title: string) => {
-    setSelectedPeriod({ period, title });
-    setView('detail');
-  }
-
-  const handleStartDirectReview = (mode: string, writingType?: 'word' | 'meaning') => {
-    onStartReview(mode, allIncorrectWords, writingType);
-    setIsDrawerOpen(false);
-  }
-
-  if (view === 'detail' && selectedPeriod) {
     return (
-      <AggregatedStudyDetailScreen
-        periodTitle={selectedPeriod.title}
-        sessions={stats[selectedPeriod.period].sessions}
-        onBack={() => setView('main')}
-        onStartReview={onStartReview}
-      />
-    )
-  }
+      <div className="space-y-4">
+        {sessions.map((session) => (
+          <Card 
+            key={session.id} 
+            className="bg-card cursor-pointer hover:bg-muted"
+            onClick={() => handleSessionClick(session.id)}
+          >
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex-1 space-y-1">
+                <h3 className="text-lg font-bold text-foreground">
+                  {session.wordbookName || "학습 세션"}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {new Date(session.completedAt).toLocaleString()}
+                </p>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Badge variant="outline">
+                    정확도: {getAccuracy(session.correctCount, session.incorrectCount)}%
+                  </Badge>
+                  <Badge variant="outline">
+                    <CheckCircle className="w-3 h-3 mr-1 text-green-500" /> {session.correctCount}
+                  </Badge>
+                  <Badge variant="outline">
+                    <XCircle className="w-3 h-3 mr-1 text-red-500" /> {session.incorrectCount}
+                  </Badge>
+                   <Badge variant="outline">
+                    시간: {formatDuration(session.durationInSeconds)}
+                  </Badge>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-background dark:bg-zinc-900">
-      <div className="px-4 py-6 sticky top-0 bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm z-10">
-        <div className="relative flex items-center justify-center">
-          <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2"><ArrowLeft size={18} className="text-muted-foreground" /></Button>
-          <h1 className="text-xl font-bold text-foreground">학습 기록</h1>
-        </div>
-        <p className="text-center text-muted-foreground text-sm mt-2">매일 오전 12시를 기준으로 갱신됩니다.</p>
-      </div>
-
-      <div className="p-4 space-y-4">
-        {isLoading ? (
-          <>
-            <Skeleton className="h-28 w-full rounded-2xl" />
-            <Skeleton className="h-28 w-full rounded-2xl" />
-            <Skeleton className="h-28 w-full rounded-2xl" />
-          </>
-        ) : (
-          <>
-            <StudyPeriodSummaryCard
-              title="오늘 학습한 단어"
-              correctCount={stats.today.correctCount}
-              incorrectCount={stats.today.incorrectCount}
-              totalWords={stats.today.correctCount + stats.today.incorrectCount}
-              onClick={() => handlePeriodClick('today', '오늘의 학습 결과')}
-            />
-            <StudyPeriodSummaryCard
-              title="7일 동안 학습한 단어"
-              correctCount={stats['7days'].correctCount}
-              incorrectCount={stats['7days'].incorrectCount}
-              totalWords={stats['7days'].correctCount + stats['7days'].incorrectCount}
-              onClick={() => handlePeriodClick('7days', '최근 7일 학습 결과')}
-            />
-            <StudyPeriodSummaryCard
-              title="30일 동안 학습한 단어"
-              correctCount={stats['30days'].correctCount}
-              incorrectCount={stats['30days'].incorrectCount}
-              totalWords={stats['30days'].correctCount + stats['30days'].incorrectCount}
-              onClick={() => handlePeriodClick('30days', '최근 30일 학습 결과')}
-            />
-            {/* ▼▼▼ [수정됨] 전체 오답 복습 버튼 추가 ▼▼▼ */}
-            <Button 
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium"
-                onClick={() => setIsDrawerOpen(true)}
-                disabled={allIncorrectWords.length === 0}
-            >
-                전체 오답 복습하기 ({allIncorrectWords.length}개)
-            </Button>
-          </>
-        )}
-      </div>
-      <Drawer open={isDrawerOpen} onOpenChange={(isOpen) => { setIsDrawerOpen(isOpen); if (!isOpen) setDrawerContent('modes'); }}>
-        <DrawerContent>
-            <div className="mx-auto w-full max-w-sm">
-            {drawerContent === 'modes' && (
-                <div className="p-2">
-                    {studyModes.map(mode => {
-                        if (mode.id === 'writing') {
-                            return (
-                                <Button key={mode.id} variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => setDrawerContent('writingOptions')}>
-                                    <mode.icon className="mr-2 h-4 w-4" />
-                                    {mode.name}
-                                </Button>
-                            );
-                        }
-                        return (
-                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview(mode.id)} key={mode.id}>
-                                <mode.icon className="mr-2 h-4 w-4" />
-                                {mode.name}
-                            </Button>
-                        );
-                    })}
-                </div>
-            )}
-            {drawerContent === 'writingOptions' && (
-                <div className="p-2">
-                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview('writing', 'word')}>
-                        뜻 보고 단어 쓰기
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview('writing', 'meaning')}>
-                        단어 보고 뜻 쓰기
-                    </Button>
-                </div>
-            )}
-                <DrawerFooter className="pt-2">
-                    <DrawerClose asChild><Button variant="outline">취소</Button></DrawerClose>
-                </DrawerFooter>
-            </div>
-        </DrawerContent>
-      </Drawer>
+    <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20 bg-background">
+      <header className="flex items-center mb-4">
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-xl font-bold ml-2 text-foreground">전체 학습 기록</h1>
+      </header>
+      {renderContent()}
     </div>
-  )
-}
+  );
+};
+
+export default StudyHistoryScreen;

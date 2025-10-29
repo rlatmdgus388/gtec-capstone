@@ -1,6 +1,6 @@
 // components/study/study-session-detail.tsx
 
-"use client"
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,12 @@ import { ArrowLeft, BookOpen, Play, PenTool, Brain, Loader2 } from "lucide-react
 import { fetchWithAuth } from "@/lib/api";
 
 interface StudySession {
-    id: string;
-    wordbookName: string;
-    mode: string;
-    score: number;
-    duration: number;
-    completedAt: string;
+  id: string;
+  wordbookName: string;
+  mode: string;
+  score: number;
+  duration: number;
+  completedAt: string;
 }
 
 interface WordResult {
@@ -28,15 +28,15 @@ interface WordResult {
 interface StudySessionDetailScreenProps {
   session: StudySession;
   onBack: () => void;
-  onStartReview: (mode: string, words: WordResult[], writingType?: 'word' | 'meaning') => void;
+  onStartReview: (mode: string, words: WordResult[], writingType?: "word" | "meaning") => void;
 }
 
 export function StudySessionDetailScreen({ session, onBack, onStartReview }: StudySessionDetailScreenProps) {
   const [correctWords, setCorrectWords] = useState<WordResult[]>([]);
   const [incorrectWords, setIncorrectWords] = useState<WordResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [drawerContent, setDrawerContent] = useState<'modes' | 'writingOptions'>('modes');
-  
+  const [drawerContent, setDrawerContent] = useState<"modes" | "writingOptions">("modes");
+
   const studyModes = [
     { id: "flashcard", name: "플래시카드", icon: BookOpen },
     { id: "autoplay", name: "자동재생", icon: Play },
@@ -47,13 +47,13 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
   const fetchSessionDetails = useCallback(async () => {
     setIsLoading(true);
     try {
-        const data = await fetchWithAuth(`/api/study-sessions/${session.id}`);
-        setCorrectWords(data.correctWords || []);
-        setIncorrectWords(data.incorrectWords || []);
+      const data = await fetchWithAuth(`/api/study-sessions/${session.id}`);
+      setCorrectWords(data.correctWords || []);
+      setIncorrectWords(data.incorrectWords || []);
     } catch (error) {
-        console.error("학습 상세 기록 로딩 실패:", error);
+      console.error("학습 상세 기록 로딩 실패:", error);
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }, [session.id]);
 
@@ -61,7 +61,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
     fetchSessionDetails();
   }, [fetchSessionDetails]);
 
-  const handleReview = (mode: string, writingType?: 'word' | 'meaning') => {
+  const handleReview = (mode: string, writingType?: "word" | "meaning") => {
     if (incorrectWords.length > 0) {
       onStartReview(mode, incorrectWords, writingType);
     } else {
@@ -70,101 +70,119 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
   };
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-white">
-      <div className="px-4 py-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+    <div className="flex-1 overflow-y-auto pb-20 bg-background text-foreground">
+      <div className="px-4 py-6 border-b border-border sticky top-0 bg-card z-10">
         <div className="relative flex items-center justify-center">
           <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
-            <ArrowLeft size={18} className="text-gray-600" />
+            <ArrowLeft size={18} className="text-muted-foreground" />
           </Button>
-          <h1 className="text-xl font-bold text-gray-900">학습 결과 상세</h1>
+          <h1 className="text-xl font-bold text-foreground">학습 결과 상세</h1>
         </div>
       </div>
+
       <div className="p-4">
         {isLoading ? (
-            <div className="flex justify-center items-center h-48">
-                <Loader2 className="animate-spin h-8 w-8 text-primary" />
-            </div>
+          <div className="flex justify-center items-center h-48">
+            <Loader2 className="animate-spin h-8 w-8 text-primary" />
+          </div>
         ) : (
-            <Tabs defaultValue="incorrect" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="correct">정답 ({correctWords.length})</TabsTrigger>
-                <TabsTrigger value="incorrect">오답 ({incorrectWords.length})</TabsTrigger>
+          <Tabs defaultValue="incorrect" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-popover border-border rounded-md">
+              <TabsTrigger value="correct">정답 ({correctWords.length})</TabsTrigger>
+              <TabsTrigger value="incorrect">오답 ({incorrectWords.length})</TabsTrigger>
             </TabsList>
+
             <TabsContent value="correct" className="mt-4">
-                <div className="space-y-2">
+              <div className="space-y-2">
                 {correctWords.map((item) => (
-                    <Card key={item.id}><CardContent className="p-3">
-                    <div className="font-semibold text-gray-900">{item.word}</div>
-                    <div className="text-sm text-gray-600 mt-1">{item.meaning}</div>
-                    </CardContent></Card>
+                  <Card key={item.id} className="bg-card border-border">
+                    <CardContent className="p-3">
+                      <div className="font-semibold text-card-foreground">{item.word}</div>
+                      <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
+                    </CardContent>
+                  </Card>
                 ))}
-                </div>
+              </div>
             </TabsContent>
+
             <TabsContent value="incorrect" className="mt-4">
-                <div className="space-y-2">
+              <div className="space-y-2">
                 {incorrectWords.map((item) => (
-                    <Card key={item.id}><CardContent className="p-3">
-                    <div className="font-semibold text-gray-900">{item.word}</div>
-                    <div className="text-sm text-gray-600 mt-1">{item.meaning}</div>
-                    </CardContent></Card>
+                  <Card key={item.id} className="bg-card border-border">
+                    <CardContent className="p-3">
+                      <div className="font-semibold text-card-foreground">{item.word}</div>
+                      <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
+                    </CardContent>
+                  </Card>
                 ))}
-                </div>
+              </div>
             </TabsContent>
-            </Tabs>
+          </Tabs>
         )}
       </div>
 
+      {/* 복습 버튼 & Drawer */}
       <div className="p-4 mt-4">
-         <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent('modes')}>
-            <DrawerTrigger asChild>
-                <Button className="w-full h-12 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-xl font-medium" disabled={incorrectWords.length === 0 || isLoading}>
-                    오답 단어 복습하기
-                </Button>
-            </DrawerTrigger>
-            <DrawerContent>
-                <div className="mx-auto w-full max-w-sm">
-                {drawerContent === 'modes' && (
-                    <div className="p-2">
-                        {studyModes.map(mode => {
-                            if (mode.id === 'writing') {
-                                return (
-                                    <Button key={mode.id} variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => setDrawerContent('writingOptions')}>
-                                        <mode.icon className="mr-2 h-4 w-4" />
-                                        {mode.name}
-                                    </Button>
-                                );
-                            }
-                            return (
-                                <DrawerClose asChild key={mode.id}>
-                                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleReview(mode.id)}>
-                                        <mode.icon className="mr-2 h-4 w-4" />
-                                        {mode.name}
-                                    </Button>
-                                </DrawerClose>
-                            );
-                        })}
-                    </div>
-                )}
-                {drawerContent === 'writingOptions' && (
-                    <div className="p-2">
-                        <DrawerClose asChild>
-                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleReview('writing', 'word')}>
-                                뜻 보고 단어 쓰기
-                            </Button>
-                        </DrawerClose>
-                        <DrawerClose asChild>
-                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleReview('writing', 'meaning')}>
-                                단어 보고 뜻 쓰기
-                            </Button>
-                        </DrawerClose>
-                    </div>
-                )}
-                    <DrawerFooter className="pt-2">
-                        <DrawerClose asChild><Button variant="outline">취소</Button></DrawerClose>
-                    </DrawerFooter>
+        <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
+          <DrawerTrigger asChild>
+            <Button
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium"
+              disabled={incorrectWords.length === 0 || isLoading}
+            >
+              오답 단어 복습하기
+            </Button>
+          </DrawerTrigger>
+
+          <DrawerContent>
+            <div className="mx-auto w-full max-w-sm">
+              {drawerContent === "modes" && (
+                <div className="p-2">
+                  {studyModes.map((mode) =>
+                    mode.id === "writing" ? (
+                      <Button
+                        key={mode.id}
+                        variant="ghost"
+                        className="w-full justify-start p-2 h-12 text-sm"
+                        onClick={() => setDrawerContent("writingOptions")}
+                      >
+                        <mode.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <span className="text-foreground">{mode.name}</span>
+                      </Button>
+                    ) : (
+                      <DrawerClose asChild key={mode.id}>
+                        <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleReview(mode.id)}>
+                          <mode.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span className="text-foreground">{mode.name}</span>
+                        </Button>
+                      </DrawerClose>
+                    )
+                  )}
                 </div>
-            </DrawerContent>
-         </Drawer>
+              )}
+
+              {drawerContent === "writingOptions" && (
+                <div className="p-2">
+                  <DrawerClose asChild>
+                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleReview("writing", "word")}>
+                      뜻 보고 단어 쓰기
+                    </Button>
+                  </DrawerClose>
+                  <DrawerClose asChild>
+                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleReview("writing", "meaning")}>
+                      단어 보고 뜻 쓰기
+                    </Button>
+                  </DrawerClose>
+                </div>
+              )}
+
+              <DrawerFooter className="pt-2">
+                <DrawerClose asChild>
+                  <Button variant="outline">취소</Button>
+                </DrawerClose>
+              </DrawerFooter>
+            </div>
+          </DrawerContent>
+        </Drawer>
       </div>
     </div>
   );

@@ -310,15 +310,15 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
   const selectedWordbookName = wordbooks.find(wb => wb.id === selectedWordbook)?.name || "학습할 단어장을 선택하세요";
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-white">
-      <div className="bg-white border-b border-gray-100">
+    <div className="flex-1 overflow-y-auto pb-20 bg-background">
+      <div className="bg-card border-b border-gray-100">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#FF7A00]/10 rounded-xl flex items-center justify-center">
               <GraduationCap size={24} className="text-[#FF7A00]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-black">학습하기</h1>
+              <h1 className="text-2xl font-bold text-white">학습하기</h1>
               <p className="text-sm text-gray-600">다양한 방법으로 단어를 학습하세요</p>
             </div>
           </div>
@@ -326,12 +326,12 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
           <div className="space-y-2 mb-2">
             <div className="flex items-center gap-2">
               <BookOpen size={18} className="text-[#FF7A00]" />
-              <span className="text-base font-medium text-black">단어장 선택</span>
+              <span className="text-base font-medium text-white">단어장 선택</span>
             </div>
             {isLoading.wordbooks ? <Skeleton className="h-12 w-full rounded-lg" /> : (
               <Drawer>
                 <DrawerTrigger asChild>
-                  <Button variant="outline" className="h-12 w-full justify-start text-left font-normal border-gray-200 bg-white rounded-lg">
+                  <Button variant="outline" className="h-12 w-full justify-start text-left font-normal border-gray-200 bg-background rounded-lg">
                     <span className="truncate">{selectedWordbookName}</span>
                   </Button>
                 </DrawerTrigger>
@@ -377,7 +377,7 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                   <Drawer key={mode.id}>
                     <DrawerTrigger asChild>
                       <button
-                        className="aspect-square bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
+                        className="aspect-square bg-background border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
                       >
                         <div className={`w-14 h-14 ${mode.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
                           <Icon size={34} className="text-white" />
@@ -413,7 +413,7 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
               return (
                 <button
                   key={mode.id}
-                  className="aspect-square bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
+                  className="aspect-square bg-card border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
                   onClick={() => handleModeSelect(mode.id)}
                 >
                   <div className={`w-14 h-14 ${mode.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
@@ -452,7 +452,7 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                 recentSessions.slice(0, 5).map((session) => (
                   <Card
                     key={session.id}
-                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 shadow-sm bg-white rounded-xl"
+                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 shadow-sm bg-background rounded-xl"
                     onClick={() => setSelectedSession(session)}
                   >
                     <CardContent className="p-3">
