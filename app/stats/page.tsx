@@ -57,7 +57,7 @@ export default function StatsPage() {
   }, []); // 빈 배열로 마운트 시 한 번만 실행
 
   return (
-    <div className="p-4 space-y-6 pb-20"> {/* 하단 여백 추가 */}
+    <div className="max-w-md mx-auto p-4 space-y-6 pb-20"> {/* max-w-md mx-auto 추가 */}
       {/* 페이지 헤더 */}
       <div className="flex items-center gap-2 mb-4">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="-ml-2">

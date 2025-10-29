@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 // 사용자의 모든 단어장 목록을 가져옵니다.
 export async function GET() {
   try {
-    const headersList = headers();
+    const headersList = await headers();
     const token = headersList.get('Authorization')?.split('Bearer ')[1];
     if (!token) {
       return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
