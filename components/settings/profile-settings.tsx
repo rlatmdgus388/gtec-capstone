@@ -20,7 +20,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
     name: "",
     email: "",
     username: "",
-    bio: "",
     avatar: "/placeholder.svg",
   })
 
@@ -37,7 +36,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
           name: data.name || "",
           email: data.email || "",
           username: data.username || "",
-          bio: data.bio || "",
           avatar: data.photoURL || "/placeholder.svg",
         })
       } catch (error) {
@@ -63,7 +61,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
         body: JSON.stringify({
           name: profile.name,
           username: profile.username,
-          bio: profile.bio,
         }),
       })
 
@@ -93,7 +90,8 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    // 1. 최상위 div에 flex flex-col 추가
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
         <div className="flex items-center justify-between p-4">
@@ -112,7 +110,9 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
+      {/* 2. 콘텐츠 영역을 새 div로 감싸고 flex-1, overflow-y-auto 추가 */}
+      {/* (pb-20은 하단 네비게이션바 등을 고려한 여백) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
         {/* Profile Photo */}
         <Card className="bg-card border border-border shadow-sm rounded-xl">
           <CardContent className="p-6">
@@ -182,22 +182,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
               />
             </div>
 
-            <div>
-              <Label htmlFor="bio" className="text-sm font-medium text-foreground">
-                소개
-              </Label>
-              <textarea
-                id="bio"
-                value={profile.bio}
-                onChange={(e) => setProfile((prev) => ({ ...prev, bio: e.target.value }))}
-                disabled={!isEditing}
-                className="mt-1 w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-muted disabled:text-muted-foreground bg-background text-foreground"
-                rows={3}
-                maxLength={150}
-              />
-              <p className="text-xs text-muted-foreground mt-1">{profile.bio.length}/150자</p>
-            </div>
-
             {isEditing && (
               <Button
                 onClick={handleSave}
@@ -210,31 +194,8 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
             )}
           </CardContent>
         </Card>
-
-        {/* Account Statistics */}
-        <Card className="bg-card border border-border shadow-sm rounded-xl">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-foreground mb-4">학습 통계</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-primary/10 rounded-lg">
-                <div className="text-2xl font-bold text-primary">23</div>
-                <div className="text-sm text-muted-foreground">연속 학습일</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-foreground">1,247</div>
-                <div className="text-sm text-muted-foreground">총 학습 단어</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-foreground">15</div>
-                <div className="text-sm text-muted-foreground">생성한 단어장</div>
-              </div>
-              <div className="text-center p-3 bg-primary/10 rounded-lg">
-                <div className="text-2xl font-bold text-primary">89%</div>
-                <div className="text-sm text-muted-foreground">평균 정답률</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        
+        {/* '학습 통계' 카드는 이미 제거되었습니다. */}
       </div>
     </div>
   )
