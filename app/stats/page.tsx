@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { BarChart, LineChart, TrendingUp, History, BookOpen } from 'lucide-react';
+// [수정] Home 아이콘 import 추가
+import { BarChart, LineChart, TrendingUp, History, BookOpen, Home } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from 'recharts';
-import { fetchLearningStats } from '@/lib/api';
+import { fetchLearningStats } from '@/lib/api'; // fetchLearningStats 경로는 lib/api.ts에 있다고 가정합니다.
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button'; // [수정] Button 컴포넌트 import 추가
 
 interface WeeklyData {
   date: string;
@@ -21,6 +23,18 @@ interface LearningStats {
   streak: number;
   weeklyData: WeeklyData[];
 }
+
+// 차트 설정
+const chartConfig = {
+  words: {
+    label: '단어 (개)',
+    color: 'hsl(var(--chart-1))',
+  },
+  time: {
+    label: '시간 (분)',
+    color: 'hsl(var(--chart-2))',
+  },
+} satisfies ChartConfig;
 
 const StatsPage = () => {
   const [stats, setStats] = useState<LearningStats | null>(null);
@@ -42,87 +56,113 @@ const StatsPage = () => {
     getStats();
   }, []);
 
-  const chartConfig = {
-    words: {
-      label: '단어 (개)',
-      color: 'hsl(var(--chart-1))',
-    },
-    time: {
-      label: '시간 (분)',
-      color: 'hsl(var(--chart-2))',
-    },
-  };
+  // recharts에 맞게 데이터 변환
+  const chartData = stats?.weeklyData.map(day => ({
+    name: day.date,
+    '단어 (개)': day.words,
+    '시간 (분)': day.time,
+  }));
 
-  const WeeklyChart = ({ data }: { data: WeeklyData[] }) => (
-    <ChartContainer config={chartConfig} className="h-[200px] w-full">
-      <ComposedChart data={data}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="date"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-          tickFormatter={(value) => value.slice(-5)} // 'YYYY/MM/DD' -> 'MM/DD'
-        />
-        <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-        <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Legend />
-        <Bar dataKey="words" name="단어 (개)" fill="var(--color-words)" yAxisId="left" barSize={20} />
-        <Line type="monotone" dataKey="time" name="시간 (분)" stroke="var(--color-time)" yAxisId="right" />
-      </ComposedChart>
-    </ChartContainer>
-  );
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto p-4 space-y-6 pb-20 bg-background">
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-52 w-full" />
+      <div className="p-4 space-y-4 pb-20">
+        {/* 요청 3: 홈 버튼 (유지) */}
+        <div className="flex items-center justify-between h-10">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="-ml-2">
+            <Home className="w-5 h-5" />
+          </Button>
+          <div className="w-8"></div>
+        </div>
+        {/* 스켈레톤 UI */}
         <Skeleton className="h-32 w-full" />
+        {/* [수정] 스켈레톤 높이도 동일하게 늘림 */}
+        <Skeleton className="h-[36rem] w-full" />
       </div>
-    );
+    )
   }
 
   if (!stats) {
     return (
-      <div className="max-w-md mx-auto p-4 space-y-6 pb-20 bg-background text-center">
-        <p className="text-muted-foreground">학습 통계 데이터를 불러오는 데 실패했습니다.</p>
-      </div>
-    );
+         <div className="p-4 space-y-4 pb-20">
+            {/* 요청 3: 홈 버튼 (유지) */}
+            <div className="flex items-center justify-between h-10">
+              <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="-ml-2">
+                <Home className="w-5 h-5" />
+              </Button>
+              <div className="w-8"></div>
+            </div>
+            <Card>
+                <CardContent className="p-6 text-center text-muted-foreground">
+                    학습 데이터를 불러오는데 실패했습니다.
+                </CardContent>
+            </Card>
+         </div>
+    )
   }
 
   return (
-    <div className="max-w-md mx-auto p-4 space-y-6 pb-20 bg-background">
+    <div className="p-4 space-y-4 pb-20">
+      
+      {/* 요청 3: 공백 및 홈 버튼 (유지) */}
+      <div className="flex items-center justify-between h-10">
+        <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="-ml-2">
+          <Home className="w-5 h-5" />
+        </Button>
+        <div className="w-8"></div>
+      </div>
+
+      {/* 오늘의 학습 현황 탭 (유지) */}
       <Card className="bg-card">
         <CardHeader>
-          <CardTitle>오늘의 학습 현황</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            오늘의 학습 현황
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">학습 단어</p>
               <p className="text-2xl font-bold">{stats.wordsLearned}</p>
+              <p className="text-xs text-muted-foreground">학습 단어</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">학습 시간</p>
-              <p className="text-2xl font-bold">{stats.studyTime}분</p>
+              <p className="text-2xl font-bold">{stats.studyTime}<span className="text-sm">분</span></p>
+              <p className="text-xs text-muted-foreground">학습 시간</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">연속 학습</p>
-              <p className="text-2xl font-bold">{stats.streak}일</p>
+              <p className="text-2xl font-bold">{stats.streak}<span className="text-sm">일</span></p>
+              <p className="text-xs text-muted-foreground">연속 학습</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-card">
+      {/* [수정] 요청 2: 주간 학습 리포트 세로 크기 변경 */}
+      <Card className="bg-card w-full">
         <CardHeader>
-          <CardTitle>주간 학습 리포트</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart className="w-5 h-5 text-primary" />
+            주간 학습 리포트
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        {/* CardContent의 높이를 h-[36rem] (576px)로 크게 늘림 */}
+        <CardContent className="h-[36rem]">
           {stats.weeklyData && stats.weeklyData.length > 0 ? (
-            <WeeklyChart data={stats.weeklyData} />
+            <ChartContainer config={chartConfig} className="w-full h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis yAxisId="left" dataKey="단어 (개)" type="number" allowDecimals={false} fontSize={12} tickLine={false} axisLine={false} stroke={chartConfig.words.color} width={40} />
+                      <YAxis yAxisId="right" dataKey="시간 (분)" type="number" allowDecimals={false} orientation="right" fontSize={12} tickLine={false} axisLine={false} stroke={chartConfig.time.color} width={40} />
+                      <Tooltip content={<ChartTooltipContent hideIndicator />} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Bar yAxisId="left" dataKey="단어 (개)" fill={chartConfig.words.color} radius={[4, 4, 0, 0]} />
+                      <Line yAxisId="right" dataKey="시간 (분)" stroke={chartConfig.time.color} type="monotone" dot={false} strokeWidth={2} />
+                  </ComposedChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           ) : (
             <p className="text-sm text-center text-muted-foreground mt-4">
               주간 학습 데이터가 없습니다.
@@ -131,39 +171,21 @@ const StatsPage = () => {
         </CardContent>
       </Card>
 
+      {/* [수정] 요청 1: '학습 기록 보기' 비활성화 (주석 처리 유지) */}
+      {/*
       <Card 
         className="bg-card cursor-pointer hover:bg-muted"
         onClick={() => router.push('/study/history')}
-      >
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>학습 기록 보기</span>
-            <History className="w-5 h-5 text-muted-foreground" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            지난 학습 세션들의 상세 기록을 확인합니다.
-          </p>
-        </CardContent>
-      </Card>
+      > ... </Card>
+      */}
 
+      {/* [수정] 요청 1: '누적 학습 단어' 비활성화 (주석 처리 유지) */}
+      {/*
       <Card 
         className="bg-card cursor-pointer hover:bg-muted"
         onClick={() => router.push('/study/aggregated-detail')}
-      >
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>누적 학습 단어</span>
-            <BookOpen className="w-5 h-5 text-muted-foreground" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            지금까지 학습한 모든 단어의 목록과 정답률을 봅니다.
-          </p>
-        </CardContent>
-      </Card>
+      > ... </Card>
+      */}
 
     </div>
   );
