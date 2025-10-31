@@ -1,4 +1,3 @@
-// components/vocabulary/wordbook-detail.tsx
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
@@ -115,11 +114,9 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     if (!wordbook.id) return
     setIsLoading(true)
     try {
-      // (이전에 수정한) 단어장 상세 조회 API (GET /api/wordbooks/[wordbookId])
       const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`)
       const fetchedWords = data.words || [];
 
-      // createdAt으로 클라이언트 사이드 정렬 (API에서 orderBy 제거했으므로)
       fetchedWords.sort((a: Word, b: Word) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -168,7 +165,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   }, [words, searchQuery, filterMastered, sortOrder, shuffledWords]);
 
 
-  // 필터 토글 핸들러
   const handleFilterToggle = () => {
     setFilterMastered((prevFilter) => {
       const newFilter = prevFilter === 'all' ? 'exclude' : 'all';
@@ -179,7 +175,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     });
   };
 
-  // 정렬 토글 핸들러
   const handleSortToggle = () => {
     setSortOrder((prevOrder) => {
       const newOrder = prevOrder === 'default' ? 'random' : 'default';
@@ -190,7 +185,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     });
   };
 
-  // --- 나머지 핸들러 함수들 (이전과 동일) ---
   const handleAddWord = async (newWordData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
     try {
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
@@ -212,7 +206,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         body: JSON.stringify(updatedData),
       })
       await fetchWords()
-      onUpdate() // [수정됨] progress 갱신을 위해 onUpdate() 호출
+      onUpdate()
       setEditingWord(null)
     } catch (error) {
       console.error("단어 수정 실패:", error)
@@ -293,7 +287,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     }
   };
 
-  // [!!! 여기를 수정합니다 !!!]
   const handleConfirmMove = async (destinationWordbookId: string) => {
     setIsMoveDrawerOpen(false)
     try {
@@ -306,18 +299,13 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         }),
       })
       alert(`${selectedWords.size}개의 단어를 이동했습니다.`)
-
-      // [수정됨] onUpdate() 대신 onBack()을 호출하여
-      // 단어장 목록 화면으로 돌아가게(새로고침) 합니다.
       onBack();
-
       setIsEditMode(false)
     } catch (error) {
       console.error("단어 이동 실패:", error)
       alert("단어 이동에 실패했습니다.")
     }
   };
-  // [!!! 수정 끝 !!!]
 
   const handleWordSelection = (wordId: string) => {
     setSelectedWords((prev) => {
@@ -351,14 +339,17 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     });
   };
 
+  // [!!! 여기를 수정합니다 !!!]
   const handleCardFlip = (wordId: string) => {
-    if (hideMode !== "none")
-      setFlippedCards((prev) => {
-        const newSet = new Set(prev)
-        newSet.has(wordId) ? newSet.delete(wordId) : newSet.add(wordId)
-        return newSet
-      })
+    // "모두 보기" 모드에서도 터치(플립)가 작동하도록 수정
+    setFlippedCards((prev) => {
+      const newSet = new Set(prev)
+      newSet.has(wordId) ? newSet.delete(wordId) : newSet.add(wordId)
+      return newSet
+    })
   };
+  // [!!! 수정 끝 !!!]
+
   const handlePhotoCaptureClick = () => { setShowImageSelection(true); };
   const handleCameraSelect = () => { setShowImageSelection(false); setSelectedImageData(null); setShowPhotoCapture(true); };
   const handleGallerySelect = () => {
@@ -706,9 +697,15 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     {isEditMode && <Checkbox checked={selectedWords.has(word.id)} className="mr-4 mt-1" />}
+
+                    {/* [!!! 여기를 수정합니다 !!!] */}
+                    {/* 이제 터치(플립) 이벤트가 '모든 모드'에서 작동합니다. */}
                     <div className="flex-1 cursor-pointer" onClick={() => !isEditMode && handleCardFlip(word.id)}>
+
+                      {/* --- 단어 --- */}
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
+                          {/* '단어 숨김' 모드이고 '플립되지 않았을' 때만 단어 숨김 */}
                           {hideMode === "word" && !flippedCards.has(word.id) && !isEditMode ? (
                             <div className="h-7 w-32 bg-muted rounded animate-pulse" />
                           ) : (
@@ -734,11 +731,34 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                           </Button>
                         )}
                       </div>
+
+                      {/* --- 뜻 --- */}
+                      {/* '뜻 숨김' 모드이고 '플립되지 않았을' 때만 뜻 숨김 */}
                       {hideMode === "meaning" && !flippedCards.has(word.id) && !isEditMode ? (
                         <div className="h-6 w-24 bg-muted rounded animate-pulse mb-1" />
                       ) : (
                         <p className="text-base text-foreground mb-1">{word.meaning}</p>
                       )}
+
+                      {/* --- 발음 기호 & 예문 --- */}
+                      {/* [수정됨] '플립된' 상태일 때만 발음과 예문을 렌더링합니다. */}
+                      {flippedCards.has(word.id) && !isEditMode && (
+                        <>
+                          {/* --- 발음 기호 --- */}
+                          {word.pronunciation && (
+                            <p className="text-sm text-muted-foreground italic mb-1">[{word.pronunciation}]</p>
+                          )}
+
+                          {/* --- 예문 --- */}
+                          {word.example && (
+                            <p className="text-sm text-blue-600 dark:text-blue-400 pl-2 border-l-2 border-blue-500 mt-2">
+                              {word.example}
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {/* [!!! 수정 끝 !!!] */}
+
                     </div>
                     {!isEditMode && (
                       <Drawer>
