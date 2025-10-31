@@ -16,7 +16,7 @@ import { WordbookDetail } from "@/components/vocabulary/wordbook-detail";
 import { CreateWordbookScreen } from "@/components/vocabulary/create-wordbook-screen";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { fetchWithAuth } from "@/lib/api";
+import { fetchWithAuth } from "@/lib/api"; // [수정됨] fetchWithAuth 임포트 확인
 
 export default function AuthManager() {
   const [isLoading, setIsLoading] = useState(true);
@@ -67,19 +67,31 @@ export default function AuthManager() {
     setSelectedWordbookForDetail(wordbook);
   };
 
-  // 👇 --- [수정] 단어장 목록으로 돌아가는 함수 --- 👇
   const handleBackToVocabularyList = () => {
     setSelectedWordbookForDetail(null); // 상세 화면 상태 해제
     setVocabularyRefreshKey(prev => prev + 1); // 목록 새로고침 트리거
   };
-  // --- [수정] 여기까지 --- 👇
 
-  // 👇 --- [추가] 단어장 상세 화면 내 업데이트 처리 함수 --- 👇
-  // (목록 화면 새로고침만 하고, 화면 전환은 하지 않음)
-  const handleWordbookUpdate = () => {
-    setVocabularyRefreshKey(prev => prev + 1); // 목록 새로고침 트리거
+  // [!!! 여기를 수정합니다 !!!]
+  const handleWordbookUpdate = async () => {
+    // 1. 단어장 목록(VocabularyScreen)을 위한 새로고침 키
+    setVocabularyRefreshKey(prev => prev + 1);
+
+    // 2. [추가됨] 현재 상세 보기 중인 단어장 정보를 API로 다시 불러와서
+    //    state(selectedWordbookForDetail)를 갱신합니다.
+    if (selectedWordbookForDetail) {
+      try {
+        // GET /api/wordbooks/[wordbookId] API는 progress가 포함된 단어장 정보를 반환합니다.
+        const updatedWordbook = await fetchWithAuth(`/api/wordbooks/${selectedWordbookForDetail.id}`);
+        setSelectedWordbookForDetail(updatedWordbook);
+      } catch (error) {
+        console.error("단어장 상세 정보 갱신 실패:", error);
+        // 실패 시 목록으로 돌려보내서 데이터를 일치시킴
+        handleBackToVocabularyList();
+      }
+    }
   };
-  // --- [추가] 여기까지 --- 👇
+  // [!!! 수정 끝 !!!]
 
   const handleCreateWordbook = async (newWordbookData: { name: string; description: string; category: string }) => {
     try {
@@ -131,8 +143,8 @@ export default function AuthManager() {
           return (
             <WordbookDetail
               wordbook={selectedWordbookForDetail}
-              onBack={handleBackToVocabularyList} // 뒤로가기 버튼은 목록으로
-              onUpdate={handleWordbookUpdate} // ✨ 수정: 업데이트 시 화면 유지 함수 전달 ✨
+              onBack={handleBackToVocabularyList}
+              onUpdate={handleWordbookUpdate} // ✨ 수정된 함수가 여기로 전달됩니다 ✨
             />
           );
         }
@@ -146,10 +158,7 @@ export default function AuthManager() {
         );
 
       case "study":
-        // 👇 --- [수정] StudyScreen props 전달 방식 변경 --- 👇
-        // selectedWordbookId prop 사용 (StudyScreen 인터페이스 확인 필요)
         return <StudyScreen selectedWordbookId={selectedWordbookForStudy?.id ?? null} />;
-      // --- [수정] 여기까지 --- 👇
 
       case "community":
         return <CommunityScreen />;

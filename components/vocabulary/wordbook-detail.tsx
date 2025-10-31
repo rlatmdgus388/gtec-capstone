@@ -28,7 +28,7 @@ import {
 import { WordEditScreen } from "./word-edit-screen"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { ImageSelectionModal } from "@/components/camera/image-selection-modal"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // ScrollArea import 추가
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import {
   ArrowLeft,
   Search,
@@ -41,11 +41,11 @@ import {
   CheckCircle,
   FolderInput,
   BookCopy,
-  Filter, // 필터 아이콘 (전체 보기 상태)
-  ListFilter, // 정렬 아이콘 (기본)
-  Check, // 선택 표시 아이콘
-  Shuffle, // 랜덤 아이콘
-  X // '미암기' 아이콘
+  Filter,
+  ListFilter,
+  Check,
+  Shuffle,
+  X
 } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -115,8 +115,17 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     if (!wordbook.id) return
     setIsLoading(true)
     try {
+      // (이전에 수정한) 단어장 상세 조회 API (GET /api/wordbooks/[wordbookId])
       const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`)
       const fetchedWords = data.words || [];
+
+      // createdAt으로 클라이언트 사이드 정렬 (API에서 orderBy 제거했으므로)
+      fetchedWords.sort((a: Word, b: Word) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA; // 최신순
+      });
+
       setWords(fetchedWords);
       setShuffledWords([...fetchedWords].sort(() => Math.random() - 0.5));
     } catch (error) {
@@ -203,6 +212,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         body: JSON.stringify(updatedData),
       })
       await fetchWords()
+      onUpdate() // [수정됨] progress 갱신을 위해 onUpdate() 호출
       setEditingWord(null)
     } catch (error) {
       console.error("단어 수정 실패:", error)
@@ -282,6 +292,8 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       setIsFetchingWordbooks(false)
     }
   };
+
+  // [!!! 여기를 수정합니다 !!!]
   const handleConfirmMove = async (destinationWordbookId: string) => {
     setIsMoveDrawerOpen(false)
     try {
@@ -294,14 +306,19 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         }),
       })
       alert(`${selectedWords.size}개의 단어를 이동했습니다.`)
-      await fetchWords()
-      onUpdate()
+
+      // [수정됨] onUpdate() 대신 onBack()을 호출하여
+      // 단어장 목록 화면으로 돌아가게(새로고침) 합니다.
+      onBack();
+
       setIsEditMode(false)
     } catch (error) {
       console.error("단어 이동 실패:", error)
       alert("단어 이동에 실패했습니다.")
     }
   };
+  // [!!! 수정 끝 !!!]
+
   const handleWordSelection = (wordId: string) => {
     setSelectedWords((prev) => {
       const newSelection = new Set(prev)
@@ -321,17 +338,15 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     }
   };
 
-  // *** [수정됨] ***
-  // '단어', '뜻', '모두 보기'를 순환하는 하나의 핸들러
   const handleToggleHideMode = () => {
-    setFlippedCards(new Set()); // 모드 변경 시 항상 카드 뒤집기 초기화
+    setFlippedCards(new Set());
     setHideMode((prevMode) => {
       if (prevMode === "none") {
-        return "word"; // 모두 보기 -> 단어 숨김
+        return "word";
       } else if (prevMode === "word") {
-        return "meaning"; // 단어 숨김 -> 뜻 숨김
+        return "meaning";
       } else {
-        return "none"; // 뜻 숨김 -> 모두 보기
+        return "none";
       }
     });
   };
@@ -526,7 +541,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 <div className="flex-1">
                   <h1 className="text-xl font-bold text-foreground">{wordbook.name}</h1>
                   <p className="text-sm text-muted-foreground">
-                    {words.length}개 단어 • {wordbook.progress}% 완료
+                    {wordbook.wordCount}개 단어 • {wordbook.progress}% 완료
                   </p>
                 </div>
                 <Drawer>
@@ -604,8 +619,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       <div className="px-4 py-4 space-y-4">
         {!isEditMode && (
           <ScrollArea className="w-full whitespace-nowrap pb-2">
-
-            {/* *** [수정됨] *** */}
             <div className="flex justify-end gap-2 mb-4">
               <Button
                 variant="outline"
@@ -625,12 +638,10 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 {sortOrder === 'random' ? <Shuffle size={14} className="mr-1" /> : <ListFilter size={14} className="mr-1" />}
                 {sortOrder === 'random' ? '랜덤' : '기본'}
               </Button>
-
-              {/* 3개의 버튼을 1개로 통합 */}
               <Button
-                variant={hideMode === "none" ? "outline" : "default"} // '모두 보기'일 때만 outline
+                variant={hideMode === "none" ? "outline" : "default"}
                 size="sm"
-                onClick={handleToggleHideMode} // 통합 핸들러 사용
+                onClick={handleToggleHideMode}
                 className="text-xs rounded-full flex-shrink-0"
               >
                 {hideMode === "none" && (
