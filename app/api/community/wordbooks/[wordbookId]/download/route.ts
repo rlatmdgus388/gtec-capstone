@@ -6,10 +6,9 @@ import admin from 'firebase-admin';
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ wordbookId: string }> } // ✅ params는 Promise
+  { params }: { params: Promise<{ wordbookId: string }> }
 ) {
   try {
-    // ✅ headers()는 await
     const h = await headers();
     const authHeader = h.get('Authorization') || h.get('authorization');
     const token = authHeader?.toString().replace(/^Bearer\s+/i, '');
@@ -18,10 +17,9 @@ export async function POST(
       return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
     }
 
-    const decoded = await adminAuth.verifyIdToken(token);
-    const userId = decoded.uid;
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    const userId = decodedToken.uid; // 403 해결 (uid 가져오기)
 
-    // ✅ params await 해서 wordbookId 추출
     const { wordbookId } = await params;
 
     const communityWordbookRef = firestore.collection('communityWordbooks').doc(wordbookId);
@@ -32,21 +30,20 @@ export async function POST(
     }
 
     const wordbookData = communityWordbookDoc.data() || {};
-    const words = Array.isArray(wordbookData.words) ? wordbookData.words : [];
+    // [수정됨] words 배열에 'id'가 포함되어 있다고 가정합니다.
+    const words: any[] = Array.isArray(wordbookData.words) ? wordbookData.words : [];
 
-    // 1) 내 단어장 컬렉션에 문서 생성 (add 대신 미리 doc() 만들어 id 확보)
+    // 1) 내 단어장 컬렉션에 문서 생성
     const newWordbookRef = firestore.collection('wordbooks').doc();
     await newWordbookRef.set({
-      userId,
+      userId: userId, // 403 해결 (uid를 userId 필드에 저장)
       name: wordbookData.name ?? '',
       description: wordbookData.description ?? '',
       category: wordbookData.category ?? '',
-      wordCount: Number.isFinite(Number(wordbookData.wordCount))
-        ? Number(wordbookData.wordCount)
-        : words.length,
+      wordCount: words.length, // [수정됨] words.length로 통일
       progress: 0,
-      source: wordbookId, // 원본 출처
-      createdAt: admin.firestore.FieldValue.serverTimestamp(), // ✅ 서버 타임스탬프
+      source: wordbookId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -54,11 +51,22 @@ export async function POST(
     if (words.length > 0) {
       const batch = firestore.batch();
       for (const w of words) {
-        const wordRef = newWordbookRef.collection('words').doc();
+
+        // 404 에러 해결: 원본 단어의 ID(w.id)를 새 문서의 ID로 사용합니다.
+        const wordId = w.id || firestore.collection('dummy').doc().id;
+        const wordRef = newWordbookRef.collection('words').doc(wordId);
+
+        // [!!! 수정됨 !!!]
+        // React Key/404 오류 해결: ...w (스프레드)를 사용하지 않고,
+        // 필요한 필드만 명시적으로 복사하여 'id' 필드 오염을 막습니다.
         batch.set(wordRef, {
-          ...w,
-          mastered: false,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(), // ✅ 서버 타임스탬프
+          word: w.word || '',
+          meaning: w.meaning || '',
+          example: w.example || '',
+          pronunciation: w.pronunciation || '',
+          // id: w.id, // [제거] id 필드를 데이터 안에 저장하지 않습니다.
+          mastered: false, // 다운로드 시 암기 상태 초기화
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       }

@@ -1,4 +1,3 @@
-// components/vocabulary/wordbook-detail.tsx
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
@@ -28,7 +27,7 @@ import {
 import { WordEditScreen } from "./word-edit-screen"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { ImageSelectionModal } from "@/components/camera/image-selection-modal"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // ScrollArea import 추가
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import {
   ArrowLeft,
   Search,
@@ -41,11 +40,11 @@ import {
   CheckCircle,
   FolderInput,
   BookCopy,
-  Filter, // 필터 아이콘 (전체 보기 상태)
-  ListFilter, // 정렬 아이콘 (기본)
-  Check, // 선택 표시 아이콘
-  Shuffle, // 랜덤 아이콘
-  X // '미암기' 아이콘
+  Filter,
+  ListFilter,
+  Check,
+  Shuffle,
+  X
 } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -117,6 +116,13 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     try {
       const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`)
       const fetchedWords = data.words || [];
+
+      fetchedWords.sort((a: Word, b: Word) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA; // 최신순
+      });
+
       setWords(fetchedWords);
       setShuffledWords([...fetchedWords].sort(() => Math.random() - 0.5));
     } catch (error) {
@@ -159,7 +165,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   }, [words, searchQuery, filterMastered, sortOrder, shuffledWords]);
 
 
-  // 필터 토글 핸들러
   const handleFilterToggle = () => {
     setFilterMastered((prevFilter) => {
       const newFilter = prevFilter === 'all' ? 'exclude' : 'all';
@@ -170,7 +175,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     });
   };
 
-  // 정렬 토글 핸들러
   const handleSortToggle = () => {
     setSortOrder((prevOrder) => {
       const newOrder = prevOrder === 'default' ? 'random' : 'default';
@@ -181,7 +185,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     });
   };
 
-  // --- 나머지 핸들러 함수들 (이전과 동일) ---
   const handleAddWord = async (newWordData: { word: string; meaning: string; example?: string; pronunciation?: string; }) => {
     try {
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
@@ -203,6 +206,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         body: JSON.stringify(updatedData),
       })
       await fetchWords()
+      onUpdate()
       setEditingWord(null)
     } catch (error) {
       console.error("단어 수정 실패:", error)
@@ -282,6 +286,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       setIsFetchingWordbooks(false)
     }
   };
+
   const handleConfirmMove = async (destinationWordbookId: string) => {
     setIsMoveDrawerOpen(false)
     try {
@@ -294,14 +299,14 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         }),
       })
       alert(`${selectedWords.size}개의 단어를 이동했습니다.`)
-      await fetchWords()
-      onUpdate()
+      onBack();
       setIsEditMode(false)
     } catch (error) {
       console.error("단어 이동 실패:", error)
       alert("단어 이동에 실패했습니다.")
     }
   };
+
   const handleWordSelection = (wordId: string) => {
     setSelectedWords((prev) => {
       const newSelection = new Set(prev)
@@ -321,29 +326,30 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     }
   };
 
-  // *** [수정됨] ***
-  // '단어', '뜻', '모두 보기'를 순환하는 하나의 핸들러
   const handleToggleHideMode = () => {
-    setFlippedCards(new Set()); // 모드 변경 시 항상 카드 뒤집기 초기화
+    setFlippedCards(new Set());
     setHideMode((prevMode) => {
       if (prevMode === "none") {
-        return "word"; // 모두 보기 -> 단어 숨김
+        return "word";
       } else if (prevMode === "word") {
-        return "meaning"; // 단어 숨김 -> 뜻 숨김
+        return "meaning";
       } else {
-        return "none"; // 뜻 숨김 -> 모두 보기
+        return "none";
       }
     });
   };
 
+  // [!!! 여기를 수정합니다 !!!]
   const handleCardFlip = (wordId: string) => {
-    if (hideMode !== "none")
-      setFlippedCards((prev) => {
-        const newSet = new Set(prev)
-        newSet.has(wordId) ? newSet.delete(wordId) : newSet.add(wordId)
-        return newSet
-      })
+    // "모두 보기" 모드에서도 터치(플립)가 작동하도록 수정
+    setFlippedCards((prev) => {
+      const newSet = new Set(prev)
+      newSet.has(wordId) ? newSet.delete(wordId) : newSet.add(wordId)
+      return newSet
+    })
   };
+  // [!!! 수정 끝 !!!]
+
   const handlePhotoCaptureClick = () => { setShowImageSelection(true); };
   const handleCameraSelect = () => { setShowImageSelection(false); setSelectedImageData(null); setShowPhotoCapture(true); };
   const handleGallerySelect = () => {
@@ -526,7 +532,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 <div className="flex-1">
                   <h1 className="text-xl font-bold text-foreground">{wordbook.name}</h1>
                   <p className="text-sm text-muted-foreground">
-                    {words.length}개 단어 • {wordbook.progress}% 완료
+                    {wordbook.wordCount}개 단어 • {wordbook.progress}% 완료
                   </p>
                 </div>
                 <Drawer>
@@ -604,8 +610,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       <div className="px-4 py-4 space-y-4">
         {!isEditMode && (
           <ScrollArea className="w-full whitespace-nowrap pb-2">
-
-            {/* *** [수정됨] *** */}
             <div className="flex justify-end gap-2 mb-4">
               <Button
                 variant="outline"
@@ -625,12 +629,10 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 {sortOrder === 'random' ? <Shuffle size={14} className="mr-1" /> : <ListFilter size={14} className="mr-1" />}
                 {sortOrder === 'random' ? '랜덤' : '기본'}
               </Button>
-
-              {/* 3개의 버튼을 1개로 통합 */}
               <Button
-                variant={hideMode === "none" ? "outline" : "default"} // '모두 보기'일 때만 outline
+                variant={hideMode === "none" ? "outline" : "default"}
                 size="sm"
-                onClick={handleToggleHideMode} // 통합 핸들러 사용
+                onClick={handleToggleHideMode}
                 className="text-xs rounded-full flex-shrink-0"
               >
                 {hideMode === "none" && (
@@ -695,9 +697,15 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     {isEditMode && <Checkbox checked={selectedWords.has(word.id)} className="mr-4 mt-1" />}
+
+                    {/* [!!! 여기를 수정합니다 !!!] */}
+                    {/* 이제 터치(플립) 이벤트가 '모든 모드'에서 작동합니다. */}
                     <div className="flex-1 cursor-pointer" onClick={() => !isEditMode && handleCardFlip(word.id)}>
+
+                      {/* --- 단어 --- */}
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
+                          {/* '단어 숨김' 모드이고 '플립되지 않았을' 때만 단어 숨김 */}
                           {hideMode === "word" && !flippedCards.has(word.id) && !isEditMode ? (
                             <div className="h-7 w-32 bg-muted rounded animate-pulse" />
                           ) : (
@@ -723,11 +731,34 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                           </Button>
                         )}
                       </div>
+
+                      {/* --- 뜻 --- */}
+                      {/* '뜻 숨김' 모드이고 '플립되지 않았을' 때만 뜻 숨김 */}
                       {hideMode === "meaning" && !flippedCards.has(word.id) && !isEditMode ? (
                         <div className="h-6 w-24 bg-muted rounded animate-pulse mb-1" />
                       ) : (
                         <p className="text-base text-foreground mb-1">{word.meaning}</p>
                       )}
+
+                      {/* --- 발음 기호 & 예문 --- */}
+                      {/* [수정됨] '플립된' 상태일 때만 발음과 예문을 렌더링합니다. */}
+                      {flippedCards.has(word.id) && !isEditMode && (
+                        <>
+                          {/* --- 발음 기호 --- */}
+                          {word.pronunciation && (
+                            <p className="text-sm text-muted-foreground italic mb-1">[{word.pronunciation}]</p>
+                          )}
+
+                          {/* --- 예문 --- */}
+                          {word.example && (
+                            <p className="text-sm text-blue-600 dark:text-blue-400 pl-2 border-l-2 border-blue-500 mt-2">
+                              {word.example}
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {/* [!!! 수정 끝 !!!] */}
+
                     </div>
                     {!isEditMode && (
                       <Drawer>

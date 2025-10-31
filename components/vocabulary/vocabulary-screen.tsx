@@ -147,22 +147,18 @@ export function VocabularyScreen({
               className="pl-12 h-12 bg-muted border-0 rounded-full text-base placeholder:text-muted-foreground"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          {/* --- [수정됨] --- */}
+          {/* grid-cols-2 gap-3를 grid-cols-1로 변경 */}
+          <div className="grid grid-cols-1">
             <Button
               onClick={onStartCreate}
               className="h-12 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium"
             >
               <Edit size={18} />새 단어장
             </Button>
-            <Button
-              variant="outline"
-              className="h-12 flex items-center justify-center gap-2 bg-card border border-border hover:bg-accent text-foreground rounded-lg font-medium"
-              onClick={handlePhotoCaptureClick}
-            >
-              <Camera size={18} />
-              사진으로 추가
-            </Button>
+            {/* "사진으로 추가" 버튼 삭제됨 */}
           </div>
+          {/* --- [수정 끝] --- */}
         </div>
       </div>
 
