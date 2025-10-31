@@ -88,7 +88,7 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
       const cleanedPart = part.replace(/[^a-zA-Z]/g, '').toLowerCase();
       if (detectedOriginalWordSet.has(cleanedPart)) {
         return (
-          <span key={index} className="bg-orange-200 rounded-sm px-0.5">
+          <span key={index} className="bg-primary text-primary-foreground rounded-sm px-0.5">
             {part}
           </span>
         );
@@ -100,11 +100,11 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
   return (
     <div className="flex flex-col h-dvh bg-background">
       {/* Header, 텍스트 인식 결과 등 상단 UI는 기존과 동일 */}
-      <div className="border-b border-gray-100">
+      <div className="border-b border-border">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2 self-center">
-              <ArrowLeft size={20} className="text-gray-700" />
+              <ArrowLeft size={20} className="text-muted-foreground" />
             </Button>
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">텍스트 인식</h1>
@@ -116,7 +116,7 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
               {isProcessing ? (
                 <img src={imageData} alt="Captured" className="w-full h-32 object-cover rounded-lg" />
               ) : (
-                <div className="w-full h-32 overflow-y-auto rounded-lg bg-white p-4 text-sm whitespace-pre-wrap leading-relaxed">
+                <div className="w-full h-32 overflow-y-auto rounded-lg bg-background p-4 text-sm whitespace-pre-wrap leading-relaxed">
                   {renderHighlightedText()}
                 </div>
               )}
@@ -152,7 +152,7 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-foreground">{word.text}</h3>
                             <div className="w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer" onClick={() => toggleWordSelection(index)}>
-                                {word.selected && <CheckCircle size={24} className="text-primary bg-white rounded-full" />}
+                                {word.selected && <CheckCircle size={24} className="text-primary bg-background rounded-full" />}
                             </div>
                           </div>
                           {/* ▼▼▼ [수정된 부분] ▼▼▼ */}
@@ -163,7 +163,7 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
                             onChange={(e) => handleMeaningChange(index, e.target.value)}
                             // 입력창 클릭 시 단어 선택이 토글되지 않도록 이벤트 전파 중단
                             onClick={(e) => e.stopPropagation()}
-                            className="text-base text-gray-700 bg-gray-50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
+                            className="text-base border-0 focus-visible:ring-1 focus-visible:ring-ring"
                           />
                           {/* ▲▲▲ [수정된 부분] ▲▲▲ */}
                         </div>
