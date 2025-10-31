@@ -9,9 +9,10 @@ import { Loader2, AlertCircle, ArrowLeft, CheckCircle } from "lucide-react"
 interface DetectedWord {
   text: string;
   original: string;
-  confidence: number;
+  confidence?: number; // Tesseract의 confidence. Gemini는 없으므로 optional
   meaning?: string;
   selected: boolean;
+  partOfSpeech?: string; // [추가] Gemini가 반환할 품사
 }
 
 interface OCRProcessingProps {
@@ -31,28 +32,56 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
       setIsProcessing(true);
       setError(null);
       try {
-        const response = await fetch('/api/ocr', {
+        // --- 1. OCR API 호출 (기존과 동일) ---
+        // Tesseract.js가 전체 텍스트를 추출합니다.
+        const ocrResponse = await fetch('/api/ocr', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image: imageData }),
         });
 
-        if (!response.ok) {
-          throw new Error('텍스트 인식에 실패했습니다.');
+        if (!ocrResponse.ok) {
+          throw new Error('1. 텍스트 인식(OCR)에 실패했습니다.');
         }
 
-        const responseData = await response.json();
+        const ocrData = await ocrResponse.json();
+        setFullText(ocrData.fullText); // 전체 텍스트 UI 업데이트
 
-        const formattedWords = responseData.words.map((word: any) => ({
-          ...word,
-          selected: false,
+        if (!ocrData.fullText || ocrData.fullText.trim().length === 0) {
+           setError("이미지에서 텍스트를 찾을 수 없습니다.");
+           setDetectedWords([]);
+           setIsProcessing(false);
+           return;
+        }
+
+        // --- 2. [신규] Gemini 분석 API 호출 ---
+        // OCR로 얻은 fullText를 Gemini API로 보냅니다.
+        const analysisResponse = await fetch('/api/gemini-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: ocrData.fullText }),
+        });
+
+        if (!analysisResponse.ok) {
+          throw new Error('2. AI 단어 분석(Gemini)에 실패했습니다.');
+        }
+
+        const analysisData = await analysisResponse.json(); // [{ text, original, partOfSpeech, meaning }]
+
+        // --- 3. [변경] Gemini 응답으로 상태 업데이트 ---
+        // Tesseract의 단어 목록(ocrData.words) 대신 Gemini의 목록을 사용합니다.
+        const formattedWords = analysisData.map((word: any) => ({
+          text: word.text || word.original, // text 필드가 없을 경우 original 사용
+          original: word.original,
+          meaning: word.meaning || "", // 뜻이 없으면 빈 문자열
+          partOfSpeech: word.partOfSpeech || "", // 품사가 없으면 빈 문자열
+          selected: false, // 기본값
         }));
 
-        setFullText(responseData.fullText);
         setDetectedWords(formattedWords);
 
       } catch (err: any) {
-        setError(err.message || "텍스트 인식 중 오류가 발생했습니다. 다시 시도해주세요.");
+        setError(err.message || "텍스트 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
       } finally {
         setIsProcessing(false);
       }
@@ -80,15 +109,17 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
   }
   
   const renderHighlightedText = () => {
-    if (!fullText) return null;
-    const detectedOriginalWordSet = new Set(detectedWords.map(w => w.original.toLowerCase()));
-    const parts = fullText.split(/(\s+)/);
+    if (!fullText) return null;
+    // 'original' (원형) 대신 'text' (실제 텍스트) 기준으로 Set 생성
+    const detectedWordTextSet = new Set(detectedWords.map(w => w.text.toLowerCase())); // [수정]
+    const parts = fullText.split(/(\s+)/);
 
-    return parts.map((part, index) => {
-      const cleanedPart = part.replace(/[^a-zA-Z]/g, '').toLowerCase();
-      if (detectedOriginalWordSet.has(cleanedPart)) {
-        return (
-          <span key={index} className="bg-primary text-primary-foreground rounded-sm px-0.5">
+    return parts.map((part, index) => {
+      const cleanedPart = part.replace(/[^a-zA-Z]/g, '').toLowerCase();
+      // 수정된 Set으로 검사
+      if (detectedWordTextSet.has(cleanedPart)) { // [수정]
+        return (
+          <span key={index} className="bg-primary text-primary-foreground rounded-sm px-0.5">
             {part}
           </span>
         );
@@ -150,7 +181,20 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-foreground">{word.text}</h3>
+                            <div className="flex items-center">
+                              {/* 1. 'text' (원본) 대신 'original' (원형)을 기본으로 표시 */}
+                              <h3 className="text-lg font-semibold text-foreground">{word.original}</h3>
+
+                              {/* 2. 품사 표시 */}
+                              {word.partOfSpeech && (
+                                <span className="text-sm text-muted-foreground ml-2 italic">{word.partOfSpeech}</span>
+                              )}
+
+                              {/* 3. 원형과 원본 텍스트가 다를 경우, 괄호로 원본 표시 */}
+                              {word.original.toLowerCase() !== word.text.toLowerCase() && (
+                                <span className="text-sm text-muted-foreground ml-2">({word.text})</span>
+                              )}
+                            </div>
                             <div className="w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer" onClick={() => toggleWordSelection(index)}>
                                 {word.selected && <CheckCircle size={24} className="text-primary bg-background rounded-full" />}
                             </div>

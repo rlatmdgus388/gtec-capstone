@@ -11,6 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 interface DetectedWord {
   text: string;
+  original: string; // [추가]
+  confidence?: number;
+  meaning?: string;
+  partOfSpeech?: string; // [추가]
   selected: boolean;
 }
 
@@ -85,7 +89,7 @@ export function AddToWordbookDialog({ words, onAddToWordbook, onBack }: AddToWor
           <CardContent className="max-h-48 overflow-y-auto">
             {selectedWords.map((word, index) => (
               <div key={index} className="flex items-center justify-between p-2">
-                <h3 className="font-medium text-foreground">{word.text}</h3>
+                <h3 className="font-medium text-foreground">{word.original}</h3>
               </div>
             ))}
           </CardContent>
