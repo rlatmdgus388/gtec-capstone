@@ -6,6 +6,7 @@ import admin from 'firebase-admin';
 
 // 특정 단어장 정보와 포함된 단어 목록을 가져옵니다.
 export async function GET(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
+  // ... (기존 GET 함수와 동일)
   try {
     const { wordbookId } = await params;
 
@@ -29,20 +30,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ word
     // lastStudied 필드를 현재 시간으로 업데이트합니다.
     await wordbookRef.update({ lastStudied: new Date().toISOString() });
 
-    // [!!! 수정됨 !!!]
-    // 'words' 하위 컬렉션에서 단어 목록 가져오기 (orderBy 제거)
-    // orderBy('createdAt', 'desc')를 사용하면 Firebase 인덱스가 필요하여 오류가 날 수 있습니다.
-    // 클라이언트에서 필요시 정렬하는 것이 더 안전합니다.
     const wordsSnapshot = await wordbookRef.collection('words').get();
 
-    // [!!! 수정됨 !!!]
-    // React Key/404 오류 해결: ...doc.data()가 doc.id를 덮어쓰지 못하도록
-    // data()를 먼저 받고, id를 마지막에 덮어씁니다.
     const words = wordsSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         ...data,
-        id: doc.id // [중요] data 안에 id가 있어도, 항상 doc.id를 사용
+        id: doc.id
       };
     });
 
@@ -51,7 +45,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ word
     return NextResponse.json({
       ...wordbookData,
       id: wordbookDoc.id,
-      words: words // 하위 컬렉션의 단어 목록 포함
+      words: words
     });
   } catch (error) {
     console.error("단어장 상세 조회 오류:", error);
@@ -59,31 +53,55 @@ export async function GET(request: Request, { params }: { params: Promise<{ word
   }
 }
 
+// [!!! 여기를 수정합니다 !!!]
 // 특정 단어장 정보를 수정합니다.
 export async function PUT(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
   try {
     const { wordbookId } = await params;
-    const { name, description, category } = await request.json();
-    await firestore.collection('wordbooks').doc(wordbookId).update({
-      name,
-      description,
-      category,
+    // 1. 요청 본문(body)을 통째로 받습니다.
+    const body = await request.json();
+
+    // 2. 업데이트할 데이터 객체를 동적으로 구성합니다.
+    const updateData: { [key: string]: any } = {
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    };
+
+    // 3. body에 'name' 필드가 있으면 updateData에 추가합니다.
+    if (body.name !== undefined) {
+      if (body.name === "") {
+        return NextResponse.json({ message: '단어장 이름은 비워둘 수 없습니다.' }, { status: 400 });
+      }
+      updateData.name = body.name;
+    }
+
+    // 4. body에 'category' 필드가 있으면 updateData에 추가합니다.
+    if (body.category !== undefined) {
+      updateData.category = body.category;
+    }
+
+    // 5. body에 'description' 필드가 있으면 updateData에 추가합니다. (미래의 확장성을 위해)
+    if (body.description !== undefined) {
+      updateData.description = body.description;
+    }
+
+    // 6. 동적으로 구성된 updateData 객체로 Firestore 문서를 업데이트합니다.
+    await firestore.collection('wordbooks').doc(wordbookId).update(updateData);
+
     return NextResponse.json({ message: '단어장이 성공적으로 수정되었습니다.' });
   } catch (error) {
     console.error("단어장 수정 오류:", error);
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
 }
+// [!!! 수정 끝 !!!]
+
 
 // 특정 단어장을 삭제합니다.
 export async function DELETE(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
+  // ... (기존 DELETE 함수와 동일)
   try {
     const { wordbookId } = await params;
 
-    // [!!! 수정됨 !!!]
-    // 단어장 삭제 시 하위 컬렉션의 모든 단어를 삭제하는 로직 (배치 사용)
     const wordsRef = firestore.collection('wordbooks').doc(wordbookId).collection('words');
     const wordsSnapshot = await wordsRef.get();
 
@@ -91,7 +109,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ w
     wordsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
 
-    // 하위 컬렉션 삭제 후 단어장 문서 삭제
     await firestore.collection('wordbooks').doc(wordbookId).delete();
 
     return new Response(null, { status: 204 });

@@ -1,110 +1,134 @@
 "use client"
 
-import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
 import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
+// import { Textarea } from "@/components/ui/textarea" // '설명'이 없어졌으므로 Textarea import 제거
+import { ArrowLeft, BookPlus } from "lucide-react"
 
+// '설명(description)' 필드를 스키마에서 제거했습니다.
+const formSchema = z.object({
+  name: z.string().min(1, "이름을 입력해주세요."),
+  // description: z.string().optional(), // '설명' 필드 제거
+  category: z.string().min(1, "카테고리를 선택해주세요."),
+})
+
+// 부모 컴포넌트(AuthManager)의 onSave 타입과 맞추기 위해
+// onSave의 타입을 유지하고, onSubmit에서 description을 추가합니다.
 interface CreateWordbookScreenProps {
   onBack: () => void
-  onSave: (data: { name: string; description: string; category: string }) => Promise<void>
+  onSave: (data: { name: string; description: string; category: string }) => void
 }
 
-// '학술' 제거 및 .sort() 삭제
-const CATEGORIES = ["기초", "시험", "회화", "비즈니스", "여행", "전문", "기타"]
-
 export function CreateWordbookScreen({ onBack, onSave }: CreateWordbookScreenProps) {
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
-  const [category, setCategory] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      category: "",
+    },
+  })
 
-  const canSubmit = name.trim() !== "" && category.trim() !== ""
-
-  const handleSubmit = async () => {
-    if (!canSubmit) {
-      alert("단어장 이름과 카테고리는 필수입니다.")
-      return
-    }
-    setIsSubmitting(true)
-    try {
-      await onSave({ name, description, category })
-    } finally {
-      setIsSubmitting(false)
-    }
+  // '설명'이 빠진 폼 데이터에 description: ""을 추가하여 onSave로 전달
+  function onSubmit(data: z.infer<typeof formSchema>) {
+    onSave({
+      ...data,
+      description: "", // '설명' 필드를 항상 빈 문자열로 전달
+    })
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-background">
-      {/* Header */}
+    <div className="flex-1 overflow-y-auto pb-20">
       <div className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="flex items-center justify-between px-2 py-2 h-16">
-          <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">
-            <ArrowLeft size={22} className="text-foreground" />
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">새 단어장</h1>
-          <Button
-            variant="ghost"
-            onClick={handleSubmit}
-            disabled={!canSubmit || isSubmitting}
-            className="text-primary font-bold hover:bg-primary/10 text-base px-4"
-          >
-            {isSubmitting ? "저장중..." : "저장"}
-          </Button>
+        <div className="px-4 py-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">
+              <ArrowLeft size={20} className="text-foreground" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-foreground">새 단어장 만들기</h1>
+              <p className="text-sm text-muted-foreground">
+                새로운 단어장을 만들고 단어를 추가하세요
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Form */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="wordbook-name" className="text-sm font-medium text-muted-foreground px-1">
-            단어장 이름
-          </Label>
-          <Input
-            id="wordbook-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="예: 토익 필수 단어"
-            className="h-12 text-base rounded-lg border-0 bg-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-card shadow-none"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="wordbook-category" className="text-sm font-medium text-muted-foreground px-1">
-            카테고리
-          </Label>
-          <Select onValueChange={setCategory} value={category}>
-            <SelectTrigger
-              id="wordbook-category"
-              className="h-12 text-base rounded-lg border-0 bg-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-card shadow-none"
+      <div className="px-4 py-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base font-semibold">단어장 이름</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="예: 토익 필수 단어"
+                      {...field}
+                      className="h-12 text-base"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* --- '설명' FormField가 여기서 삭제되었습니다 --- */}
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base font-semibold">카테고리</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-12 text-base">
+                        <SelectValue placeholder="카테고리를 선택하세요" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="일상">일상</SelectItem>
+                      <SelectItem value="시험">시험</SelectItem>
+                      <SelectItem value="여행">여행</SelectItem>
+                      <SelectItem value="비즈니스">비즈니스</SelectItem>
+                      <SelectItem value="기타">기타</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              className="w-full h-12 text-base font-bold"
+              disabled={form.formState.isSubmitting}
             >
-              <SelectValue placeholder="카테고리를 선택하세요" />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORIES.map((c) => (
-                <SelectItem key={c} value={c} className="text-base">
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="wordbook-description" className="text-sm font-medium text-muted-foreground px-1">
-            설명 (선택)
-          </Label>
-          <Textarea
-            id="wordbook-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="이 단어장에 대한 간단한 설명을 입력하세요."
-            className="text-base rounded-lg border-0 bg-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-card shadow-none"
-            rows={4}
-          />
-        </div>
+              <BookPlus size={18} className="mr-2" />
+              단어장 생성
+            </Button>
+          </form>
+        </Form>
       </div>
     </div>
   )
