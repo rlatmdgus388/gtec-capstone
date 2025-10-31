@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-// [수정] Home 아이콘 import 추가
-import { BarChart, LineChart, TrendingUp, History, BookOpen, Home } from 'lucide-react';
+// 뒤로 가기 아이콘
+import { BarChart, LineChart, TrendingUp, History, BookOpen, ArrowLeft } from 'lucide-react'; 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from 'recharts';
-import { fetchLearningStats } from '@/lib/api'; // fetchLearningStats 경로는 lib/api.ts에 있다고 가정합니다.
+import { fetchLearningStats } from '@/lib/api'; // 경로는 실제 위치에 맞게 수정 필요
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button'; // [수정] Button 컴포넌트 import 추가
+import { Button } from '@/components/ui/button';
 
 interface WeeklyData {
   date: string;
@@ -28,14 +28,13 @@ interface LearningStats {
 const chartConfig = {
   words: {
     label: '단어 (개)',
-    color: 'hsl(var(--chart-1))',
+    color: 'hsl(var(--chart-1))', // <--- 1번 색상 변수
   },
   time: {
     label: '시간 (분)',
-    color: 'hsl(var(--chart-2))',
+    color: 'hsl(var(--chart-2))', // <--- 2번 색상 변수
   },
 } satisfies ChartConfig;
-
 const StatsPage = () => {
   const [stats, setStats] = useState<LearningStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,17 +65,17 @@ const StatsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-4 space-y-4 pb-20">
-        {/* 요청 3: 홈 버튼 (유지) */}
+      // [수정] max-w-lg로 너비 축소, space-y-6 간격 유지
+      <div className="max-w-lg mx-auto p-4 space-y-6 pb-20">
+        {/* 뒤로 가기 버튼 (유지) */}
         <div className="flex items-center justify-between h-10">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="-ml-2">
-            <Home className="w-5 h-5" />
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="-ml-2">
+            <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="w-8"></div>
         </div>
         {/* 스켈레톤 UI */}
         <Skeleton className="h-32 w-full" />
-        {/* [수정] 스켈레톤 높이도 동일하게 늘림 */}
         <Skeleton className="h-[36rem] w-full" />
       </div>
     )
@@ -84,11 +83,12 @@ const StatsPage = () => {
 
   if (!stats) {
     return (
-         <div className="p-4 space-y-4 pb-20">
-            {/* 요청 3: 홈 버튼 (유지) */}
+         // [수정] max-w-lg로 너비 축소, space-y-6 간격 유지
+         <div className="max-w-lg mx-auto p-4 space-y-6 pb-20">
+            {/* 뒤로 가기 버튼 (유지) */}
             <div className="flex items-center justify-between h-10">
-              <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="-ml-2">
-                <Home className="w-5 h-5" />
+              <Button variant="ghost" size="icon" onClick={() => router.back()} className="-ml-2">
+                <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="w-8"></div>
             </div>
@@ -102,12 +102,13 @@ const StatsPage = () => {
   }
 
   return (
-    <div className="p-4 space-y-4 pb-20">
+    // [수정] 최상위 div에 max-w-lg mx-auto 추가하여 너비 축소 및 가운데 정렬
+    <div className="max-w-lg mx-auto p-4 space-y-6 pb-20">
       
-      {/* 요청 3: 공백 및 홈 버튼 (유지) */}
+      {/* 뒤로 가기 버튼 (유지) */}
       <div className="flex items-center justify-between h-10">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="-ml-2">
-          <Home className="w-5 h-5" />
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="-ml-2">
+          <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="w-8"></div>
       </div>
@@ -115,7 +116,7 @@ const StatsPage = () => {
       {/* 오늘의 학습 현황 탭 (유지) */}
       <Card className="bg-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
             <TrendingUp className="w-5 h-5 text-primary" />
             오늘의 학습 현황
           </CardTitle>
@@ -123,22 +124,22 @@ const StatsPage = () => {
         <CardContent>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold">{stats.wordsLearned}</p>
+              <p className="text-2xl font-bold text-primary">{stats.wordsLearned}</p>
               <p className="text-xs text-muted-foreground">학습 단어</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.studyTime}<span className="text-sm">분</span></p>
+              <p className="text-2xl font-bold text-primary">{stats.studyTime}<span className="text-sm">분</span></p>
               <p className="text-xs text-muted-foreground">학습 시간</p>
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.streak}<span className="text-sm">일</span></p>
+              <p className="text-2xl font-bold text-primary">{stats.streak}<span className="text-sm">일</span></p>
               <p className="text-xs text-muted-foreground">연속 학습</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* [수정] 요청 2: 주간 학습 리포트 세로 크기 변경 */}
+      {/* 주간 학습 리포트 (유지) */}
       <Card className="bg-card w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -146,8 +147,8 @@ const StatsPage = () => {
             주간 학습 리포트
           </CardTitle>
         </CardHeader>
-        {/* CardContent의 높이를 h-[36rem] (576px)로 크게 늘림 */}
-        <CardContent className="h-[36rem]">
+        {/* 세로 길이 h-[36rem] (유지) */}
+        <CardContent className="h-[36rem]"> 
           {stats.weeklyData && stats.weeklyData.length > 0 ? (
             <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -171,20 +172,12 @@ const StatsPage = () => {
         </CardContent>
       </Card>
 
-      {/* [수정] 요청 1: '학습 기록 보기' 비활성화 (주석 처리 유지) */}
+      {/* 비활성화된 카드 (주석 처리 유지) */}
       {/*
-      <Card 
-        className="bg-card cursor-pointer hover:bg-muted"
-        onClick={() => router.push('/study/history')}
-      > ... </Card>
+      <Card ... > ... </Card>
       */}
-
-      {/* [수정] 요청 1: '누적 학습 단어' 비활성화 (주석 처리 유지) */}
       {/*
-      <Card 
-        className="bg-card cursor-pointer hover:bg-muted"
-        onClick={() => router.push('/study/aggregated-detail')}
-      > ... </Card>
+      <Card ... > ... </Card>
       */}
 
     </div>
