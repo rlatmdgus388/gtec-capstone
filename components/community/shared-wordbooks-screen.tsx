@@ -34,11 +34,31 @@ interface SharedWordbook {
   likes: number
   downloads: number
   views: number
-  category: string
+  category: string // e.g., 'exam', 'basic'
 }
 
-const ALL_CATEGORIES = ["기초", "시험", "회화", "비즈니스", "여행", "전문", "기타"]
-const FILTER_CATEGORIES = [{ label: "전체", value: "all" }, ...ALL_CATEGORIES.map((c) => ({ label: c, value: c }))]
+// ✨ 카테고리 정의 수정: 한글 레이블과 영문 값(DB 저장 값)을 매핑합니다.
+const CATEGORY_MAP: Record<string, string> = {
+  basic: "기초",
+  exam: "시험",
+  conversation: "회화",
+  business: "비즈니스",
+  travel: "여행",
+  specialized: "전문",
+  etc: "기타",
+}
+
+// ✨ 영문 value를 한글 label로 변환하는 헬퍼 함수
+const getCategoryLabel = (value: string) => {
+  return CATEGORY_MAP[value] || value // 매핑이 없으면 원본 값(영문) 반환
+}
+
+// ✨ 필터 카테고리 수정: '전체'를 추가하고 CATEGORY_MAP을 기반으로 생성합니다.
+const FILTER_CATEGORIES = [
+  { label: "전체", value: "all" },
+  // CATEGORY_MAP의 [key, value]를 { value: key, label: value } 형태로 변환
+  ...Object.entries(CATEGORY_MAP).map(([value, label]) => ({ label, value })),
+]
 
 // ✨ 아래 줄이 수정되었습니다. onSelectWordbook prop을 추가합니다.
 export function SharedWordbooksScreen({
@@ -49,6 +69,7 @@ export function SharedWordbooksScreen({
   const [isLoading, setIsLoading] = useState(true)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  // selectedCategory는 이제 'all', 'basic', 'exam' 등의 영문 값을 저장합니다.
   const [selectedCategory, setSelectedCategory] = useState("all")
 
   // ✨ 아래 줄이 삭제되었습니다. 펼치기 상태는 더 이상 필요 없습니다.
@@ -102,7 +123,10 @@ export function SharedWordbooksScreen({
     const matchesSearch =
       wb.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       wb.author.name.toLowerCase().includes(searchQuery.toLowerCase())
+
+    // ✨ 필터 로직 수정: 이제 wb.category (영문)와 selectedCategory (영문)가 올바르게 비교됩니다.
     const matchesCategory = selectedCategory === "all" || wb.category === selectedCategory
+
     return matchesSearch && matchesCategory
   })
 
@@ -132,23 +156,28 @@ export function SharedWordbooksScreen({
               className="pl-9 h-10 bg-muted/50 border-border rounded-md"
             />
           </div>
+
+          {/* ✨ 카테고리 필터 렌더링 수정 */}
           <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex w-max space-x-2">
               {FILTER_CATEGORIES.map((cat) => (
                 <Badge
                   key={cat.value}
                   variant={selectedCategory === cat.value ? "default" : "secondary"}
-                  onClick={() => setSelectedCategory(cat.value)}
+                  onClick={() => setSelectedCategory(cat.value)} // 클릭 시 영문 value가 state에 저장됨
                   className="cursor-pointer"
                 >
-                  {cat.label}
+                  {cat.label} {/* 사용자에게는 한글 label이 보임 */}
                 </Badge>
               ))}
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </div>
-        <div className="p-4 space-y-4">
+
+        {/* Content */}
+        {/* 3번 요청: space-y-4 -> space-y-3 로 수정 */}
+        <div className="p-4 space-y-3">
           {isLoading ? (
             <div className="space-y-3">
               <Skeleton className="h-24 w-full" />
@@ -174,10 +203,13 @@ export function SharedWordbooksScreen({
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <h3 className="font-semibold text-card-foreground">{wordbook.name}</h3>
+                      {/* 4번 요청: p 태그는 원래 클릭 불가능 */}
                       <p className="text-sm text-muted-foreground">by {wordbook.author.name}</p>
                       <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
+
+                      {/* ✨ 단어장 카드 내부의 카테고리 표시 수정 */}
                       <Badge variant="secondary" className="mt-2">
-                        {wordbook.category}
+                        {getCategoryLabel(wordbook.category)} {/* 영문 값을 한글로 변환하여 표시 */}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">

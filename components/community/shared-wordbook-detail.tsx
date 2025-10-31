@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react" // useRef import
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +8,7 @@ import { ArrowLeft, Download, Heart, Eye } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { auth } from "@/lib/firebase"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils" // 1번: cn 유틸리티 추가
 
 interface Word {
   id: string
@@ -37,7 +38,7 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
   const [isLoading, setIsLoading] = useState(true)
   const [isLiked, setIsLiked] = useState(false)
   const currentUser = auth.currentUser
-  const fetchInitiated = useRef(false) // API 호출 여부를 추적하는 ref
+  const fetchInitiated = useRef(false)
 
   const fetchWordbook = useCallback(async () => {
     setIsLoading(true)
@@ -55,9 +56,8 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
   }, [wordbookId, currentUser])
 
   useEffect(() => {
-    // ref를 확인하여 fetch가 시작되지 않았을 경우에만 API 호출 (StrictMode 중복 실행 방지)
     if (wordbookId && !fetchInitiated.current) {
-      fetchInitiated.current = true // 호출 시작으로 표시
+      fetchInitiated.current = true
       fetchWordbook()
     }
   }, [wordbookId, fetchWordbook])
@@ -117,6 +117,7 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
                   {wordbook.category}
                 </Badge>
                 <h2 className="text-2xl font-bold">{wordbook.name}</h2>
+                {/* 4번 요청: p 태그는 원래 클릭 불가능 */}
                 <p className="text-sm text-muted-foreground">by {wordbook.author.name}</p>
                 <p className="text-sm text-foreground mt-2">{wordbook.description}</p>
               </CardHeader>
@@ -138,8 +139,24 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
                   <Button className="flex-1" onClick={handleDownload}>
                     <Download className="mr-2 h-4 w-4" /> 내 단어장에 추가
                   </Button>
-                  <Button variant={isLiked ? "destructive" : "outline"} onClick={handleLike}>
-                    <Heart className="mr-2 h-4 w-4" /> {isLiked ? "좋아요 취소" : "좋아요"}
+                  {/* 1번 요청: 좋아요 버튼 스타일 수정 */}
+                  <Button
+                    variant="outline"
+                    onClick={handleLike}
+                    className={cn(
+                      "transition-colors",
+                      isLiked
+                        ? "text-red-500 border-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <Heart
+                      className={cn(
+                        "mr-2 h-4 w-4 transition-all",
+                        isLiked && "fill-current" // text-red-500가 적용됨
+                      )}
+                    />
+                    {isLiked ? "좋아요" : "좋아요"}
                   </Button>
                 </div>
               </CardContent>
