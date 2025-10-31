@@ -8,10 +8,6 @@ import {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-<<<<<<< HEAD
-=======
-// ✅ 폴백 후보 (flash → pro → 1.5 라인)
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
 const MODEL_CANDIDATES = [
   "gemini-2.5-flash",
   "gemini-2.5-pro",
@@ -19,11 +15,7 @@ const MODEL_CANDIDATES = [
   "gemini-1.5-flash-001",
 ] as const;
 
-<<<<<<< HEAD
 /** 긴 입력을 안전하게 분할 */
-=======
-/** 긴 입력을 안전하게 분할 (토큰 찢김/출력 꼬리 방지) */
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
 function splitTextByLength(s: string, max = 2000) {
   if (s.length <= max) return [s];
   const parts: string[] = [];
@@ -31,7 +23,6 @@ function splitTextByLength(s: string, max = 2000) {
   return parts;
 }
 
-<<<<<<< HEAD
 /** 문자열 내부 JSON 탐색 */
 function findFirstValidJsonSpan(s: string): { start: number; end: number } | null {
   const openers = ["[", "{"];
@@ -40,13 +31,6 @@ function findFirstValidJsonSpan(s: string): { start: number; end: number } | nul
     esc = false,
     stack: string[] = [],
     start = -1;
-=======
-/** 문자열/이스케이프 인지하면서 첫 유효 JSON(객체/배열) 범위 찾기 */
-function findFirstValidJsonSpan(s: string): { start: number; end: number } | null {
-  const openers = ["[", "{"];
-  const closers: Record<string, string> = { "[": "]", "{": "}" };
-  let inStr = false, esc = false, stack: string[] = [], start = -1;
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
   for (let i = 0; i < s.length; i++) {
     const ch = s[i];
     if (inStr) {
@@ -54,7 +38,6 @@ function findFirstValidJsonSpan(s: string): { start: number; end: number } | nul
       else if (ch === "\\") esc = true;
       else if (ch === '"') inStr = false;
     } else {
-<<<<<<< HEAD
       if (ch === '"') {
         inStr = true;
         esc = false;
@@ -64,24 +47,15 @@ function findFirstValidJsonSpan(s: string): { start: number; end: number } | nul
         if (!stack.length) start = i;
         stack.push(ch);
       } else if (stack.length) {
-=======
-      if (ch === '"') { inStr = true; esc = false; continue; }
-      if (openers.includes(ch)) { if (!stack.length) start = i; stack.push(ch); }
-      else if (stack.length) {
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
         const top = stack[stack.length - 1];
         if (ch === closers[top]) {
           stack.pop();
           if (!stack.length && start !== -1) {
             const cand = s.slice(start, i + 1);
-<<<<<<< HEAD
             try {
               JSON.parse(cand);
               return { start, end: i };
             } catch {}
-=======
-            try { JSON.parse(cand); return { start, end: i }; } catch {}
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
           }
         }
       }
@@ -90,11 +64,7 @@ function findFirstValidJsonSpan(s: string): { start: number; end: number } | nul
   return null;
 }
 
-<<<<<<< HEAD
 /** JSON 안전 파싱 */
-=======
-/** 안전 JSON 파서 (혹시 인자 문자열이 JSON이 아닐 때 마지막 방어선) */
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
 function tryParseJSON(s: string) {
   let t = s
     .replace(/^\uFEFF/, "")
@@ -105,51 +75,15 @@ function tryParseJSON(s: string) {
     .replace(/,\s*([}\]])/g, "$1")
     .trim();
 
-<<<<<<< HEAD
   try {
     return JSON.parse(t);
   } catch {}
-=======
-  try { return JSON.parse(t); } catch {}
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
   const idx = findFirstValidJsonSpan(t);
   if (idx) return JSON.parse(t.slice(idx.start, idx.end + 1));
   throw new SyntaxError("Failed to parse tool arguments as JSON.");
 }
 
-<<<<<<< HEAD
 /** 임시 오류 여부 판별 */
-=======
-// 도메인 스키마
-const TermItemSchema = {
-  type: "object",
-  properties: {
-    original: { type: "string" },
-    text: { type: "string" },
-    partOfSpeech: { type: "string" },
-    meaning: { type: "string" },
-  },
-  required: ["original", "text", "partOfSpeech", "meaning"],
-} as const;
-
-// 함수 선언
-const functionDeclarations = [
-  {
-    name: "return_terms",
-    description:
-      "Extract important English words from the input text and return them in a strict schema.",
-    parameters: {
-      type: "object",
-      properties: {
-        terms: { type: "array", items: TermItemSchema },
-      },
-      required: ["terms"],
-    },
-  },
-] as const;
-
-// ✅ 일시적 오류 판별 + 재시도 래퍼
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
 function isTransient(err: any) {
   const st = Number(err?.status || err?.code || 0);
   const msg = String(err?.message || "").toLowerCase();
@@ -157,10 +91,7 @@ function isTransient(err: any) {
   return /overloaded|temporar|timeout|deadline|rate|quota|unavailable/i.test(msg);
 }
 
-<<<<<<< HEAD
 /** 재시도 로직 */
-=======
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
 async function callWithRetry<T>(
   fn: () => Promise<T>,
   { retries = 4, baseMs = 400, maxMs = 6000 }: { retries?: number; baseMs?: number; maxMs?: number } = {}
@@ -179,7 +110,6 @@ async function callWithRetry<T>(
   throw lastErr;
 }
 
-<<<<<<< HEAD
 // 단어 필터링 정리
 function sanitizeTerms(arr: any[]) {
   return arr
@@ -200,26 +130,15 @@ function sanitizeTerms(arr: any[]) {
 }
 
 /** 분석 함수 */
-=======
-/** 한 덩어리 텍스트에 대해 함수 호출로 결과 받기 (모델 폴백 + 타임아웃 + 백오프) */
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
 async function analyzeChunk(genAI: GoogleGenerativeAI, text: string) {
   const prompt = `
 다음 텍스트에서 중요한 영어 단어들을 추출해 아래 스키마에 맞춰 함수(return_terms)를 반드시 호출하세요.
 - original: 원형
-<<<<<<< HEAD
 - text: 원문 그대로
 - partOfSpeech: n|v|adj|adv 등
 - meaning: 한국어 뜻
 
 반드시 함수 호출을 하세요. **단어가 없어도 return_terms({ "terms": [] })를 호출**하세요.
-=======
-- text: 원문에 나온 그대로
-- partOfSpeech: n|v|adj|adv 등
-- meaning: 한국어 뜻
-
-중요: 고유명사(사람 이름, 지명, 브랜드 등)는 제외하세요.
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
 설명/주석/코드펜스 없이 함수 호출만 하세요.
 
 텍스트:
@@ -235,7 +154,6 @@ ${text}
     maxOutputTokens: 2048,
   };
 
-<<<<<<< HEAD
   const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -272,22 +190,6 @@ ${text}
 
   const tryToolCall = async (modelId: string, forcePrompt = prompt) => {
     const model = genAI.getGenerativeModel({ model: modelId });
-=======
-  // ✅ 불필요 차단 최소화(원한다면 완화 수치 조정)
-  const safetySettings = [
-    { category: HarmCategory.HARM_CATEGORY_HARASSMENT,        threshold: HarmBlockThreshold.BLOCK_NONE },
-    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,       threshold: HarmBlockThreshold.BLOCK_NONE },
-    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE }, // ✅ 수정된 부분
-    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-  ];
-  
-
-  let lastErr: any;
-  for (const modelId of MODEL_CANDIDATES) {
-    const model = genAI.getGenerativeModel({ model: modelId });
-
-    // ✅ 타임아웃(예: 25초)
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 25_000);
 
@@ -296,14 +198,8 @@ ${text}
         () =>
           model.generateContent(
             {
-<<<<<<< HEAD
               contents: [{ role: "user", parts: [{ text: forcePrompt }] }],
               tools: [{ functionDeclarations }],
-=======
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
-              tools: [{ functionDeclarations }],
-              // ✅ 함수 강제 + 허용 목록 지정
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
               toolConfig: {
                 functionCallingConfig: {
                   mode: "ANY",
@@ -313,7 +209,6 @@ ${text}
               generationConfig,
               safetySettings,
             },
-<<<<<<< HEAD
             // @ts-ignore
             { signal: controller.signal }
           ),
@@ -400,63 +295,6 @@ ${text}
   }
 
   throw new Error("All models failed to return structured output.");
-=======
-            // @ts-ignore: SDK가 signal 옵션 허용
-            { signal: controller.signal }
-          ),
-        { retries: 4, baseMs: 400, maxMs: 6000 }
-      );
-
-      clearTimeout(timer);
-
-      // ✅ 차단 피드백 로그(디버그용)
-      const fb = result.response.promptFeedback;
-      if (fb?.blockReason) {
-        console.warn("Prompt blocked:", fb.blockReason, fb.safetyRatings);
-      }
-
-      const cand = result.response.candidates?.[0];
-      if (!cand) throw new Error("No candidate returned.");
-
-      const parts = cand.content?.parts ?? [];
-      const call = parts.find((p: any) => p.functionCall);
-      if (!call) {
-        console.warn("Model did not return a function call for a chunk. Returning empty array.");
-        return [];
-      }
-
-      const { name, args } = call.functionCall;
-      if (name !== "return_terms") throw new Error(`Unexpected function call: ${name}`);
-
-      const parsed = typeof args === "string" ? tryParseJSON(args) : args;
-      const arr = parsed?.terms ?? [];
-
-      const cleaned = arr
-        .filter(
-          (x: any) =>
-            x &&
-            typeof x.original === "string" &&
-            typeof x.text === "string" &&
-            typeof x.partOfSpeech === "string" &&
-            typeof x.meaning === "string"
-        )
-        .map((x: any) => ({
-          original: x.original.trim(),
-          text: x.text.trim(),
-          partOfSpeech: x.partOfSpeech.trim(),
-          meaning: x.meaning.trim(),
-        }));
-
-      return cleaned;
-    } catch (err) {
-      clearTimeout(timer);
-      lastErr = err;
-      if (!isTransient(err)) break; // 비일시 오류면 즉시 중단
-      // 일시 오류면 다음 모델로 폴백
-    }
-  }
-  throw lastErr;
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
 }
 
 export async function POST(request: Request) {
@@ -466,27 +304,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "텍스트가 필요합니다." }, { status: 400 });
     }
 
-<<<<<<< HEAD
     const chunks = splitTextByLength(text, 2000)
       .map((s) => s.trim())
       .filter((s) => /[A-Za-z]/.test(s));
 
     const all: any[] = [];
-=======
-    const chunks = splitTextByLength(text, 2000);
-    const all: any[] = [];
-
-    // 순차 처리(503/429 완화)
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
     for (const chunk of chunks) {
       const part = await analyzeChunk(genAI, chunk);
       all.push(...part);
     }
 
-<<<<<<< HEAD
-=======
-    // 중복 제거
->>>>>>> 33781645fc2483635ec3d2251918bd049a3eed00
     const key = (t: any) => `${t.text}@@${t.original}`.toLowerCase();
     const dedup = Array.from(new Map(all.map((r) => [key(r), r])).values());
 
