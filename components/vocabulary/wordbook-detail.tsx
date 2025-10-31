@@ -320,9 +320,22 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       setSelectedWords(new Set(filteredAndSortedWords.map((w) => w.id)))
     }
   };
-  const handleHideWords = () => { setHideMode("word"); setFlippedCards(new Set()); };
-  const handleHideMeanings = () => { setHideMode("meaning"); setFlippedCards(new Set()); };
-  const handleShowAll = () => { setHideMode("none"); setFlippedCards(new Set()); };
+
+  // *** [수정됨] ***
+  // '단어', '뜻', '모두 보기'를 순환하는 하나의 핸들러
+  const handleToggleHideMode = () => {
+    setFlippedCards(new Set()); // 모드 변경 시 항상 카드 뒤집기 초기화
+    setHideMode((prevMode) => {
+      if (prevMode === "none") {
+        return "word"; // 모두 보기 -> 단어 숨김
+      } else if (prevMode === "word") {
+        return "meaning"; // 단어 숨김 -> 뜻 숨김
+      } else {
+        return "none"; // 뜻 숨김 -> 모두 보기
+      }
+    });
+  };
+
   const handleCardFlip = (wordId: string) => {
     if (hideMode !== "none")
       setFlippedCards((prev) => {
@@ -591,6 +604,8 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       <div className="px-4 py-4 space-y-4">
         {!isEditMode && (
           <ScrollArea className="w-full whitespace-nowrap pb-2">
+
+            {/* *** [수정됨] *** */}
             <div className="flex justify-end gap-2 mb-4">
               <Button
                 variant="outline"
@@ -610,31 +625,32 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 {sortOrder === 'random' ? <Shuffle size={14} className="mr-1" /> : <ListFilter size={14} className="mr-1" />}
                 {sortOrder === 'random' ? '랜덤' : '기본'}
               </Button>
+
+              {/* 3개의 버튼을 1개로 통합 */}
               <Button
-                variant={hideMode === "word" ? "default" : "outline"}
+                variant={hideMode === "none" ? "outline" : "default"} // '모두 보기'일 때만 outline
                 size="sm"
-                onClick={handleHideWords}
+                onClick={handleToggleHideMode} // 통합 핸들러 사용
                 className="text-xs rounded-full flex-shrink-0"
               >
-                <EyeOff size={14} className="mr-1" />
-                단어
-              </Button>
-              <Button
-                variant={hideMode === "meaning" ? "default" : "outline"}
-                size="sm"
-                onClick={handleHideMeanings}
-                className="text-xs rounded-full flex-shrink-0"
-              >
-                <EyeOff size={14} className="mr-1" />뜻
-              </Button>
-              <Button
-                variant={hideMode === "none" ? "default" : "outline"}
-                size="sm"
-                onClick={handleShowAll}
-                className="text-xs rounded-full flex-shrink-0"
-              >
-                <Eye size={14} className="mr-1" />
-                모두 보기
+                {hideMode === "none" && (
+                  <>
+                    <Eye size={14} className="mr-1" />
+                    모두 보기
+                  </>
+                )}
+                {hideMode === "word" && (
+                  <>
+                    <EyeOff size={14} className="mr-1" />
+                    단어 숨김
+                  </>
+                )}
+                {hideMode === "meaning" && (
+                  <>
+                    <EyeOff size={14} className="mr-1" />
+                    뜻 숨김
+                  </>
+                )}
               </Button>
             </div>
             <ScrollBar orientation="horizontal" className="h-2" />
