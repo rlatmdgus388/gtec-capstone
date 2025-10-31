@@ -1,84 +1,101 @@
 // app/api/community/discussions/route.ts
-import { NextResponse } from 'next/server';
-import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
-import { headers } from 'next/headers';
-import type { Query } from 'firebase-admin/firestore'; // Query 타입 import
+import { NextResponse } from 'next/server'
+import { firestore, auth as adminAuth } from '@/lib/firebase-admin'
+import { headers } from 'next/headers'
+import admin from 'firebase-admin'
+import type { Query } from 'firebase-admin/firestore' // Query 타입 임포트
 
-// 모든 게시글 목록을 가져옵니다.
+// 토론 목록 가져오기 (✨ 'hot' 정렬 추가)
 export async function GET(request: Request) {
     try {
-        const { searchParams } = new URL(request.url);
-        const sortBy = searchParams.get('sortBy') || 'createdAt';
+        const { searchParams } = new URL(request.url)
+        const sortBy = searchParams.get('sortBy') || 'createdAt' // 'createdAt', 'likes', 'hot'
+        const category = searchParams.get('category') || 'all'
 
-        const headersList = await headers();
-        const token = headersList.get('Authorization')?.split('Bearer ')[1];
+        let query: Query = firestore.collection('discussions')
 
-        if (!token) {
-            return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
+        // 카테고리 필터링
+        if (category !== 'all') {
+            query = query.where('category', '==', category)
         }
-        await adminAuth.verifyIdToken(token);
 
-        // 'query' 변수의 타입을 명시적으로 Query로 지정
-        let query: Query = firestore.collection('discussions');
-
-        if (sortBy === 'likes') {
-            query = query.orderBy('likes', 'desc');
+        // 정렬 로직
+        if (sortBy === 'hot') {
+            // ✨ 5번 요청: '핫' 게시판 로직 (좋아요 3개 이상, 좋아요순 정렬)
+            query = query
+                .where('likes', '>=', 3)
+                .orderBy('likes', 'desc')
+            // .orderBy('createdAt', 'desc') // [임시 주석] 색인 생성 완료 시 주석 해제
+        } else if (sortBy === 'likes') {
+            query = query.orderBy('likes', 'desc')
+            // .orderBy('createdAt', 'desc') // [임시 주석] 색인 생성 완료 시 주석 해제
         } else {
-            query = query.orderBy('createdAt', 'desc');
+            // 기본값 (createdAt)
+            query = query.orderBy('createdAt', 'desc')
         }
 
-        const discussionsSnapshot = await query.get();
-        const discussions = discussionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const snapshot = await query.get()
+        const discussions = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }))
 
-        return NextResponse.json(discussions);
+        return NextResponse.json(discussions, { status: 200 })
     } catch (error) {
-        console.error("게시글 목록 조회 실패:", error);
-        if (error instanceof Error && 'code' in error && (error as any).code === 'auth/id-token-expired') {
-            return NextResponse.json({ message: '인증 토큰이 만료되었습니다.' }, { status: 401 });
-        }
-        return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+        console.error('토론 목록 조회 오류:', error)
+        return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 })
     }
 }
 
-// 새로운 게시글을 생성합니다.
+// 새 토론 생성
 export async function POST(request: Request) {
     try {
-        const headersList = await headers();
-        const token = headersList.get('Authorization')?.split('Bearer ')[1];
-        if (!token) {
-            return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
-        }
-        const decodedToken = await adminAuth.verifyIdToken(token);
-        const userId = decodedToken.uid;
-        const userDoc = await adminAuth.getUser(userId);
+        const h = headers() // await 제거 (Next.js 14 기준)
+        const authHeader = h.get('Authorization') || h.get('authorization')
+        const token = authHeader?.toString().replace(/^Bearer\s+/i, '')
 
-        const { title, content, category } = await request.json();
+        if (!token) {
+            return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 })
+        }
+
+        const decodedToken = await adminAuth.verifyIdToken(token)
+        const userId = decodedToken.uid
+        const userRecord = await adminAuth.getUser(userId)
+
+        const payload = await request.json()
+        const { title, content, category } = payload || {}
 
         if (!title || !content || !category) {
-            return NextResponse.json({ message: '제목, 내용, 카테고리는 필수입니다.' }, { status: 400 });
+            return NextResponse.json(
+                { message: '제목, 내용, 카테고리는 필수입니다.' },
+                { status: 400 }
+            )
         }
 
-        const newPost = {
-            title,
-            content,
-            category,
+        const newDiscussion = {
+            title: String(title),
+            content: String(content),
+            category: String(category),
             author: {
                 uid: userId,
-                name: userDoc.displayName || userDoc.email || 'Anonymous',
-                photoURL: userDoc.photoURL || null,
+                name: userRecord.displayName || userRecord.email || '익명',
+                photoURL: userRecord.photoURL || '',
             },
-            createdAt: new Date().toISOString(),
             likes: 0,
-            likedBy: [],
-            replies: 0,
-            views: 0, // 조회수 필드 추가
-        };
+            likedBy: [] as string[],
+            commentCount: 0,
+            views: 0,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }
 
-        const docRef = await firestore.collection('discussions').add(newPost);
+        const docRef = await firestore.collection('discussions').add(newDiscussion)
+        const saved = await docRef.get()
+        const savedData = saved.data() || {}
 
-        return NextResponse.json({ id: docRef.id, ...newPost }, { status: 201 });
+        return NextResponse.json({ id: saved.id, ...savedData }, { status: 201 })
     } catch (error) {
-        console.error("게시글 생성 오류:", error);
-        return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+        console.error('토론 생성 오류:', error)
+        return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 })
     }
 }

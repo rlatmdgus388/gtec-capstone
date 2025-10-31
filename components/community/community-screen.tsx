@@ -10,7 +10,7 @@ import { UserProfile } from "./user-profile"
 import { SharedWordbookDetail } from "./shared-wordbook-detail"
 import { DiscussionDetailScreen } from "./discussion-detail-screen"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CreatePostDialog } from "./create-post-dialog"
+import { PostFormScreen } from "./post-form-screen"
 import { fetchWithAuth } from "@/lib/api"
 import { auth } from "@/lib/firebase"
 import { DiscussionsScreen } from "./discussions-screen"
@@ -43,7 +43,7 @@ interface DiscussionPost {
 
 export function CommunityScreen() {
   const [currentView, setCurrentView] = useState<
-    "main" | "profile" | "wordbook" | "discussion" | "allDiscussions" | "allWordbooks"
+    "main" | "profile" | "wordbook" | "discussion" | "allDiscussions" | "allWordbooks" | "editPost"
   >("main")
   const [selectedUserId, setSelectedUserId] = useState<string>("")
   const [selectedWordbookId, setSelectedWordbookId] = useState<string>("")
@@ -52,14 +52,11 @@ export function CommunityScreen() {
   const [discussions, setDiscussions] = useState<DiscussionPost[]>([])
   const [isLoading, setIsLoading] = useState({ wordbooks: true, discussions: true })
   const [postToEdit, setPostToEdit] = useState<DiscussionPost | null>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-
   const currentUserId = auth.currentUser?.uid
 
   const fetchCommunityData = useCallback(async () => {
     setIsLoading({ wordbooks: true, discussions: true })
     try {
-      // API에서 정렬된 데이터를 가져옵니다.
       const [wordbooksData, discussionsData] = await Promise.all([
         fetchWithAuth("/api/community/wordbooks?sortBy=downloads"),
         fetchWithAuth("/api/community/discussions?sortBy=likes"),
@@ -113,11 +110,12 @@ export function CommunityScreen() {
     setSelectedPostId("")
     setSelectedUserId("")
     setSelectedWordbookId("")
+    setPostToEdit(null)
   }
 
   const handleEditClick = (post: DiscussionPost) => {
     setPostToEdit(post)
-    setIsEditDialogOpen(true)
+    setCurrentView("editPost")
   }
 
   const handleDeleteClick = async (postId: string) => {
@@ -135,25 +133,35 @@ export function CommunityScreen() {
   if (currentView === "profile") return <UserProfile userId={selectedUserId} onBack={handleBackToMain} />
   if (currentView === "wordbook")
     return <SharedWordbookDetail wordbookId={selectedWordbookId} onBack={() => setCurrentView("allWordbooks")} />
-  if (currentView === "discussion") return <DiscussionDetailScreen postId={selectedPostId} onBack={handleBackToMain} />
+
+  if (currentView === "discussion")
+    return (
+      <DiscussionDetailScreen
+        postId={selectedPostId}
+        onBack={handleBackToMain}
+        onEdit={handleEditClick}
+      />
+    )
+
   if (currentView === "allDiscussions") return <DiscussionsScreen onBack={handleBackToMain} />
-  // ✨ 아래 줄이 수정되었습니다. onSelectWordbook prop을 추가합니다.
   if (currentView === "allWordbooks")
     return <SharedWordbooksScreen onBack={handleBackToMain} onSelectWordbook={handleViewWordbook} />
 
-  return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-background">
-      <CreatePostDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+  if (currentView === "editPost" && postToEdit) {
+    return (
+      <PostFormScreen
         postToEdit={postToEdit}
+        onBack={handleBackToMain}
         onPostCreatedOrUpdated={() => {
-          setIsEditDialogOpen(false)
           setPostToEdit(null)
-          fetchCommunityData()
+          handleBackToMain()
         }}
       />
+    )
+  }
 
+  return (
+    <div className="flex-1 overflow-y-auto pb-20 bg-background">
       <div className="bg-card border-b border-border">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
@@ -168,10 +176,11 @@ export function CommunityScreen() {
         </div>
       </div>
 
-      <div className="px-4 py-4 space-y-6">
+      {/* 섹션 간 여백 space-y-4 (토론글과 분리) */}
+      <div className="px-4 py-4 space-y-4">
         {/* Shared Wordbooks */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <BookOpen size={20} className="text-primary" /> 인기 공유 단어장
             </h2>
@@ -185,7 +194,7 @@ export function CommunityScreen() {
             </Button>
           </div>
           {isLoading.wordbooks ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Skeleton className="h-24 w-full rounded-xl" />
               <Skeleton className="h-24 w-full rounded-xl" />
               <Skeleton className="h-24 w-full rounded-xl" />
@@ -198,15 +207,20 @@ export function CommunityScreen() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            /* 카드 3개가 붙지 않도록 space-y-2 유지 */
+            <div className="space-y-2">
               {sharedWordbooks.slice(0, 3).map((wordbook) => (
                 <Card
                   key={wordbook.id}
                   className="hover:shadow-md transition-shadow cursor-pointer bg-card border border-border rounded-xl"
                   onClick={() => handleViewWordbook(wordbook.id)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
+                  {/* [수정]
+                    CardContent의 패딩을 px-4 py-2 (세로 0.5rem)로 변경
+                  */}
+                  <CardContent className="px-4 py-2">
+                    {/* [수정] 스탯과의 여백을 mb-3 -> mb-2로 변경 */}
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-medium text-card-foreground">{wordbook.name}</h3>
@@ -214,17 +228,16 @@ export function CommunityScreen() {
                             {wordbook.category}
                           </Badge>
                         </div>
-                        <p
-                          className="text-sm text-muted-foreground cursor-pointer hover:text-primary"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleViewProfile(wordbook.author.uid)
-                          }}
-                        >
+                        <p className="text-sm text-muted-foreground">
                           by {wordbook.author.name}
                         </p>
                         <p className="text-sm text-muted-foreground">{wordbook.wordCount}개 단어</p>
                       </div>
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                          {wordbook.author.name[0]}
+                        </AvatarFallback>
+                      </Avatar>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -247,9 +260,9 @@ export function CommunityScreen() {
           )}
         </div>
 
-        {/* Discussion Board */}
+        {/* Discussion Board (원래 여백으로 복구) */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <MessageCircle size={20} className="text-primary" /> 인기 토론글
             </h2>
@@ -263,7 +276,7 @@ export function CommunityScreen() {
             </Button>
           </div>
           {isLoading.discussions ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Skeleton className="h-20 w-full rounded-xl" />
               <Skeleton className="h-20 w-full rounded-xl" />
               <Skeleton className="h-20 w-full rounded-xl" />
@@ -276,11 +289,12 @@ export function CommunityScreen() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {discussions.slice(0, 3).map((discussion) => (
                 <Card key={discussion.id} className="bg-card border border-border rounded-xl">
+                  {/* 토론글 카드는 원래 패딩(p-4) 유지 */}
                   <div className="flex items-start gap-3 p-4">
-                    <Avatar className="w-8 h-8" onClick={() => handleViewProfile(discussion.author.uid)}>
+                    <Avatar className="w-8 h-8">
                       <AvatarFallback className="text-xs bg-primary/10 text-primary">
                         {discussion.author.name[0]}
                       </AvatarFallback>

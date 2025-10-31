@@ -23,9 +23,10 @@ export async function GET(
       views: admin.firestore.FieldValue.increment(1),
     });
 
+    // 5번 요청: 댓글 정렬 'asc' -> 'desc' (최신순)
     const commentsSnapshot = await postRef
       .collection('comments')
-      .orderBy('createdAt', 'asc')
+      .orderBy('createdAt', 'desc') // 'asc'에서 'desc'로 변경
       .get();
 
     // 문서 데이터 + id 포함
@@ -81,7 +82,12 @@ export async function PUT(
       return NextResponse.json({ message: '게시글을 수정할 권한이 없습니다.' }, { status: 403 });
     }
 
-    await postRef.update({ title, content, category });
+    await postRef.update({
+      title,
+      content,
+      category,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp() // 2번 요청: 수정 시간 업데이트
+    });
     const updatedDoc = await postRef.get();
 
     return NextResponse.json({ id: updatedDoc.id, ...updatedDoc.data() }, { status: 200 });
@@ -120,8 +126,19 @@ export async function DELETE(
       return NextResponse.json({ message: '게시글을 삭제할 권한이 없습니다.' }, { status: 403 });
     }
 
-    // TODO: 댓글(하위 컬렉션) 삭제 로직 필요 시 추가
+    // 2번 요청: 댓글(하위 컬렉션) 삭제 로직 추가 (Batch)
+    const commentsRef = postRef.collection('comments');
+    const commentsSnapshot = await commentsRef.get();
 
+    if (!commentsSnapshot.empty) {
+      const batch = firestore.batch();
+      commentsSnapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+    }
+
+    // 게시글 삭제
     await postRef.delete();
 
     return new Response(null, { status: 204 });

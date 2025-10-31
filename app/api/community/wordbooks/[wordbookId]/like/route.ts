@@ -1,66 +1,71 @@
 // app/api/community/wordbooks/[wordbookId]/like/route.ts
-import { NextResponse } from 'next/server';
-import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
-import { headers } from 'next/headers';
-import admin from 'firebase-admin';
+import { NextResponse } from 'next/server'
+import { firestore, auth as adminAuth } from '@/lib/firebase-admin'
+import { headers } from 'next/headers'
+import admin from 'firebase-admin'
 
+// 단어장 좋아요 / 좋아요 취소 (토글)
 export async function POST(
-  _request: Request,
-  { params }: { params: Promise<{ wordbookId: string }> } // ✅ Promise로 받기
+  request: Request,
+  { params }: { params: { wordbookId: string } }
 ) {
   try {
-    // ✅ headers() await
-    const h = await headers();
-    const authHeader = h.get('Authorization') || h.get('authorization');
-    const token = authHeader?.toString().replace(/^Bearer\s+/i, '');
+    const { wordbookId } = params
+
+    const h = headers()
+    const authHeader = h.get('Authorization') || h.get('authorization')
+    const token = authHeader?.toString().replace(/^Bearer\s+/i, '')
 
     if (!token) {
-      return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
+      return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 })
     }
 
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    const userId = decodedToken.uid;
+    const decodedToken = await adminAuth.verifyIdToken(token)
+    const userId = decodedToken.uid
 
-    const { wordbookId } = await params; // ✅ await
+    const wordbookRef = firestore.collection('communityWordbooks').doc(wordbookId)
 
-    const wordbookRef = firestore.collection('communityWordbooks').doc(wordbookId);
-    const doc = await wordbookRef.get();
+    // ✨ 1번 요청: 트랜잭션을 사용하여 좋아요/취소 동시 처리
+    const result = await firestore.runTransaction(async (transaction) => {
+      const wordbookDoc = await transaction.get(wordbookRef)
+      if (!wordbookDoc.exists) {
+        throw new Error('단어장을 찾을 수 없습니다.')
+      }
 
-    if (!doc.exists) {
-      return NextResponse.json({ message: '단어장을 찾을 수 없습니다.' }, { status: 404 });
+      const data = wordbookDoc.data()!
+      const likedBy = (data.likedBy || []) as string[]
+      let newLikes = data.likes || 0
+      let isLiked = false
+
+      if (likedBy.includes(userId)) {
+        // --- 좋아요 취소 ---
+        transaction.update(wordbookRef, {
+          likes: admin.firestore.FieldValue.increment(-1),
+          likedBy: admin.firestore.FieldValue.arrayRemove(userId),
+        })
+        newLikes--
+        isLiked = false
+      } else {
+        // --- 좋아요 ---
+        transaction.update(wordbookRef, {
+          likes: admin.firestore.FieldValue.increment(1),
+          likedBy: admin.firestore.FieldValue.arrayUnion(userId),
+        })
+        newLikes++
+        isLiked = true
+      }
+
+      return { newLikes, isLiked }
+    })
+
+    // ✨ 프론트엔드 상태 관리를 위해 좋아요 수와 여부 반환
+    return NextResponse.json(result, { status: 200 })
+
+  } catch (error: any) {
+    console.error('좋아요 처리 오류:', error)
+    if (error.message === '단어장을 찾을 수 없습니다.') {
+      return NextResponse.json({ message: error.message }, { status: 404 })
     }
-
-    const data = doc.data() || {};
-    const likedBy: string[] = Array.isArray(data.likedBy) ? data.likedBy : [];
-    const hasLiked = likedBy.includes(userId);
-
-    if (hasLiked) {
-      // 좋아요 취소
-      await wordbookRef.update({
-        likedBy: admin.firestore.FieldValue.arrayRemove(userId),
-        likes: admin.firestore.FieldValue.increment(-1),
-      });
-    } else {
-      // 좋아요
-      await wordbookRef.update({
-        likedBy: admin.firestore.FieldValue.arrayUnion(userId),
-        likes: admin.firestore.FieldValue.increment(1),
-      });
-    }
-
-    // 최신 상태 재조회해 정확한 수 반환
-    const updated = await wordbookRef.get();
-    const updatedData = updated.data() || {};
-
-    return NextResponse.json(
-      {
-        likes: updatedData.likes ?? 0,
-        likedBy: updatedData.likedBy ?? [],
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("'좋아요' 처리 오류:", error);
-    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 })
   }
 }
