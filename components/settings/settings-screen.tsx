@@ -1,8 +1,7 @@
 "use client"
-import { Bell, Download, ChevronRight, BookOpen, User, Database, Upload, LogOut, Settings, Palette } from "lucide-react"
+import { Bell, Download, ChevronRight, User, Upload, LogOut, Settings, Palette } from "lucide-react"
 import { useState } from "react"
 import { ProfileSettings } from "./profile-settings"
-import { StudyPreferences } from "./study-preferences"
 import { NotificationSettings } from "./notification-settings"
 import { ThemeSettings } from "./theme-settings"
 
@@ -11,10 +10,9 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ onLogout }: SettingsScreenProps) {
-  const [currentView, setCurrentView] = useState<"main" | "profile" | "study" | "notifications" | "theme">("main")
+  const [currentView, setCurrentView] = useState<"main" | "profile" | "notifications" | "theme">("main")
 
   const handleViewProfile = () => setCurrentView("profile")
-  const handleViewStudy = () => setCurrentView("study")
   const handleViewNotifications = () => setCurrentView("notifications")
   const handleViewTheme = () => setCurrentView("theme")
   const handleBackToMain = () => setCurrentView("main")
@@ -46,10 +44,6 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
 
   if (currentView === "profile") {
     return <ProfileSettings onBack={handleBackToMain} />
-  }
-
-  if (currentView === "study") {
-    return <StudyPreferences onBack={handleBackToMain} />
   }
 
   if (currentView === "notifications") {
@@ -106,25 +100,6 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
           <div className="flex items-center gap-4">
             <Bell size={24} className="text-foreground" />
             <span className="font-semibold text-foreground text-base">알림</span>
-          </div>
-          <ChevronRight size={20} className="text-muted-foreground" />
-        </button>
-
-        <button
-          onClick={handleViewStudy}
-          className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
-        >
-          <div className="flex items-center gap-4">
-            <BookOpen size={24} className="text-foreground" />
-            <span className="font-semibold text-foreground text-base">학습</span>
-          </div>
-          <ChevronRight size={20} className="text-muted-foreground" />
-        </button>
-
-        <button className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card">
-          <div className="flex items-center gap-4">
-            <Database size={24} className="text-foreground" />
-            <span className="font-semibold text-foreground text-base">단어 관리</span>
           </div>
           <ChevronRight size={20} className="text-muted-foreground" />
         </button>

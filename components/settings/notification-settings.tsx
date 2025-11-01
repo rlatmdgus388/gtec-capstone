@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { ArrowLeft, Bell, Clock, Trophy, BookOpen } from "lucide-react"
+import { ArrowLeft, Bell, Clock } from "lucide-react"
 
 interface NotificationSettingsProps {
   onBack: () => void
@@ -13,9 +13,6 @@ interface NotificationSettingsProps {
 export function NotificationSettings({ onBack }: NotificationSettingsProps) {
   const [settings, setSettings] = useState({
     studyReminder: true,
-    dailyGoal: true,
-    achievements: false,
-    newWords: true,
     weeklyReport: true,
   })
 
@@ -55,36 +52,6 @@ export function NotificationSettings({ onBack }: NotificationSettingsProps) {
               <Switch
                 checked={settings.studyReminder}
                 onCheckedChange={() => handleToggle("studyReminder")}
-                className="data-[state=checked]:bg-primary"
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-4 py-2">
-              <div className="flex items-center gap-3 flex-1">
-                <Trophy size={18} className="text-muted-foreground" />
-                <div>
-                  <p className="font-medium text-card-foreground">목표 달성</p>
-                  <p className="text-sm text-muted-foreground">일일 목표 달성 시 알림</p>
-                </div>
-              </div>
-              <Switch
-                checked={settings.dailyGoal}
-                onCheckedChange={() => handleToggle("dailyGoal")}
-                className="data-[state=checked]:bg-primary"
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-4 py-2">
-              <div className="flex items-center gap-3 flex-1">
-                <BookOpen size={18} className="text-muted-foreground" />
-                <div>
-                  <p className="font-medium text-card-foreground">새 단어 추가</p>
-                  <p className="text-sm text-muted-foreground">새로운 단어가 추가될 때 알림</p>
-                </div>
-              </div>
-              <Switch
-                checked={settings.newWords}
-                onCheckedChange={() => handleToggle("newWords")}
                 className="data-[state=checked]:bg-primary"
               />
             </div>

@@ -23,6 +23,11 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
     avatar: "/placeholder.svg",
   })
 
+  const [originalProfile, setOriginalProfile] = useState({
+    name: "",
+    username: "",
+  })
+
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -31,15 +36,22 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
     const fetchProfile = async () => {
       try {
         setIsLoading(true)
+        console.log("  Fetching profile data...")
         const data = await fetchWithAuth("/api/user/profile")
-        setProfile({
+        console.log("  Profile data received:", data)
+        const profileData = {
           name: data.name || "",
           email: data.email || "",
           username: data.username || "",
           avatar: data.photoURL || "/placeholder.svg",
+        }
+        setProfile(profileData)
+        setOriginalProfile({
+          name: profileData.name,
+          username: profileData.username,
         })
       } catch (error) {
-        console.error("프로필 로딩 실패:", error)
+        console.error("  프로필 로딩 실패:", error)
         toast({
           title: "오류",
           description: "프로필을 불러올 수 없습니다.",
@@ -56,12 +68,42 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
   const handleSave = async () => {
     try {
       setIsSaving(true)
-      await fetchWithAuth("/api/user/profile", {
+      console.log("  Saving profile with data:", {
+        name: profile.name,
+        username: profile.username,
+      })
+
+      if (!profile.name.trim()) {
+        toast({
+          title: "오류",
+          description: "이름을 입력해주세요.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (!profile.username.trim()) {
+        toast({
+          title: "오류",
+          description: "사용자명을 입력해주세요.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const response = await fetchWithAuth("/api/user/profile", {
         method: "PUT",
         body: JSON.stringify({
-          name: profile.name,
-          username: profile.username,
+          name: profile.name.trim(),
+          username: profile.username.trim(),
         }),
+      })
+
+      console.log("  Profile save response:", response)
+
+      setOriginalProfile({
+        name: profile.name,
+        username: profile.username,
       })
 
       toast({
@@ -70,15 +112,25 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
       })
       setIsEditing(false)
     } catch (error) {
-      console.error("프로필 저장 실패:", error)
+      console.error("  프로필 저장 실패:", error)
+      const errorMessage = error instanceof Error ? error.message : "프로필 저장에 실패했습니다."
       toast({
         title: "오류",
-        description: "프로필 저장에 실패했습니다.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleCancel = () => {
+    setProfile((prev) => ({
+      ...prev,
+      name: originalProfile.name,
+      username: originalProfile.username,
+    }))
+    setIsEditing(false)
   }
 
   if (isLoading) {
@@ -90,7 +142,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
   }
 
   return (
-    // 1. 최상위 div에 flex flex-col 추가
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
@@ -102,7 +153,7 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => (isEditing ? handleCancel() : setIsEditing(true))}
             className="text-primary hover:bg-primary/10"
           >
             {isEditing ? "취소" : "편집"}
@@ -110,8 +161,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
         </div>
       </div>
 
-      {/* 2. 콘텐츠 영역을 새 div로 감싸고 flex-1, overflow-y-auto 추가 */}
-      {/* (pb-20은 하단 네비게이션바 등을 고려한 여백) */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
         {/* Profile Photo */}
         <Card className="bg-card border border-border shadow-sm rounded-xl">
@@ -194,8 +243,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
             )}
           </CardContent>
         </Card>
-        
-        {/* '학습 통계' 카드는 이미 제거되었습니다. */}
       </div>
     </div>
   )
