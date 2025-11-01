@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/ui/drawer";
 import { ArrowLeft, BookOpen, Play, PenTool, Brain, Loader2 } from "lucide-react";
 import { fetchWithAuth } from "@/lib/api";
+import { cn } from "@/lib/utils"; // [!!!] cn 유틸리티 import 추가
 
 interface StudySession {
   id: string;
@@ -23,6 +24,7 @@ interface WordResult {
   id: string;
   word: string;
   meaning: string;
+  mastered: boolean; // [!!!] 'mastered' 필드 추가
 }
 
 interface StudySessionDetailScreenProps {
@@ -48,6 +50,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
     setIsLoading(true);
     try {
       const data = await fetchWithAuth(`/api/study-sessions/${session.id}`);
+      // API가 'mastered'를 포함한 데이터를 반환한다고 가정합니다.
       setCorrectWords(data.correctWords || []);
       setIncorrectWords(data.incorrectWords || []);
     } catch (error) {
@@ -68,6 +71,35 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
       alert("오답 단어가 없어 복습을 시작할 수 없습니다.");
     }
   };
+
+  // [!!!] 단어 카드를 렌더링하는 헬퍼 함수 (중복 제거)
+  const renderWordCard = (item: WordResult) => (
+    <Card key={item.id} className="bg-card border-border">
+      <CardContent className="p-3">
+        <div className="flex items-start justify-between">
+          {/* 단어/뜻 */}
+          <div className="flex-1">
+            <div className="font-semibold text-card-foreground">{item.word}</div>
+            <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
+          </div>
+          {/* 암기 상태 배지 (클릭 불가, 표시 전용) */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "text-xs font-semibold rounded-full px-3 py-1 h-auto ml-2 flex-shrink-0",
+              item.mastered
+                ? "text-green-700 bg-green-100"
+                : "text-muted-foreground bg-muted",
+              "pointer-events-none" // 클릭 이벤트 방지
+            )}
+          >
+            {item.mastered ? "암기 완료" : "암기 미완료"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="flex-1 overflow-y-auto pb-20 bg-background text-foreground">
@@ -92,36 +124,25 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
               <TabsTrigger value="incorrect">오답 ({incorrectWords.length})</TabsTrigger>
             </TabsList>
 
+            {/* [!!!] 정답 탭 수정 */}
             <TabsContent value="correct" className="mt-4">
               <div className="space-y-2">
-                {correctWords.map((item) => (
-                  <Card key={item.id} className="bg-card border-border">
-                    <CardContent className="p-3">
-                      <div className="font-semibold text-card-foreground">{item.word}</div>
-                      <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {correctWords.map(renderWordCard)}
               </div>
             </TabsContent>
 
+            {/* [!!!] 오답 탭 수정 */}
             <TabsContent value="incorrect" className="mt-4">
               <div className="space-y-2">
-                {incorrectWords.map((item) => (
-                  <Card key={item.id} className="bg-card border-border">
-                    <CardContent className="p-3">
-                      <div className="font-semibold text-card-foreground">{item.word}</div>
-                      <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {incorrectWords.map(renderWordCard)}
               </div>
             </TabsContent>
+
           </Tabs>
         )}
       </div>
 
-      {/* 복습 버튼 & Drawer */}
+      {/* 복습 버튼 & Drawer (이하 동일) */}
       <div className="p-4 mt-4">
         <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
           <DrawerTrigger asChild>
