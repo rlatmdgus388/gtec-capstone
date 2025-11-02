@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchWithAuth } from "@/lib/api"
 import { PlusCircle, Edit, ArrowLeft } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface PostData {
     id?: string;
@@ -78,7 +79,7 @@ export function PostFormScreen({
     };
 
     return (
-        <div className="flex-1 flex flex-col bg-background">
+        <div className={cn("flex-1 flex flex-col bg-background", "page-transition-enter")}>
             {/* [수정] Header: create-wordbook-screen과 동일한 구조 */}
             <div className="bg-card border-b border-border sticky top-0 z-10">
                 <div className="flex items-center justify-between px-2 py-2 h-16">

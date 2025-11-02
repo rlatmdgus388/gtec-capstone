@@ -22,6 +22,8 @@ import {
 import { Input } from "@/components/ui/input"
 // import { Textarea } from "@/components/ui/textarea" // '설명'이 없어졌으므로 Textarea import 제거
 import { ArrowLeft, BookPlus } from "lucide-react"
+import { cn } from "@/lib/utils"
+
 
 // '설명(description)' 필드를 스키마에서 제거했습니다.
 const formSchema = z.object({
@@ -55,7 +57,7 @@ export function CreateWordbookScreen({ onBack, onSave }: CreateWordbookScreenPro
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20">
+    <div className={cn("flex-1 overflow-y-auto pb-20", "page-transition-enter")}>
       <div className="bg-card border-b border-border sticky top-0 z-10">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">

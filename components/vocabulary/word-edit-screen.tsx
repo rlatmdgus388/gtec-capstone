@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface WordData {
   word: string;
@@ -54,7 +55,7 @@ export function WordEditScreen({ wordbookName, onBack, onSave, initialData }: Wo
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       {/* Header */}
       <div className="px-2 py-4 bg-card border-b border-border">
         <div className="flex items-center justify-between">

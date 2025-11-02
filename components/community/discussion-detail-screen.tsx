@@ -237,7 +237,7 @@ export function DiscussionDetailScreen({
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto pb-20 bg-background">
+      <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter-from-left")}>
         {/* Header */}
         <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10 p-4 flex items-center">
           <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { ArrowLeft, Bell, Clock } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface NotificationSettingsProps {
   onBack: () => void
@@ -21,7 +22,7 @@ export function NotificationSettings({ onBack }: NotificationSettingsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       {/* Header */}
       <div className="px-4 py-6 border-b border-border">
         <div className="flex items-center gap-3">

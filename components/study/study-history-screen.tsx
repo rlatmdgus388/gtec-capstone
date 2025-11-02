@@ -10,6 +10,7 @@ import { fetchWithAuth } from "@/lib/api";
 import { StudyPeriodSummaryCard } from "./study-period-summary-card";
 import { AggregatedStudyDetailScreen } from "./aggregated-study-detail-screen";
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
+import { cn } from "@/lib/utils"
 
 // ... (인터페이스 정의는 이전과 동일) ...
 interface StudySession {
@@ -148,7 +149,7 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-background dark:bg-zinc-900">
+    <div className={cn("flex-1 overflow-y-auto pb-20 bg-background dark:bg-zinc-900", "page-transition-enter")}>
       <div className="px-4 py-6 sticky top-0 bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm z-10">
         <div className="relative flex items-center justify-center">
           <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2"><ArrowLeft size={18} className="text-muted-foreground" /></Button>

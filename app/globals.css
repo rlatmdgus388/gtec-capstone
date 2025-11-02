@@ -123,3 +123,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 슬라이드 - 오->왼 */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.page-transition-enter {
+  animation: slide-in-from-right 0.25s ease-out forwards;
+}
+
+/* 슬라이드- 왼->오 */
+@keyframes slide-in-from-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.page-transition-enter-from-left {
+  animation: slide-in-from-left 0.25s ease-out forwards;
+}

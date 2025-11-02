@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "@/lib/theme-context"
+import { cn } from "@/lib/utils"
 
 interface ThemeSettingsProps {
   onBack: () => void
@@ -20,7 +21,7 @@ export function ThemeSettings({ onBack }: ThemeSettingsProps) {
 
   return (
     // 1. 최상위 div를 flex-col로 변경
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={cn("min-h-screen bg-background flex flex-col", "page-transition-enter")}>
       {/* Header */}
       <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
         <div className="flex items-center justify-between p-4">

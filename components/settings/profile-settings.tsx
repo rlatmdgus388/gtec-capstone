@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ArrowLeft, Camera, Save } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 interface ProfileSettingsProps {
   onBack: () => void
@@ -142,7 +143,7 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={cn("min-h-screen bg-background flex flex-col", "page-transition-enter")}>
       {/* Header */}
       <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
         <div className="flex items-center justify-between p-4">

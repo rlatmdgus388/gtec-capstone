@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Trophy, Clock, Target, RotateCcw, Home } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface StudyResultsProps {
   results: {
@@ -32,7 +33,7 @@ export function StudyResults({ results, mode, onRestart, onHome }: StudyResultsP
   const gradeInfo = getGrade(percentage)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       {/* Header */}
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
         <div className="px-4 py-8 text-center">

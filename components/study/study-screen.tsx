@@ -18,6 +18,7 @@ import { Skeleton } from "../ui/skeleton"
 import { Loader2 } from "lucide-react"
 import { StudyOptionsScreen } from "./study-options-screen" // StudyOptionsScreen 임포트
 
+
 // Word 인터페이스 수정 (mastered 옵셔널 추가)
 interface Word {
   id: string;

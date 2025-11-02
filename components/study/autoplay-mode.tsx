@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 // ▼▼▼ [수정됨] Volume2 아이콘을 import에서 제거합니다 ▼▼▼
 import { ArrowLeft, Play, Pause, SkipForward, SkipBack } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 // ▼▼▼ [수정됨] Word 인터페이스에서 example과 pronunciation을 제거합니다 ▼▼▼
 interface Word {
@@ -76,7 +77,7 @@ export function AutoplayMode({ words, onComplete, onBack }: AutoplayModeProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       {/* Header */}
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
         <div className="px-4 py-6">

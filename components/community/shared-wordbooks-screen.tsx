@@ -23,6 +23,8 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
+import { cn } from "@/lib/utils"
+
 
 // --- 인터페이스 정의 ---
 interface SharedWordbook {
@@ -118,7 +120,7 @@ export function SharedWordbooksScreen({
   return (
     <>
       <ShareWordbookDialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen} onShared={fetchWordbooks} />
-      <div className="flex-1 overflow-y-auto pb-20 bg-background">
+      <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter")}>
         {/* Header */}
         <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10 p-4">
           <div className="flex items-center justify-between mb-4">

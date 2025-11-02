@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Clock, Check, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface Word {
   id: string;
@@ -139,7 +140,7 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
         <div className="px-4 py-6">
           <div className="flex items-center gap-3 mb-4">

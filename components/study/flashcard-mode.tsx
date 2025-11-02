@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, Check, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface Word {
   id: string;
@@ -75,7 +76,7 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
         <div className="px-4 py-6">
           <div className="flex items-center gap-3 mb-4">

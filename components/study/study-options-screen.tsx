@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "../ui/skeleton"
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 // 이 파일 내부에서 사용할 Word 인터페이스 (mastered 포함)
 interface Word {
@@ -180,7 +181,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
 
   return (
     // ▼▼▼ [수정됨] 전체 배경을 bg-background로 변경 ▼▼▼
-    <div className="flex-1 overflow-y-auto pb-20 bg-background">
+    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       {/* 1. Header */}
       {/* ▼▼▼ [수정됨] 헤더 배경을 bg-card로, 텍스트 색을 foreground로 변경 ▼▼▼ */}
       <div className="bg-card border-b border-border">

@@ -102,7 +102,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
   );
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-background text-foreground">
+    <div className={cn("flex-1 overflow-y-auto pb-20 bg-background text-foreground", "page-transition-enter-from-left")}>
       <div className="px-4 py-6 border-b border-border sticky top-0 bg-card z-10">
         <div className="relative flex items-center justify-center">
           <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">

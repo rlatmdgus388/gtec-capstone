@@ -475,7 +475,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     )
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-background">
+    <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter-from-left")}>
       {/* --- 다이얼로그 및 모달 --- */}
       <AlertDialog open={!!wordToDelete} onOpenChange={(open) => !open && setWordToDelete(null)}>
         {/* ... (기존 코드와 동일) */}

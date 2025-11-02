@@ -10,6 +10,7 @@ import { PostFormScreen } from "./post-form-screen"
 import { DiscussionDetailScreen } from "./discussion-detail-screen"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 // (목록용) 게시글 타입
 interface DiscussionPost {
@@ -143,7 +144,7 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
 
   // 기본 리스트 스크린
   return (
-    <div className="flex-1 overflow-y-auto pb-20 bg-background">
+    <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter")}>
       {/* Header */}
       <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
         {/* ▼▼▼ [수정됨] justify-between 추가, 버튼 이동 ▼▼▼ */}

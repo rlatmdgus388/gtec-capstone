@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 // Firebase auth 관련 모듈 임포트
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import { cn } from "@/lib/utils"
 
 interface WeeklyData {
   date: string;
@@ -83,7 +84,7 @@ const StatsPage = () => {
 
   if (loading) {
     return (
-      <div className="max-w-lg mx-auto bg-background pb-20">
+      <div className={cn("max-w-lg mx-auto bg-background pb-20", "page-transition-enter-from-left")}>
         {/* 스켈레톤 헤더 (레이아웃 수정됨) */}
         <div className="bg-card border-b border-border">
           <div className="px-4 py-4">
@@ -214,8 +215,8 @@ const StatsPage = () => {
               주간 학습 리포트
             </CardTitle>
           </CardHeader>
-          {/* [수정됨] 그래프 높이 h-96으로 변경 */}
-          <CardContent className="h-96"> 
+          {/* [수정됨] 그래프 높이 h-80으로 변경 */}
+          <CardContent className="h-80"> 
             {stats.weeklyData && stats.weeklyData.length > 0 ? (
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">

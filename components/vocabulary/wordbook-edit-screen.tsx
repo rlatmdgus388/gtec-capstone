@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select"
 import { ArrowLeft, Check } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 // 컴포넌트가 받을 Props 정의
 interface WordbookEditScreenProps {
@@ -60,7 +61,7 @@ export function WordbookEditScreen({ initialData, onBack, onSave }: WordbookEdit
     };
 
     return (
-        <div className="flex-1 overflow-y-auto pb-20 bg-background">
+        <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter")}>
             {/* --- 헤더 --- */}
             <div className="bg-card border-b border-border sticky top-0 z-10 px-4 py-4">
                 <div className="flex items-center justify-between h-10">
