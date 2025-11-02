@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { BarChart, LineChart, TrendingUp, History, BookOpen, ArrowLeft } from 'lucide-react'; 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from 'recharts';
+// ▼▼▼ [수정됨] LabelList 임포트 추가 ▼▼▼
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart, LabelList } from 'recharts';
 import { fetchLearningStats } from '@/lib/api'; // 경로는 실제 위치에 맞게 수정 필요
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
@@ -27,18 +28,24 @@ interface LearningStats {
   weeklyData: WeeklyData[];
 }
 
-// ▼▼▼ [수정됨] 'words'의 color를 'var(--foreground)'로 변경 (hsl() 제거) ▼▼▼
+// ▼▼▼ [수정됨] chartConfig를 theme 속성을 사용하도록 변경 ▼▼▼
 const chartConfig = {
   words: {
     label: '단어 (개)',
-    color: 'var(--foreground)', // 테마의 전경색(검/흰)을 CSS 변수로 설정
+    theme: {
+      light: 'oklch(0.145 0 0)', // globals.css의 :root --foreground
+      dark: '#dedede',             // globals.css의 .dark --foreground
+    },
   },
   time: {
     label: '시간 (분)',
-    color: 'hsl(var(--chart-2))', // 이 값은 globals.css의 oklch 값을 참조하므로 hsl()이 필요합니다.
+    theme: {
+      light: 'oklch(0.6 0.118 184.704)', // globals.css의 :root --chart-2
+      dark: 'oklch(0.696 0.17 162.48)',   // globals.css의 .dark --chart-2
+    },
   },
 } satisfies ChartConfig;
-// ▲▲▲ [수정됨] 'words'의 color를 'var(--foreground)'로 변경 ▲▲▲
+// ▲▲▲ [수정됨] chartConfig를 theme 속성을 사용하도록 변경 ▲▲▲
 
 const StatsPage = () => {
   const [stats, setStats] = useState<LearningStats | null>(null);
@@ -109,6 +116,9 @@ const StatsPage = () => {
                   <Button variant="ghost" size="icon" onClick={() => router.back()} className="-ml-2">
                     <ArrowLeft className="w-5 h-5" />
                   </Button>
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <TrendingUp size={24} className="text-primary" />
+                  </div>
                   <div>
                     <h1 className="text-2xl font-bold text-foreground">학습 현황</h1>
                     <p className="text-sm text-muted-foreground">주간 학습 리포트와 통계를 확인하세요.</p>
@@ -127,6 +137,27 @@ const StatsPage = () => {
     )
   }
 
+  // ▼▼▼ [수정됨] LabelList에서 사용할 formatter 함수 ▼▼▼
+  const renderLabel = (props: any) => {
+    const { x, y, width, value } = props;
+    // 값이 0이거나 null/undefined이면 레이블을 렌더링하지 않음
+    if (!value || value === 0) {
+      return null;
+    }
+    return (
+      <text 
+        x={x + width / 2} 
+        y={y} 
+        dy={-4} // 막대 상단에서 약간 띄움
+        fill="var(--color-words)" // CSS 변수 참조
+        fontSize={12} 
+        textAnchor="middle"
+      >
+        {value}
+      </text>
+    );
+  };
+
   return (
     <div className="max-w-lg mx-auto bg-background pb-20">
       
@@ -137,6 +168,9 @@ const StatsPage = () => {
             <Button variant="ghost" size="icon" onClick={() => router.back()} className="-ml-2">
               <ArrowLeft className="w-5 h-5" />
             </Button>
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <TrendingUp size={24} className="text-primary" />
+            </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">학습 현황</h1>
               <p className="text-sm text-muted-foreground">주간 학습 리포트와 통계를 확인하세요.</p>
@@ -181,13 +215,14 @@ const StatsPage = () => {
             </CardTitle>
           </CardHeader>
           {/* [수정됨] 그래프 높이 h-96으로 변경 */}
-          <CardContent className="h-90"> 
+          <CardContent className="h-96"> 
             {stats.weeklyData && stats.weeklyData.length > 0 ? (
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
+                    {/* ▼▼▼ [수정됨] LabelList를 위해 margin-top을 20으로 늘림 ▼▼▼ */}
+                    <ComposedChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        {/* ▼▼▼ [수정됨] XAxis 텍스트 색상을 tick prop으로, (hsl() 제거) ▼▼▼ */}
+                        {/* ▼▼▼ [수정됨] XAxis에 interval={0} 추가, tick fill 수정 ▼▼▼ */}
                         <XAxis 
                           dataKey="name" 
                           fontSize={12} 
@@ -195,8 +230,8 @@ const StatsPage = () => {
                           axisLine={false} 
                           tick={{ fill: "var(--foreground)" }} 
                           stroke="var(--foreground)"
+                          interval={0} // 모든 레이블 표시
                         />
-                        {/* ▼▼▼ [수정됨] YAxis stroke를 CSS 변수 참조로 변경 ▼▼▼ */}
                         <YAxis 
                           yAxisId="left" 
                           dataKey="단어 (개)" 
@@ -222,8 +257,14 @@ const StatsPage = () => {
                         />
                         <Tooltip content={<ChartTooltipContent hideIndicator />} />
                         <Legend wrapperStyle={{ fontSize: '12px' }} />
-                        {/* ▼▼▼ [수정됨] Bar fill을 CSS 변수 참조로 변경 ▼▼▼ */}
-                        <Bar yAxisId="left" dataKey="단어 (개)" fill="var(--color-words)" radius={[4, 4, 0, 0]} />
+                        <Bar yAxisId="left" dataKey="단어 (개)" fill="var(--color-words)" radius={[4, 4, 0, 0]}>
+                          {/* ▼▼▼ [수정됨] 그래프 위에 숫자 표시 ▼▼▼ */}
+                          <LabelList 
+                            dataKey="단어 (개)" 
+                            position="top" 
+                            content={renderLabel} // 0 제외 커스텀 렌더러 사용
+                          />
+                        </Bar>
                         <Line yAxisId="right" dataKey="시간 (분)" stroke="var(--color-time)" type="monotone" dot={false} strokeWidth={2} />
                     </ComposedChart>
                 </ResponsiveContainer>
