@@ -887,10 +887,12 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
 
       {/* [!!! 여기를 수정합니다 !!!] - 하단 편집 모드 버튼들을 이곳으로 이동 */}
       {/* --- 하단 편집 모드 버튼들 --- */}
-      {/* ... (기존 코드와 동일) ... */}
       {isEditMode && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-20 p-4">
-          <div className="flex flex-col items-end gap-4" style={{ marginBottom: "5rem" }}>
+        // [!!!] 여기가 수정되었습니다.
+        // bottom-0 -> bottom-[5rem] (네비게이션바 높이)
+        // 내부 div의 style={{ marginBottom: "5rem" }} 제거
+        <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-20 p-4">
+          <div className="flex flex-col items-end gap-4">
             <div className="flex items-center gap-3">
               <span className="bg-card/90 text-sm font-semibold p-2 rounded-lg shadow-md border border-border">
                 그룹 변경
