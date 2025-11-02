@@ -179,18 +179,16 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
   const canStart = selectedWordbook && !isLoading.words && maxWords > 0 && wordCount > 0;
 
   return (
-    // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-    <div className="flex-1 overflow-y-auto pb-20 bg-white dark:bg-zinc-900">
+    // ▼▼▼ [수정됨] 전체 배경을 bg-background로 변경 ▼▼▼
+    <div className="flex-1 overflow-y-auto pb-20 bg-background">
       {/* 1. Header */}
-      {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800">
+      {/* ▼▼▼ [수정됨] 헤더 배경을 bg-card로, 텍스트 색을 foreground로 변경 ▼▼▼ */}
+      <div className="bg-card border-b border-border">
         <div className="px-4 py-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
-            {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-            <ArrowLeft size={20} className="text-black dark:text-white" />
+            <ArrowLeft size={20} className="text-foreground" />
           </Button>
-          {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-          <h1 className="text-xl font-bold text-black dark:text-white">{modeName} 설정</h1>
+          <h1 className="text-xl font-bold text-foreground">{modeName} 설정</h1>
         </div>
       </div>
 
@@ -198,19 +196,21 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
       <div className="p-4 space-y-6">
         
         {/* 2.1. 단어장 선택 */}
-        {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-        <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 shadow-sm rounded-xl">
+        {/* ▼▼▼ [수정됨] Card 배경을 bg-card로, Title 색을 foreground로 변경 ▼▼▼ */}
+        <Card className="bg-card border-border shadow-sm rounded-xl">
           <CardHeader>
-            {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-            <CardTitle className="text-lg text-black dark:text-white">1. 단어장 선택</CardTitle>
+            <CardTitle className="text-lg text-foreground">1. 단어장 선택</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading.wordbooks ? <Skeleton className="h-12 w-full rounded-lg" /> : (
               <Drawer>
                 <DrawerTrigger asChild>
-                  {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-                  <Button variant="outline" className="h-12 w-full justify-start text-left font-normal border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-lg text-black dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-700">
-                    <BookOpen size={18} className="text-[#FF7A00] mr-3" />
+                  {/* ▼▼▼ [수정됨] 버튼 스타일을 bg-card 기반으로 변경 ▼▼▼ */}
+                  <Button 
+                    variant="outline" 
+                    className="h-12 w-full justify-start text-left font-normal bg-card border-border rounded-lg text-foreground hover:bg-accent"
+                  >
+                    <BookOpen size={18} className="text-primary mr-3" />
                     <span className="truncate">{selectedWordbookName}</span>
                   </Button>
                 </DrawerTrigger>
@@ -218,8 +218,8 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
                   <div className="mx-auto w-full max-w-sm">
                     <div className="p-2 max-h-[50vh] overflow-y-auto">
                       {wordbooks.length === 0 ? (
-                        // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-                        <p className="text-center text-gray-500 dark:text-gray-400 p-4">단어장이 없습니다.</p>
+                        // ▼▼▼ [수정됨] 텍스트 색을 muted-foreground로 변경 ▼▼▼
+                        <p className="text-center text-muted-foreground p-4">단어장이 없습니다.</p>
                       ) : wordbooks.map((wordbook) => (
                         <DrawerClose asChild key={wordbook.id}>
                           <Button
@@ -229,8 +229,8 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
                           >
                             <div className="flex items-center justify-between w-full">
                                 <span>{wordbook.name}</span>
-                                {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">{wordbook.wordCount}개</span>
+                                {/* ▼▼▼ [수정됨] 텍스트 색을 muted-foreground로 변경 ▼▼▼ */}
+                                <span className="text-xs text-muted-foreground ml-2">{wordbook.wordCount}개</span>
                             </div>
                           </Button>
                         </DrawerClose>
@@ -247,33 +247,30 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
             )}
             {isLoading.words && (
                 <div className="flex items-center justify-center pt-4">
-                    {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-                    <Loader2 className="animate-spin h-5 w-5 text-gray-400 dark:text-gray-500" />
-                    {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-                    <span className="ml-2 text-gray-500 dark:text-gray-400 text-sm">단어 불러오는 중...</span>
+                    {/* ▼▼▼ [수정됨] 텍스트 색을 muted-foreground로 변경 ▼▼▼ */}
+                    <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground text-sm">단어 불러오는 중...</span>
                 </div>
             )}
             {error && (
-                // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-                <p className="text-red-600 dark:text-red-500 text-sm pt-2">{error}</p>
+                // ▼▼▼ [수정됨] 텍스트 색을 destructive로 변경 ▼▼▼
+                <p className="text-destructive text-sm pt-2">{error}</p>
             )}
           </CardContent>
         </Card>
 
         {/* 2.2. 학습 범위 (암기 여부) */}
-        {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-        <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 shadow-sm rounded-xl">
+        {/* ▼▼▼ [수정됨] Card 배경, Title 색, 텍스트 색 변경 ▼▼▼ */}
+        <Card className="bg-card border-border shadow-sm rounded-xl">
             <CardHeader>
-                {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-                <CardTitle className="text-lg text-black dark:text-white">2. 학습 범위</CardTitle>
+                <CardTitle className="text-lg text-foreground">2. 학습 범위</CardTitle>
             </CardHeader>
             <CardContent>
                 <RadioGroup 
                     value={masteryFilter} 
                     onValueChange={(value: string) => setMasteryFilter(value as MasteryFilter)}
                     disabled={!selectedWordbook || isLoading.words}
-                    // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-                    className="text-black dark:text-white"
+                    className="text-foreground"
                 >
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="all" id="filter-all" />
@@ -292,11 +289,10 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
         </Card>
 
         {/* 2.3. 학습할 단어 개수 */}
-        {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-        <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 shadow-sm rounded-xl">
+        {/* ▼▼▼ [수정됨] Card 배경, Title 색, Input 배경/텍스트, 텍스트 색 변경 ▼▼▼ */}
+        <Card className="bg-card border-border shadow-sm rounded-xl">
             <CardHeader>
-                {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-                <CardTitle className="text-lg text-black dark:text-white">3. 학습할 단어 개수</CardTitle>
+                <CardTitle className="text-lg text-foreground">3. 학습할 단어 개수</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -305,12 +301,10 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
                             type="number" 
                             value={wordCount}
                             onChange={(e) => handleCountChange(parseInt(e.target.value) || 0)}
-                            // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-                            className="w-20 text-center text-lg font-bold border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-black dark:text-white"
+                            className="w-20 text-center text-lg font-bold border-border bg-background text-foreground"
                             disabled={!selectedWordbook || isLoading.words || maxWords === 0}
                         />
-                        {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-                        <span className="text-gray-500 dark:text-gray-400 text-sm">/ {maxWords}개</span>
+                        <span className="text-muted-foreground text-sm">/ {maxWords}개</span>
                     </div>
                     <Slider
                         value={[wordCount]}
@@ -326,18 +320,16 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
 
         {/* 2.4. (조건부) 받아쓰기 타입 */}
         {modeId === 'writing' && (
-             // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-             <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 shadow-sm rounded-xl">
+             // ▼▼▼ [수정됨] Card 배경, Title 색, 텍스트 색 변경 ▼▼▼
+             <Card className="bg-card border-border shadow-sm rounded-xl">
                 <CardHeader>
-                    {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-                    <CardTitle className="text-lg text-black dark:text-white">4. 받아쓰기 타입</CardTitle>
+                    <CardTitle className="text-lg text-foreground">4. 받아쓰기 타입</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <RadioGroup 
                         value={writingModeType} 
                         onValueChange={(value: string) => setWritingModeType(value as 'word' | 'meaning')}
-                        // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-                        className="text-black dark:text-white"
+                        className="text-foreground"
                     >
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="word" id="write-word" />
@@ -355,11 +347,11 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
       </div>
 
       {/* 3. Footer (하단 고정 버튼) */}
-      {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 z-10 max-w-md mx-auto" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
+      {/* ▼▼▼ [수정됨] Footer 배경을 bg-card로 변경 ▼▼▼ */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-border bg-card z-10 max-w-md mx-auto" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
         <Button
           size="lg"
-          className="w-full h-12 text-base bg-[#FF7A00] hover:bg-[#FF8C00] text-white"
+          className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
           disabled={!canStart}
           onClick={handleStartClick}
         >
