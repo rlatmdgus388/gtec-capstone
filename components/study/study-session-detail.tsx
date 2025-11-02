@@ -149,7 +149,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
 
 
       {/* ▼▼▼ [수정됨] 하단 고정 버튼 (fixed, bottom-16)은 그대로 유지 ▼▼▼ */}
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
         <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
           <DrawerTrigger asChild>
             <Button
