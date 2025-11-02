@@ -3,10 +3,12 @@
 import { NextResponse } from 'next/server';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { GoogleAuth } from 'google-auth-library';
-// @ts-ignore
-// import serviceAccount from '../../../ocr-key.json'; // 1. 이 줄을 삭제하거나 주석 처리합니다.
 
-// 2. 환경 변수에서 JSON 문자열을 읽어오는 코드 추가
+// 1. ocr-key.json import를 완전히 삭제했습니다.
+// @ts-ignore
+// import serviceAccount from '../../../ocr-key.json'; 
+
+// 2. Vercel 환경 변수에서 JSON 문자열을 읽어옵니다.
 const ocrCredentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
 if (!ocrCredentialsJson) {
@@ -14,7 +16,8 @@ if (!ocrCredentialsJson) {
   // Vercel 설정에 변수가 없는 경우
 }
 
-// 3. 읽어온 JSON 문자열을 객체로 변환
+// 3. 읽어온 JSON 문자열을 객체로 변환합니다.
+//    (JSON.parse가 \n을 자동으로 처리해줍니다.)
 const serviceAccount = JSON.parse(ocrCredentialsJson || '{}');
 
 // --- DeepL, lemmatize, stopwords, dictionary 관련 import 모두 제거 ---
@@ -22,8 +25,8 @@ const serviceAccount = JSON.parse(ocrCredentialsJson || '{}');
 const auth = new GoogleAuth({
   credentials: {
     client_email: serviceAccount.client_email,
-    // 4. private_key가 Vercel에서 줄바꿈(\n)을 인식하도록 .replace() 추가
-    private_key: serviceAccount.private_key.replace(/\\n/g, '\n'),
+    // 4. [수정됨] .replace()를 완전히 삭제했습니다.
+    private_key: serviceAccount.private_key,
   },
   scopes: ['https://www.googleapis.com/auth/cloud-platform'],
 });
