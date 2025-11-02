@@ -122,17 +122,19 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
                 <p className="text-sm text-foreground mt-2">{wordbook.description}</p>
               </CardHeader>
               <CardContent>
+                {/* ▼▼▼ [수정됨] "좋아요", "다운로드", "조회수" 텍스트 제거 ▼▼▼ */}
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5">
-                    <Heart size={14} /> 좋아요 {wordbook.likes}
+                    <Heart size={14} /> {wordbook.likes}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Download size={14} /> 다운로드 {wordbook.downloads}
+                    <Download size={14} /> {wordbook.downloads}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Eye size={14} /> 조회수 {wordbook.views}
+                    <Eye size={14} /> {wordbook.views}
                   </span>
                 </div>
+                {/* ▲▲▲ [수정됨] "좋아요", "다운로드", "조회수" 텍스트 제거 ▲▲▲ */}
               </CardContent>
               <CardContent>
                 <div className="flex gap-2">
@@ -185,3 +187,4 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
     </div>
   )
 }
+

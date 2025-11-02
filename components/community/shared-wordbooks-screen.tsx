@@ -161,9 +161,10 @@ export function SharedWordbooksScreen({
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-3">
+        {/* ▼▼▼ [수정됨] 카드 간격을 space-y-3에서 space-y-2로 수정 ▼▼▼ */}
+        <div className="p-4 space-y-2">
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
@@ -183,20 +184,22 @@ export function SharedWordbooksScreen({
                   onClick={() => onSelectWordbook(wordbook.id)}
                   className="cursor-pointer transition-all hover:shadow-md bg-card border-border"
                 >
-                  <CardContent className="p-3">
-                    <div className="flex items-start justify-between mb-3">
+                  {/* ▼▼▼ [수정됨] CardContent 패딩을 px-4 py-3으로, 내부 레이아웃을 홈화면과 동일하게 변경 ▼▼▼ */}
+                  <CardContent className="px-4 py-3">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-card-foreground">{wordbook.name}</h3>
-                        <p className="text-sm text-muted-foreground">by {wordbook.author.name}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className="flex-shrink-0">
-                            {/* [수정] getCategoryLabel(wordbook.category) -> wordbook.category */}
-                            {/* DB에서 "시험" (한글)을 받아오므로 번역 함수 불필요 */}
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-card-foreground">{wordbook.name}</h3>
+                          <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-0">
                             {wordbook.category}
                           </Badge>
-                          <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
                         </div>
+                        <p className="text-sm text-muted-foreground">
+                          by {wordbook.author.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
                       </div>
+                      {/* ▲▲▲ [수정됨] 레이아웃 변경 완료 ▲▲▲ */}
                       <div className="flex items-center">
                         {currentUserId === wordbook.author.uid && (
                           <DrawerTrigger asChild>

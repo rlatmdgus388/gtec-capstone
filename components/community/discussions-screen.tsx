@@ -146,34 +146,38 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
     <div className="flex-1 overflow-y-auto pb-20 bg-background">
       {/* Header */}
       <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
-        <div className="flex items-center p-4">
-          <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="font-semibold text-foreground text-lg">토론 게시판</h1>
-        </div>
-      </div>
-
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-2 overflow-x-auto pb-2">
-            {/* [수정] CATEGORIES 객체 배열을 순회 (이제 value가 한글) */}
-            {CATEGORIES.map((category) => (
-              <Badge
-                key={category.value}
-                variant={selectedCategory === category.value ? "default" : "secondary"}
-                onClick={() => setSelectedCategory(category.value)} // 클릭 시 '학습팁', '질문' 등 한글 value가 state에 저장됨
-                className="cursor-pointer flex-shrink-0"
-              >
-                {category.label} {/* 사용자에게는 한글 label이 보임 */}
-              </Badge>
-            ))}
+        {/* ▼▼▼ [수정됨] justify-between 추가, 버튼 이동 ▼▼▼ */}
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="font-semibold text-foreground text-lg">토론 게시판</h1>
           </div>
           <Button size="sm" onClick={() => setScreen("create")} className="flex-shrink-0">
             <PlusCircle size={16} className="mr-2" />
             글쓰기
           </Button>
         </div>
+        {/* ▲▲▲ [수정됨] justify-between 추가, 버튼 이동 ▲▲▲ */}
+      </div>
+
+      <div className="p-4 space-y-4">
+        {/* ▼▼▼ [수정됨] justify-between 제거, 버튼 삭제 ▼▼▼ */}
+        <div className="flex space-x-2 overflow-x-auto pb-2">
+          {/* [수정] CATEGORIES 객체 배열을 순회 (이제 value가 한글) */}
+          {CATEGORIES.map((category) => (
+            <Badge
+              key={category.value}
+              variant={selectedCategory === category.value ? "default" : "secondary"}
+              onClick={() => setSelectedCategory(category.value)} // 클릭 시 '학습팁', '질문' 등 한글 value가 state에 저장됨
+              className="cursor-pointer flex-shrink-0"
+            >
+              {category.label} {/* 사용자에게는 한글 label이 보임 */}
+            </Badge>
+          ))}
+        </div>
+        {/* ▲▲▲ [수정됨] justify-between 제거, 버튼 삭제 ▲▲▲ */}
 
         {isLoading ? (
           <div className="space-y-3">
@@ -236,3 +240,4 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
     </div>
   )
 }
+
