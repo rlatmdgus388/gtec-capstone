@@ -196,7 +196,7 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
       </div>
       
       {/* ▼▼▼ [수정됨] 하단 고정 버튼 래퍼 추가 (fixed, bottom-16) ▼▼▼ */}
-      <div className="fixed bottom-21 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
+      <div className="fixed bottom-18 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
         <Drawer open={isDrawerOpen} onOpenChange={(isOpen) => { setIsDrawerOpen(isOpen); if (!isOpen) setDrawerContent('modes'); }}>
           <DrawerTrigger asChild>
             <Button 

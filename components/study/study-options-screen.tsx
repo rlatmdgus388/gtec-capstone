@@ -339,7 +339,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
 
       {/* 3. Footer (하단 고정 버튼) */}
       {/* ▼▼▼ [수정됨] bottom-0 -> bottom-16, 레이아웃 정렬 수정, bg-white/dark:bg-zinc-900 -> bg-background ▼▼▼ */}
-      <div className="fixed bottom-21 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
+      <div className="fixed bottom-18 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
         <Button
           size="lg"
           className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
