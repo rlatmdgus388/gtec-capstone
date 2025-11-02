@@ -474,412 +474,418 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       />
     )
 
+  // [!!! 여기를 수정합니다 !!!] - <React.Fragment> (<>) 추가
   return (
-    <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter-from-left")}>
-      {/* --- 다이얼로그 및 모달 --- */}
-      <AlertDialog open={!!wordToDelete} onOpenChange={(open) => !open && setWordToDelete(null)}>
-        {/* ... (기존 코드와 동일) */}
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>단어 삭제</AlertDialogTitle>
-            <AlertDialogDescription>'{wordToDelete?.word}' 단어를 정말로 삭제하시겠습니까?</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmWordDelete} className="bg-destructive hover:bg-destructive/90">
-              삭제
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        {/* ... (기존 코드와 동일) */}
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>단어 삭제</AlertDialogTitle>
-            <AlertDialogDescription>{selectedWords.size}개의 단어를 정말로 삭제하시겠습니까?</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSelectedWords} className="bg-destructive hover:bg-destructive/90">
-              삭제
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={isDeleteWordbookDialogOpen} onOpenChange={setIsDeleteWordbookDialogOpen}>
-        {/* ... (기존 코드와 동일) */}
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>단어장 삭제</AlertDialogTitle>
-            <AlertDialogDescription>'{wordbook.name}' 단어장을 정말로 삭제하시겠습니까?</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteWordbook} className="bg-destructive hover:bg-destructive/90">
-              삭제
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <ImageSelectionModal
-        open={showImageSelection}
-        onClose={() => setShowImageSelection(false)}
-        onCameraSelect={handleCameraSelect}
-        onGallerySelect={handleGallerySelect}
-      />
+    <>
+      <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter-from-left")}>
+        {/* --- 다이얼로그 및 모달 --- */}
+        <AlertDialog open={!!wordToDelete} onOpenChange={(open) => !open && setWordToDelete(null)}>
+          {/* ... (기존 코드와 동일) */}
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>단어 삭제</AlertDialogTitle>
+              <AlertDialogDescription>'{wordToDelete?.word}' 단어를 정말로 삭제하시겠습니까?</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmWordDelete} className="bg-destructive hover:bg-destructive/90">
+                삭제
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          {/* ... (기존 코드와 동일) */}
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>단어 삭제</AlertDialogTitle>
+              <AlertDialogDescription>{selectedWords.size}개의 단어를 정말로 삭제하시겠습니까?</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteSelectedWords} className="bg-destructive hover:bg-destructive/90">
+                삭제
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={isDeleteWordbookDialogOpen} onOpenChange={setIsDeleteWordbookDialogOpen}>
+          {/* ... (기존 코드와 동일) */}
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>단어장 삭제</AlertDialogTitle>
+              <AlertDialogDescription>'{wordbook.name}' 단어장을 정말로 삭제하시겠습니까?</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteWordbook} className="bg-destructive hover:bg-destructive/90">
+                삭제
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <ImageSelectionModal
+          open={showImageSelection}
+          onClose={() => setShowImageSelection(false)}
+          onCameraSelect={handleCameraSelect}
+          onGallerySelect={handleGallerySelect}
+        />
 
-      {/* [!!! 여기를 수정합니다 !!!] - (기존 단어장 정보 수정 Drawer UI 제거) */}
+        {/* [!!! 여기를 수정합니다 !!!] - (기존 단어장 정보 수정 Drawer UI 제거) */}
 
-      {/* --- 그룹 변경 Drawer --- */}
-      <Drawer open={isMoveDrawerOpen} onOpenChange={setIsMoveDrawerOpen}>
-        {/* ... (기존 코드와 동일) */}
-        <DrawerContent>
-          <div className="mx-auto w-full max-w-sm">
-            <DrawerHeader>
-              <DrawerTitle>이동할 그룹 선택</DrawerTitle>
-            </DrawerHeader>
-            <div className="p-4 max-h-64 overflow-y-auto">
-              {isFetchingWordbooks ? (
-                <Skeleton className="h-10 w-full" />
-              ) : movableWordbooks.length > 0 ? (
-                movableWordbooks.map((wb) => (
-                  <Button
-                    key={wb.id}
-                    variant="outline"
-                    className="w-full justify-start mb-2 bg-transparent"
-                    onClick={() => handleConfirmMove(wb.id)}
-                  >
-                    <BookCopy className="mr-2 h-4 w-4" />
-                    {wb.name}
-                  </Button>
-                ))
-              ) : (
-                <p className="text-center text-sm text-gray-500">이동할 다른 단어장이 없습니다.</p>
-              )}
-            </div>
-            <DrawerFooter>
-              <DrawerClose asChild>
-                <Button variant="outline">취소</Button>
-              </DrawerClose>
-            </DrawerFooter>
-          </div>
-        </DrawerContent>
-      </Drawer>
-
-      <div className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="px-4 py-4">
-          {isEditMode ? (
-            // ... (기존 코드와 동일)
-            <div className="flex items-center gap-3 mb-4 h-10">
-              <Button variant="ghost" size="sm" onClick={() => setIsEditMode(false)} className="p-2 -ml-2">
-                <ArrowLeft size={20} className="text-foreground" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="select-all"
-                  checked={selectedWords.size > 0 && selectedWords.size === filteredAndSortedWords.length && filteredAndSortedWords.length > 0}
-                  onCheckedChange={handleSelectAll}
-                />
-                <label htmlFor="select-all" className="text-lg font-bold text-foreground">
-                  단어 선택
-                </label>
+        {/* --- 그룹 변경 Drawer --- */}
+        <Drawer open={isMoveDrawerOpen} onOpenChange={setIsMoveDrawerOpen}>
+          {/* ... (기존 코드와 동일) */}
+          <DrawerContent>
+            <div className="mx-auto w-full max-w-sm">
+              <DrawerHeader>
+                <DrawerTitle>이동할 그룹 선택</DrawerTitle>
+              </DrawerHeader>
+              <div className="p-4 max-h-64 overflow-y-auto">
+                {isFetchingWordbooks ? (
+                  <Skeleton className="h-10 w-full" />
+                ) : movableWordbooks.length > 0 ? (
+                  movableWordbooks.map((wb) => (
+                    <Button
+                      key={wb.id}
+                      variant="outline"
+                      className="w-full justify-start mb-2 bg-transparent"
+                      onClick={() => handleConfirmMove(wb.id)}
+                    >
+                      <BookCopy className="mr-2 h-4 w-4" />
+                      {wb.name}
+                    </Button>
+                  ))
+                ) : (
+                  <p className="text-center text-sm text-gray-500">이동할 다른 단어장이 없습니다.</p>
+                )}
               </div>
-              <Button
-                variant="link"
-                onClick={() => setSelectedWords(new Set())}
-                className="ml-auto text-primary p-0 h-auto"
-                disabled={selectedWords.size === 0}
-              >
-                선택 취소 ({selectedWords.size})
-              </Button>
+              <DrawerFooter>
+                <DrawerClose asChild>
+                  <Button variant="outline">취소</Button>
+                </DrawerClose>
+              </DrawerFooter>
             </div>
-          ) : (
-            <>
-              <div className="flex items-center gap-3 mb-4">
-                <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">
+          </DrawerContent>
+        </Drawer>
+
+        <div className="bg-card border-b border-border sticky top-0 z-10">
+          <div className="px-4 py-4">
+            {isEditMode ? (
+              // ... (기존 코드와 동일)
+              <div className="flex items-center gap-3 mb-4 h-10">
+                <Button variant="ghost" size="sm" onClick={() => setIsEditMode(false)} className="p-2 -ml-2">
                   <ArrowLeft size={20} className="text-foreground" />
                 </Button>
-                <div className="flex-1">
-                  <h1 className="text-xl font-bold text-foreground">{wordbook.name}</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {wordbook.wordCount}개 단어 • {wordbook.progress}% 완료
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="select-all"
+                    checked={selectedWords.size > 0 && selectedWords.size === filteredAndSortedWords.length && filteredAndSortedWords.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <label htmlFor="select-all" className="text-lg font-bold text-foreground">
+                    단어 선택
+                  </label>
                 </div>
-                <Drawer>
-                  <DrawerTrigger asChild>
-                    <Button variant="ghost" size="sm" className="p-2">
-                      <MoreVertical size={20} className="text-foreground" />
-                    </Button>
-                  </DrawerTrigger>
-                  <DrawerContent>
-                    <DrawerTitle className="sr-only">단어장 설정</DrawerTitle>
-                    <div className="mx-auto w-full max-w-sm">
-
-                      {/* [!!! 여기를 수정합니다 !!!] - 단어장 정보 수정 버튼 onClick 수정 */}
-                      <div className="p-2">
-                        <DrawerClose asChild>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start p-2 h-12 text-sm"
-                            onClick={() => setIsEditingWordbookInfo(true)} // 페이지로 이동
-                          >
-                            <BookCopy size={16} className="mr-2" />
-                            단어장 정보 수정
-                          </Button>
-                        </DrawerClose>
-                        {/* [!!! 수정 끝 !!!] */}
-
-                        <DrawerClose asChild>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start p-2 h-12 text-sm"
-                            onClick={() => setIsEditMode(true)}
-                          >
-                            <Edit size={16} className="mr-2" />
-                            단어 편집
-                          </Button>
-                        </DrawerClose>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive"
-                          onClick={() => setIsDeleteWordbookDialogOpen(true)}
-                        >
-                          <Trash2 size={16} className="mr-2" />
-                          단어장 삭제
-                        </Button>
-                      </div>
-                      <DrawerFooter className="pt-2">
-                        <DrawerClose asChild>
-                          <Button variant="outline">취소</Button>
-                        </DrawerClose>
-                      </DrawerFooter>
-                    </div>
-                  </DrawerContent>
-                </Drawer>
-              </div>
-
-              {/* ... (이하 기존 코드와 동일) ... */}
-              <div className="relative mb-4">
-                <Search
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-                  size={18}
-                />
-                <Input
-                  placeholder="단어 검색..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-11 h-11 bg-muted border-0 rounded-lg text-sm placeholder:text-muted-foreground"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <Button
-                  onClick={() => setIsAddingWord(true)}
-                  className="h-12 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium"
+                  variant="link"
+                  onClick={() => setSelectedWords(new Set())}
+                  className="ml-auto text-primary p-0 h-auto"
+                  disabled={selectedWords.size === 0}
                 >
-                  <Edit size={18} />
-                  직접 입력
+                  선택 취소 ({selectedWords.size})
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">
+                    <ArrowLeft size={20} className="text-foreground" />
+                  </Button>
+                  <div className="flex-1">
+                    <h1 className="text-xl font-bold text-foreground">{wordbook.name}</h1>
+                    <p className="text-sm text-muted-foreground">
+                      {wordbook.wordCount}개 단어 • {wordbook.progress}% 완료
+                    </p>
+                  </div>
+                  <Drawer>
+                    <DrawerTrigger asChild>
+                      <Button variant="ghost" size="sm" className="p-2">
+                        <MoreVertical size={20} className="text-foreground" />
+                      </Button>
+                    </DrawerTrigger>
+                    <DrawerContent>
+                      <DrawerTitle className="sr-only">단어장 설정</DrawerTitle>
+                      <div className="mx-auto w-full max-w-sm">
+
+                        {/* [!!! 여기를 수정합니다 !!!] - 단어장 정보 수정 버튼 onClick 수정 */}
+                        <div className="p-2">
+                          <DrawerClose asChild>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start p-2 h-12 text-sm"
+                              onClick={() => setIsEditingWordbookInfo(true)} // 페이지로 이동
+                            >
+                              <BookCopy size={16} className="mr-2" />
+                              단어장 정보 수정
+                            </Button>
+                          </DrawerClose>
+                          {/* [!!! 수정 끝 !!!] */}
+
+                          <DrawerClose asChild>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start p-2 h-12 text-sm"
+                              onClick={() => setIsEditMode(true)}
+                            >
+                              <Edit size={16} className="mr-2" />
+                              단어 편집
+                            </Button>
+                          </DrawerClose>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive"
+                            onClick={() => setIsDeleteWordbookDialogOpen(true)}
+                          >
+                            <Trash2 size={16} className="mr-2" />
+                            단어장 삭제
+                          </Button>
+                        </div>
+                        <DrawerFooter className="pt-2">
+                          <DrawerClose asChild>
+                            <Button variant="outline">취소</Button>
+                          </DrawerClose>
+                        </DrawerFooter>
+                      </div>
+                    </DrawerContent>
+                  </Drawer>
+                </div>
+
+                {/* ... (이하 기존 코드와 동일) ... */}
+                <div className="relative mb-4">
+                  <Search
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                    size={18}
+                  />
+                  <Input
+                    placeholder="단어 검색..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-11 h-11 bg-muted border-0 rounded-lg text-sm placeholder:text-muted-foreground"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    onClick={() => setIsAddingWord(true)}
+                    className="h-12 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium"
+                  >
+                    <Edit size={18} />
+                    직접 입력
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 flex items-center justify-center gap-2 bg-card border border-border hover:bg-muted text-foreground rounded-lg font-medium"
+                    onClick={handlePhotoCaptureClick}
+                  >
+                    <Camera size={18} />
+                    사진으로 추가
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="px-4 py-4 space-y-4">
+          {/* ... (이하 기존 코드와 동일) ... */}
+          {!isEditMode && (
+            <ScrollArea className="w-full whitespace-nowrap pb-2">
+              <div className="flex justify-end gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs rounded-full flex-shrink-0"
+                  onClick={handleFilterToggle}
+                >
+                  {filterMastered === 'all' ? <Filter size={14} className="mr-1" /> : <X size={14} className="mr-1 text-red-500" />}
+                  {filterMastered === 'all' ? '전체' : '미암기'}
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-12 flex items-center justify-center gap-2 bg-card border border-border hover:bg-muted text-foreground rounded-lg font-medium"
-                  onClick={handlePhotoCaptureClick}
+                  size="sm"
+                  className="text-xs rounded-full flex-shrink-0"
+                  onClick={handleSortToggle}
                 >
-                  <Camera size={18} />
-                  사진으로 추가
+                  {sortOrder === 'random' ? <Shuffle size={14} className="mr-1" /> : <ListFilter size={14} className="mr-1" />}
+                  {sortOrder === 'random' ? '랜덤' : '기본'}
+                </Button>
+                <Button
+                  variant={hideMode === "none" ? "outline" : "default"}
+                  size="sm"
+                  onClick={handleToggleHideMode}
+                  className="text-xs rounded-full flex-shrink-0"
+                >
+                  {hideMode === "none" && (
+                    <>
+                      <Eye size={14} className="mr-1" />
+                      모두 보기
+                    </>
+                  )}
+                  {hideMode === "word" && (
+                    <>
+                      <EyeOff size={14} className="mr-1" />
+                      단어 숨김
+                    </>
+                  )}
+                  {hideMode === "meaning" && (
+                    <>
+                      <EyeOff size={14} className="mr-1" />
+                      뜻 숨김
+                    </>
+                  )}
                 </Button>
               </div>
-            </>
+              <ScrollBar orientation="horizontal" className="h-2" />
+            </ScrollArea>
           )}
-        </div>
-      </div>
 
-      <div className="px-4 py-4 space-y-4">
-        {/* ... (이하 기존 코드와 동일) ... */}
-        {!isEditMode && (
-          <ScrollArea className="w-full whitespace-nowrap pb-2">
-            <div className="flex justify-end gap-2 mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs rounded-full flex-shrink-0"
-                onClick={handleFilterToggle}
-              >
-                {filterMastered === 'all' ? <Filter size={14} className="mr-1" /> : <X size={14} className="mr-1 text-red-500" />}
-                {filterMastered === 'all' ? '전체' : '미암기'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs rounded-full flex-shrink-0"
-                onClick={handleSortToggle}
-              >
-                {sortOrder === 'random' ? <Shuffle size={14} className="mr-1" /> : <ListFilter size={14} className="mr-1" />}
-                {sortOrder === 'random' ? '랜덤' : '기본'}
-              </Button>
-              <Button
-                variant={hideMode === "none" ? "outline" : "default"}
-                size="sm"
-                onClick={handleToggleHideMode}
-                className="text-xs rounded-full flex-shrink-0"
-              >
-                {hideMode === "none" && (
-                  <>
-                    <Eye size={14} className="mr-1" />
-                    모두 보기
-                  </>
-                )}
-                {hideMode === "word" && (
-                  <>
-                    <EyeOff size={14} className="mr-1" />
-                    단어 숨김
-                  </>
-                )}
-                {hideMode === "meaning" && (
-                  <>
-                    <EyeOff size={14} className="mr-1" />
-                    뜻 숨김
-                  </>
-                )}
-              </Button>
-            </div>
-            <ScrollBar orientation="horizontal" className="h-2" />
-          </ScrollArea>
-        )}
-
-        <div className={`space-y-3 ${isEditMode ? "pb-24" : ""}`}>
-          {isLoading ? (
-            <div className="space-y-3 pt-4">
-              <Skeleton className="h-24 w-full rounded-lg" />
-              <Skeleton className="h-24 w-full rounded-lg" />
-              <Skeleton className="h-24 w-full rounded-lg" />
-            </div>
-          ) : filteredAndSortedWords.length === 0 ? (
-            <Card className="text-center py-12 border border-border rounded-lg">
-              <CardContent>
-                <Edit size={48} className="mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {searchQuery ? "검색 결과가 없습니다" : filterMastered === 'exclude' ? "조건에 맞는 단어가 없습니다" : "단어가 없습니다"}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {searchQuery ? "다른 검색어를 시도해보세요" : filterMastered === 'exclude' ? "필터를 변경하거나 단어를 추가하세요" : "첫 번째 단어를 추가해보세요"}
-                </p>
-                {!searchQuery && (
-                  <Button
-                    onClick={() => setIsAddingWord(true)}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium"
-                  >
-                    <Edit size={16} className="mr-2" />
-                    단어 추가하기
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            filteredAndSortedWords.map((word) => (
-              <Card
-                key={word.id}
-                className={`transition-all rounded-lg bg-card ${selectedWords.has(word.id) ? "border-primary ring-2 ring-primary" : "border border-border"}`}
-                onClick={() => isEditMode && handleWordSelection(word.id)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    {isEditMode && <Checkbox checked={selectedWords.has(word.id)} className="mr-4 mt-1" />}
-                    <div className="flex-1 cursor-pointer" onClick={() => !isEditMode && handleCardFlip(word.id)}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          {hideMode === "word" && !flippedCards.has(word.id) && !isEditMode ? (
-                            <div className="h-7 w-32 bg-muted rounded animate-pulse" />
-                          ) : (
-                            <h3 className="text-lg font-semibold text-foreground">{word.word}</h3>
-                          )}
-                        </div>
-                        {!isEditMode && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleMastered(word);
-                            }}
-                            className={cn(
-                              "text-xs font-semibold rounded-full px-3 py-1 h-auto",
-                              word.mastered
-                                ? "text-green-700 bg-green-100 hover:bg-green-200"
-                                : "text-muted-foreground bg-muted hover:bg-muted/80"
-                            )}
-                          >
-                            {word.mastered ? "암기 완료" : "암기 미완료"}
-                          </Button>
-                        )}
-                      </div>
-                      {hideMode === "meaning" && !flippedCards.has(word.id) && !isEditMode ? (
-                        <div className="h-6 w-24 bg-muted rounded animate-pulse mb-1" />
-                      ) : (
-                        <p className="text-base text-foreground mb-1">{word.meaning}</p>
-                      )}
-                      {flippedCards.has(word.id) && !isEditMode && (
-                        <>
-                          {word.pronunciation && (
-                            <p className="text-sm text-muted-foreground italic mb-1">[{word.pronunciation}]</p>
-                          )}
-                          {word.example && (
-                            <p className="text-sm text-blue-600 dark:text-blue-400 pl-2 border-l-2 border-blue-500 mt-2">
-                              {word.example}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    {!isEditMode && (
-                      <Drawer>
-                        <DrawerTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 -ml-2">
-                            <MoreVertical size={16} className="text-muted-foreground" />
-                          </Button>
-                        </DrawerTrigger>
-                        <DrawerContent>
-                          <DrawerTitle className="sr-only">단어 옵션</DrawerTitle>
-                          <div className="mx-auto w-full max-w-sm">
-                            <div className="p-2">
-                              <DrawerClose asChild>
-                                <Button
-                                  variant="ghost"
-                                  className="w-full justify-start p-2 h-12 text-sm"
-                                  onClick={() => setEditingWord(word)}
-                                >
-                                  <Edit size={16} className="mr-2" />
-                                  편집
-                                </Button>
-                              </DrawerClose>
-                              <DrawerClose asChild>
-                                <Button
-                                  variant="ghost"
-                                  className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive"
-                                  onClick={() => setWordToDelete(word)}
-                                >
-                                  <Trash2 size={16} className="mr-2" />
-                                  삭제
-                                </Button>
-                              </DrawerClose>
-                            </div>
-                            <DrawerFooter className="pt-2">
-                              <DrawerClose asChild>
-                                <Button variant="outline">취소</Button>
-                              </DrawerClose>
-                            </DrawerFooter>
-                          </div>
-                        </DrawerContent>
-                      </Drawer>
-                    )}
-                  </div>
+          <div className={`space-y-3 ${isEditMode ? "pb-24" : ""}`}>
+            {isLoading ? (
+              <div className="space-y-3 pt-4">
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+              </div>
+            ) : filteredAndSortedWords.length === 0 ? (
+              <Card className="text-center py-12 border border-border rounded-lg">
+                <CardContent>
+                  <Edit size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    {searchQuery ? "검색 결과가 없습니다" : filterMastered === 'exclude' ? "조건에 맞는 단어가 없습니다" : "단어가 없습니다"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {searchQuery ? "다른 검색어를 시도해보세요" : filterMastered === 'exclude' ? "필터를 변경하거나 단어를 추가하세요" : "첫 번째 단어를 추가해보세요"}
+                  </p>
+                  {!searchQuery && (
+                    <Button
+                      onClick={() => setIsAddingWord(true)}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium"
+                    >
+                      <Edit size={16} className="mr-2" />
+                      단어 추가하기
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
-            ))
-          )}
+            ) : (
+              filteredAndSortedWords.map((word) => (
+                <Card
+                  key={word.id}
+                  className={`transition-all rounded-lg bg-card ${selectedWords.has(word.id) ? "border-primary ring-2 ring-primary" : "border border-border"}`}
+                  onClick={() => isEditMode && handleWordSelection(word.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      {isEditMode && <Checkbox checked={selectedWords.has(word.id)} className="mr-4 mt-1" />}
+                      <div className="flex-1 cursor-pointer" onClick={() => !isEditMode && handleCardFlip(word.id)}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            {hideMode === "word" && !flippedCards.has(word.id) && !isEditMode ? (
+                              <div className="h-7 w-32 bg-muted rounded animate-pulse" />
+                            ) : (
+                              <h3 className="text-lg font-semibold text-foreground">{word.word}</h3>
+                            )}
+                          </div>
+                          {!isEditMode && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleMastered(word);
+                              }}
+                              className={cn(
+                                "text-xs font-semibold rounded-full px-3 py-1 h-auto",
+                                word.mastered
+                                  ? "text-green-700 bg-green-100 hover:bg-green-200"
+                                  : "text-muted-foreground bg-muted hover:bg-muted/80"
+                              )}
+                            >
+                              {word.mastered ? "암기 완료" : "암기 미완료"}
+                            </Button>
+                          )}
+                        </div>
+                        {hideMode === "meaning" && !flippedCards.has(word.id) && !isEditMode ? (
+                          <div className="h-6 w-24 bg-muted rounded animate-pulse mb-1" />
+                        ) : (
+                          <p className="text-base text-foreground mb-1">{word.meaning}</p>
+                        )}
+                        {flippedCards.has(word.id) && !isEditMode && (
+                          <>
+                            {word.pronunciation && (
+                              <p className="text-sm text-muted-foreground italic mb-1">[{word.pronunciation}]</p>
+                            )}
+                            {word.example && (
+                              <p className="text-sm text-blue-600 dark:text-blue-400 pl-2 border-l-2 border-blue-500 mt-2">
+                                {word.example}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      {!isEditMode && (
+                        <Drawer>
+                          <DrawerTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 -ml-2">
+                              <MoreVertical size={16} className="text-muted-foreground" />
+                            </Button>
+                          </DrawerTrigger>
+                          <DrawerContent>
+                            <DrawerTitle className="sr-only">단어 옵션</DrawerTitle>
+                            <div className="mx-auto w-full max-w-sm">
+                              <div className="p-2">
+                                <DrawerClose asChild>
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full justify-start p-2 h-12 text-sm"
+                                    onClick={() => setEditingWord(word)}
+                                  >
+                                    <Edit size={16} className="mr-2" />
+                                    편집
+                                  </Button>
+                                </DrawerClose>
+                                <DrawerClose asChild>
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive"
+                                    onClick={() => setWordToDelete(word)}
+                                  >
+                                    <Trash2 size={16} className="mr-2" />
+                                    삭제
+                                  </Button>
+                                </DrawerClose>
+                              </div>
+                              <DrawerFooter className="pt-2">
+                                <DrawerClose asChild>
+                                  <Button variant="outline">취소</Button>
+                                </DrawerClose>
+                              </DrawerFooter>
+                            </div>
+                          </DrawerContent>
+                        </Drawer>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         </div>
+
+        {/* [!!! 여기를 수정합니다 !!!] - 하단 편집 모드 버튼들이 있던 자리 (이제 비어있음) */}
       </div>
 
+      {/* [!!! 여기를 수정합니다 !!!] - 하단 편집 모드 버튼들을 이곳으로 이동 */}
       {/* --- 하단 편집 모드 버튼들 --- */}
       {/* ... (기존 코드와 동일) ... */}
       {isEditMode && (
@@ -916,6 +922,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
           </div>
         </div>
       )}
-    </div>
+    </> // [!!! 여기를 수정합니다 !!!] - </React.Fragment> (</>) 추가
   )
 }
