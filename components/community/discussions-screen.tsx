@@ -31,13 +31,20 @@ interface PostToEditData {
   category: string;
 }
 
-// 6번 요청: '핫 🔥' 카테고리 추가
-const CATEGORIES = ["전체", "핫 🔥", "학습팁", "질문", "자유"]
+// [수정] 카테고리 'value'를 DB에 저장된 한글로 변경
+const CATEGORIES = [
+  { value: "all", label: "전체" },
+  { value: "hot", label: "핫 🔥" },
+  { value: "학습팁", label: "학습팁" }, // "tip" -> "학습팁"
+  { value: "질문", label: "질문" },     // "question" -> "질문"
+  { value: "자유", label: "자유" },     // "free" -> "자유"
+]
 
 export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
   const [discussions, setDiscussions] = useState<DiscussionPost[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedCategory, setSelectedCategory] = useState("전체")
+  // [수정] selectedCategory가 이제 "all" 또는 "hot" 또는 "학습팁" 등 한글 value를 사용
+  const [selectedCategory, setSelectedCategory] = useState("all")
 
   const [screen, setScreen] = useState<"list" | "detail" | "create" | "edit">("list")
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
@@ -47,10 +54,12 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
   const fetchDiscussions = useCallback(async () => {
     setIsLoading(true)
     try {
-      // [수정]
-      // '핫' 카테고리가 아닐 경우, 기본 정렬을 'likes'(좋아요순)에서 'createdAt'(최신순)으로 변경합니다.
-      const sortBy = selectedCategory === "핫 🔥" ? "hot" : "createdAt"
-      const category = (selectedCategory === "전체" || selectedCategory === "핫 🔥") ? "all" : selectedCategory
+      // [수정] selectedCategory가 "hot"이면 sortBy=hot
+      const sortBy = selectedCategory === "hot" ? "hot" : "createdAt"
+
+      // [수정] selectedCategory가 "all" 또는 "hot"이면 category=all, 
+      // 그 외("학습팁", "질문" 등)에는 해당 한글 value가 category 파라미터로 전달됨
+      const category = (selectedCategory === "all" || selectedCategory === "hot") ? "all" : selectedCategory
 
       const data = await fetchWithAuth(`/api/community/discussions?sortBy=${sortBy}&category=${category}`)
       setDiscussions(data || [])
@@ -59,7 +68,7 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
     } finally {
       setIsLoading(false)
     }
-  }, [selectedCategory])
+  }, [selectedCategory]) // [수정] 의존성 배열은 selectedCategory로 유지
 
   useEffect(() => {
     if (screen === "list") {
@@ -148,14 +157,15 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex space-x-2 overflow-x-auto pb-2">
+            {/* [수정] CATEGORIES 객체 배열을 순회 (이제 value가 한글) */}
             {CATEGORIES.map((category) => (
               <Badge
-                key={category}
-                variant={selectedCategory === category ? "default" : "secondary"}
-                onClick={() => setSelectedCategory(category)}
+                key={category.value}
+                variant={selectedCategory === category.value ? "default" : "secondary"}
+                onClick={() => setSelectedCategory(category.value)} // 클릭 시 '학습팁', '질문' 등 한글 value가 state에 저장됨
                 className="cursor-pointer flex-shrink-0"
               >
-                {category}
+                {category.label} {/* 사용자에게는 한글 label이 보임 */}
               </Badge>
             ))}
           </div>

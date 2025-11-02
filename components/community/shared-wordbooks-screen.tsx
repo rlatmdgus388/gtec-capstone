@@ -7,23 +7,22 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, BookOpen, Download, Heart, Share2, Search, Trash2, Eye } from "lucide-react"
+import { ArrowLeft, BookOpen, Download, Heart, Share2, Search, Trash2, Eye, MoreVertical } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
 import { auth } from "@/lib/firebase"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ShareWordbookDialog } from "./share-wordbook-dialog"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 
 // --- 인터페이스 정의 ---
 interface SharedWordbook {
@@ -34,33 +33,22 @@ interface SharedWordbook {
   likes: number
   downloads: number
   views: number
-  category: string // e.g., 'exam', 'basic'
+  category: string // e.g., '시험', '일상' (한글)
 }
 
-// ✨ 카테고리 정의 수정: 한글 레이블과 영문 값(DB 저장 값)을 매핑합니다.
-const CATEGORY_MAP: Record<string, string> = {
-  basic: "기초",
-  exam: "시험",
-  conversation: "회화",
-  business: "비즈니스",
-  travel: "여행",
-  specialized: "전문",
-  etc: "기타",
-}
+// [수정] CATEGORY_MAP과 getCategoryLabel 삭제
 
-// ✨ 영문 value를 한글 label로 변환하는 헬퍼 함수
-const getCategoryLabel = (value: string) => {
-  return CATEGORY_MAP[value] || value // 매핑이 없으면 원본 값(영문) 반환
-}
-
-// ✨ 필터 카테고리 수정: '전체'를 추가하고 CATEGORY_MAP을 기반으로 생성합니다.
+// [수정] 필터 카테고리를 DB에 저장된 한글 값으로 변경 (요청하신 목록)
 const FILTER_CATEGORIES = [
   { label: "전체", value: "all" },
-  // CATEGORY_MAP의 [key, value]를 { value: key, label: value } 형태로 변환
-  ...Object.entries(CATEGORY_MAP).map(([value, label]) => ({ label, value })),
+  { label: "시험", value: "시험" },     // "exam" -> "시험"
+  { label: "일상", value: "일상" },     // "daily" -> "일상"
+  { label: "여행", value: "여행" },     // "travel" -> "여행"
+  { label: "비즈니스", value: "비즈니스" }, // "business" -> "비즈니스"
+  { label: "자유", value: "자유" },     // "free" -> "자유"
+  { label: "기타", value: "기타" },     // "etc" -> "기타"
 ]
 
-// ✨ 아래 줄이 수정되었습니다. onSelectWordbook prop을 추가합니다.
 export function SharedWordbooksScreen({
   onBack,
   onSelectWordbook,
@@ -69,32 +57,29 @@ export function SharedWordbooksScreen({
   const [isLoading, setIsLoading] = useState(true)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  // selectedCategory는 이제 'all', 'basic', 'exam' 등의 영문 값을 저장합니다.
+  // [수정] selectedCategory는 이제 'all', '시험', '일상' 등의 한글 값을 저장합니다.
   const [selectedCategory, setSelectedCategory] = useState("all")
-
-  // ✨ 아래 줄이 삭제되었습니다. 펼치기 상태는 더 이상 필요 없습니다.
-  // const [expandedWordbookId, setExpandedWordbookId] = useState<string | null>(null);
 
   const currentUserId = auth.currentUser?.uid
 
   const fetchWordbooks = useCallback(async () => {
     setIsLoading(true)
     try {
-      const data = await fetchWithAuth("/api/community/wordbooks?sortBy=downloads")
+      // [수정] API 호출 시 category 파라미터를 추가 (서버 사이드 필터링)
+      const categoryParam = selectedCategory === "all" ? "all" : selectedCategory
+      // 원본 파일(before)에서 sortBy=downloads로 고정되어 있었으므로 유지
+      const data = await fetchWithAuth(`/api/community/wordbooks?sortBy=downloads&category=${categoryParam}`)
       setWordbooks(data || [])
     } catch (error) {
       console.error("공유 단어장 목록 조회 실패:", error)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [selectedCategory]) // [수정] selectedCategory가 바뀔 때마다 fetchWordbooks가 다시 실행되도록 의존성 추가
 
   useEffect(() => {
     fetchWordbooks()
   }, [fetchWordbooks])
-
-  // ✨ 아래 함수가 삭제되었습니다. 펼치기 기능이 없어졌기 때문입니다.
-  // const handleToggleDetail = async (wordbookId: string) => { ... };
 
   const handleDelete = async (wordbookId: string) => {
     try {
@@ -119,15 +104,15 @@ export function SharedWordbooksScreen({
     }
   }
 
+  // [수정] 클라이언트 측 카테고리 필터링 제거 (서버가 하므로)
   const filteredWordbooks = wordbooks.filter((wb) => {
     const matchesSearch =
       wb.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       wb.author.name.toLowerCase().includes(searchQuery.toLowerCase())
 
-    // ✨ 필터 로직 수정: 이제 wb.category (영문)와 selectedCategory (영문)가 올바르게 비교됩니다.
-    const matchesCategory = selectedCategory === "all" || wb.category === selectedCategory
+    // const matchesCategory = ... (제거)
 
-    return matchesSearch && matchesCategory
+    return matchesSearch
   })
 
   return (
@@ -164,7 +149,7 @@ export function SharedWordbooksScreen({
                 <Badge
                   key={cat.value}
                   variant={selectedCategory === cat.value ? "default" : "secondary"}
-                  onClick={() => setSelectedCategory(cat.value)} // 클릭 시 영문 value가 state에 저장됨
+                  onClick={() => setSelectedCategory(cat.value)} // 클릭 시 한글 value("시험", "일상" 등)가 state에 저장됨
                   className="cursor-pointer"
                 >
                   {cat.label} {/* 사용자에게는 한글 label이 보임 */}
@@ -176,7 +161,6 @@ export function SharedWordbooksScreen({
         </div>
 
         {/* Content */}
-        {/* 3번 요청: space-y-4 -> space-y-3 로 수정 */}
         <div className="p-4 space-y-3">
           {isLoading ? (
             <div className="space-y-3">
@@ -194,80 +178,95 @@ export function SharedWordbooksScreen({
             </Card>
           ) : (
             filteredWordbooks.map((wordbook) => (
-              <Card
-                key={wordbook.id}
-                onClick={() => onSelectWordbook(wordbook.id)}
-                className="cursor-pointer transition-all hover:shadow-md bg-card border-border"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-card-foreground">{wordbook.name}</h3>
-                      {/* 4번 요청: p 태그는 원래 클릭 불가능 */}
-                      <p className="text-sm text-muted-foreground">by {wordbook.author.name}</p>
-                      <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
-
-                      {/* ✨ 단어장 카드 내부의 카테고리 표시 수정 */}
-                      <Badge variant="secondary" className="mt-2">
-                        {getCategoryLabel(wordbook.category)} {/* 영문 값을 한글로 변환하여 표시 */}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {currentUserId === wordbook.author.uid && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+              <Drawer key={wordbook.id}>
+                <Card
+                  onClick={() => onSelectWordbook(wordbook.id)}
+                  className="cursor-pointer transition-all hover:shadow-md bg-card border-border"
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-card-foreground">{wordbook.name}</h3>
+                        <p className="text-sm text-muted-foreground">by {wordbook.author.name}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary" className="flex-shrink-0">
+                            {/* [수정] getCategoryLabel(wordbook.category) -> wordbook.category */}
+                            {/* DB에서 "시험" (한글)을 받아오므로 번역 함수 불필요 */}
+                            {wordbook.category}
+                          </Badge>
+                          <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        {currentUserId === wordbook.author.uid && (
+                          <DrawerTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={(e) => e.stopPropagation()}
+                              className="h-8 w-8"
+                              onClick={(e) => e.stopPropagation()} // Prevent card click
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>정말 삭제하시겠습니까?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                이 작업은 되돌릴 수 없습니다. 단어장이 커뮤니티에서 영구적으로 삭제됩니다.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={(e) => e.stopPropagation()}>취소</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDelete(wordbook.id)
-                                }}
-                              >
-                                삭제
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                      <Button size="sm" onClick={(e) => handleDownload(e, wordbook)}>
+                          </DrawerTrigger>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          <Heart size={14} />
+                          {wordbook.likes}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Download size={14} />
+                          {wordbook.downloads}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Eye size={14} />
+                          {wordbook.views}
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={(e) => handleDownload(e, wordbook)}
+                        className="h-8"
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         다운로드
                       </Button>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Drawer (삭제 확인) 부분은 원본과 동일 */}
+                <DrawerContent>
+                  <div className="mx-auto w-full max-w-sm">
+                    <DrawerHeader className="text-left">
+                      <DrawerTitle>정말 삭제하시겠습니까?</DrawerTitle>
+                      <DrawerDescription>
+                        이 작업은 되돌릴 수 없습니다. 단어장이 커뮤니티에서 영구적으로 삭제됩니다.
+                      </DrawerDescription>
+                    </DrawerHeader>
+                    <DrawerFooter>
+                      <Button
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(wordbook.id)
+                        }}
+                      >
+                        삭제
+                      </Button>
+                      <DrawerClose asChild>
+                        <Button variant="outline" onClick={(e) => e.stopPropagation()}>
+                          취소
+                        </Button>
+                      </DrawerClose>
+                    </DrawerFooter>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Heart size={14} />
-                      {wordbook.likes}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Download size={14} />
-                      {wordbook.downloads}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye size={14} />
-                      {wordbook.views}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+                </DrawerContent>
+              </Drawer>
             ))
           )}
         </div>

@@ -231,13 +231,10 @@ export function CommunityScreen() {
                         <p className="text-sm text-muted-foreground">
                           by {wordbook.author.name}
                         </p>
-                        <p className="text-sm text-muted-foreground">{wordbook.wordCount}개 단어</p>
+                        {/* [수정] "개 단어" -> "words"로 변경 */}
+                        <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
                       </div>
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                          {wordbook.author.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      {/* [수정] Avatar 컴포넌트 삭제 */}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">

@@ -110,7 +110,8 @@ export function ShareWordbookDialog({ open, onOpenChange, onShared }: ShareWordb
                                     >
                                         <CardContent className="p-3">
                                             <h4 className="font-semibold">{wb.name}</h4>
-                                            <p className="text-sm text-gray-500">{wb.wordCount} 단어</p>
+                                            {/* [수정] 5번 요청: '단어' -> 'words' */}
+                                            <p className="text-sm text-gray-500">{wb.wordCount} words</p>
                                         </CardContent>
                                     </Card>
                                 ))

@@ -140,7 +140,7 @@ export function UserProfile({ userId, onBack }: UserProfileProps) {
                 <CardContent className="p-4">
                   <h4 className="font-medium text-black truncate">{post.title}</h4>
                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                    <span>{timeAgo(post.createdAt)}</span>
+
                     <span className="flex items-center gap-1"><Heart size={14} /> {post.likes}</span>
                     <span className="flex items-center gap-1"><MessageCircle size={14} /> {post.replies}</span>
                   </div>
