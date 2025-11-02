@@ -98,19 +98,19 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
 
   // fetchWords useEffect 제거
 
-  // ▼▼▼ [수정됨] icon 속성을 src 속성(이미지 경로)으로 변경 ▼▼▼
+  // ▼▼▼ [수정됨] 'color' 속성 제거 ▼▼▼
   const studyModes = [
     {
-      id: "flashcard", name: "플래시카드", description: "카드를 넘기며 단어 학습", src: "/icons/flash.svg", color: "bg-white-500"
+      id: "flashcard", name: "플래시카드", description: "카드를 넘기며 단어 학습", src: "/icons/flash.svg"
     },
     {
-      id: "autoplay", name: "자동재생", description: "자동으로 단어와 뜻 재생", src: "/icons/auto.svg", color: "bg-white-500"
+      id: "autoplay", name: "자동재생", description: "자동으로 단어와 뜻 재생", src: "/icons/auto.svg"
     },
     {
-      id: "writing", name: "받아쓰기", description: "직접 단어를 입력하여 학습", src: "/icons/write.svg", color: "bg-white-500"
+      id: "writing", name: "받아쓰기", description: "직접 단어를 입력하여 학습", src: "/icons/write.svg"
     },
     {
-      id: "quiz", name: "객관식 퀴즈", description: "객관식 문제로 실력 테스트", src: "/icons/quiz.svg", color: "bg-white-500"
+      id: "quiz", name: "객관식 퀴즈", description: "객관식 문제로 실력 테스트", src: "/icons/quiz.svg"
     },
   ]
 
@@ -326,19 +326,17 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
   // selectedWordbookName 제거
 
   return (
-    // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-    <div className="flex-1 overflow-y-auto pb-20 bg-white dark:bg-zinc-900">
-      {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800">
+    // ▼▼▼ [수정됨] 전체 배경을 'bg-background'로 변경 ▼▼▼
+    <div className="flex-1 overflow-y-auto pb-20 bg-background">
+      {/* ▼▼▼ [수정됨] 헤더 배경을 'bg-card'로 변경 ▼▼▼ */}
+      <div className="bg-card border-b border-gray-100 dark:border-zinc-800">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#FF7A00]/10 rounded-xl flex items-center justify-center">
               <GraduationCap size={24} className="text-[#FF7A00]" />
             </div>
             <div>
-              {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
               <h1 className="text-2xl font-bold text-black dark:text-white">학습하기</h1>
-              {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
               <p className="text-sm text-gray-600 dark:text-gray-400">다양한 방법으로 단어를 학습하세요</p>
             </div>
           </div>
@@ -350,18 +348,17 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
 
       <div className="px-4 pt-4 space-y-6">
         <div>
-          {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
           <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">학습 모드</h2>
           <div className="grid grid-cols-2 gap-3">
-            {/* ▼▼▼ [수정됨] studyModes.map() 렌더링 로직 변경 ▼▼▼ */}
             {studyModes.map((mode) => (
                 <button
                   key={mode.id}
-                  className="aspect-square bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
+                  // ▼▼▼ [수정됨] 버튼 배경을 'bg-card'로 변경 ▼▼▼
+                  className="aspect-square bg-card border border-gray-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition-all duration-200 p-4 flex flex-col items-center justify-center text-center space-y-2 group"
                   onClick={() => handleModeSelect(mode)}
                 >
-                  <div className={`w-14 h-14 ${mode.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200 p-2`}>
-                    {/* Image 컴포넌트로 변경 */}
+                  {/* ▼▼▼ [수정됨] 아이콘 배경(bg-muted, rounded-lg) 제거 ▼▼▼ */}
+                  <div className="w-14 h-14 flex items-center justify-center group-hover:scale-110 transition-transform duration-200 p-2">
                     <Image
                       src={mode.src}
                       alt={`${mode.name} 아이콘`}
@@ -377,13 +374,11 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                 </button>
               )
             )}
-            {/* ▲▲▲ [수정됨] studyModes.map() 렌더링 로직 변경 ▲▲▲ */}
           </div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-3">
-            {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
             <h2 className="text-base font-semibold text-black dark:text-white">최근 학습 기록</h2>
             <Button variant="ghost" size="sm" onClick={() => setIsHistoryVisible(true)}>
               더보기
@@ -396,9 +391,8 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                     <Skeleton className="h-20 w-full rounded-xl" />
                 </div>
             ) : recentSessions.length === 0 ? (
-                // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-                <Card className="border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800">
-                    {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
+                // ▼▼▼ [수정됨] 최근 기록 카드 배경을 'bg-card'로 (다른 카드들과 동일하게) ▼▼▼
+                <Card className="border border-gray-200 dark:border-zinc-700 rounded-xl bg-card">
                     <CardContent className="p-6 text-center text-gray-500 dark:text-gray-400">
                         최근 학습 기록이 없습니다.
                     </CardContent>
@@ -407,16 +401,14 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                 recentSessions.slice(0, 5).map((session) => (
                   <Card
                     key={session.id}
-                    // ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼
-                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 dark:border-zinc-700 shadow-sm bg-white dark:bg-zinc-800 rounded-xl"
+                    // ▼▼▼ [수정됨] 최근 기록 카드 배경을 'bg-card'로 (다른 카드들과 동일하게) ▼▼▼
+                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 dark:border-zinc-700 shadow-sm bg-card rounded-xl"
                     onClick={() => setSelectedSession(session)}
                   >
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
                           <h3 className="font-medium text-black dark:text-white mb-0.5 text-base">{session.wordbookName}</h3>
-                          {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
                           <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                             <span>{session.mode}</span>
                             <span className="flex items-center gap-1">
@@ -428,7 +420,6 @@ export function StudyScreen({ selectedWordbookId }: StudyScreenProps) {
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-[#FF7A00]">{session.score}%</div>
-                          {/* ▼▼▼ [수정됨] dark: 클래스 추가 ▼▼▼ */}
                           <div className="text-[16px] text-gray-500 dark:text-gray-400">점수</div>
                         </div>
                       </div>
