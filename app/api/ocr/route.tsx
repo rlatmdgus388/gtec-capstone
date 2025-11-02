@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     // [변경] 오직 fullText만 추출
     const fullText = detections[0].description || "";
 
-    // --- 단어 필터링(filteredWords), 원형 추출(uniqueLemmasMap), DeepL 번역 로직 모두 제거 ---
+    // --- 단어 필터링(filteredWords), 원형 추출(uniqueLemmasMap), DeepL 번역 로직 모두 제거 -
 
     // [변경] fullText만 반환
     return NextResponse.json({ fullText });
