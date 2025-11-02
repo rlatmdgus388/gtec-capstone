@@ -50,7 +50,7 @@ export function LoginForm({
             <SnapVocaLogo size="xl" />
           </div>
           {/* 글씨 더 크고 두껍게 */}
-          <h1 className="text-5xl font-black text-black">찍어보카</h1>
+          <h1 className="text-5xl font-black text-black">담아보카</h1>
         </div>
 
         <div className="space-y-4">
