@@ -20,7 +20,6 @@ import { Input } from "@/components/ui/input"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "../ui/skeleton"
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 // 이 파일 내부에서 사용할 Word 인터페이스 (mastered 포함)
 interface Word {
@@ -180,10 +179,9 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
   const canStart = selectedWordbook && !isLoading.words && maxWords > 0 && wordCount > 0;
 
   return (
-    // ▼▼▼ [수정됨] 전체 배경을 bg-background로 변경 ▼▼▼
-    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
+    // ▼▼▼ [수정됨] overflow-y-auto, pb-20 제거 ▼▼▼
+    <div className="flex-1 bg-background">
       {/* 1. Header */}
-      {/* ▼▼▼ [수정됨] 헤더 배경을 bg-card로, 텍스트 색을 foreground로 변경 ▼▼▼ */}
       <div className="bg-card border-b border-border">
         <div className="px-4 py-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
@@ -194,10 +192,10 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
       </div>
 
       {/* 2. Options Content */}
-      <div className="p-4 space-y-6">
+      {/* ▼▼▼ [수정됨] 하단 패딩 pb-36 추가 (fixed 버튼 공간) ▼▼▼ */}
+      <div className="p-4 space-y-6 pb-36">
         
         {/* 2.1. 단어장 선택 */}
-        {/* ▼▼▼ [수정됨] Card 배경을 bg-card로, Title 색을 foreground로 변경 ▼▼▼ */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="text-lg text-foreground">1. 단어장 선택</CardTitle>
@@ -206,7 +204,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
             {isLoading.wordbooks ? <Skeleton className="h-12 w-full rounded-lg" /> : (
               <Drawer>
                 <DrawerTrigger asChild>
-                  {/* ▼▼▼ [수정됨] 버튼 스타일을 bg-card 기반으로 변경 ▼▼▼ */}
                   <Button 
                     variant="outline" 
                     className="h-12 w-full justify-start text-left font-normal bg-card border-border rounded-lg text-foreground hover:bg-accent"
@@ -219,7 +216,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
                   <div className="mx-auto w-full max-w-sm">
                     <div className="p-2 max-h-[50vh] overflow-y-auto">
                       {wordbooks.length === 0 ? (
-                        // ▼▼▼ [수정됨] 텍스트 색을 muted-foreground로 변경 ▼▼▼
                         <p className="text-center text-muted-foreground p-4">단어장이 없습니다.</p>
                       ) : wordbooks.map((wordbook) => (
                         <DrawerClose asChild key={wordbook.id}>
@@ -230,7 +226,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
                           >
                             <div className="flex items-center justify-between w-full">
                                 <span>{wordbook.name}</span>
-                                {/* ▼▼▼ [수정됨] 텍스트 색을 muted-foreground로 변경 ▼▼▼ */}
                                 <span className="text-xs text-muted-foreground ml-2">{wordbook.wordCount}개</span>
                             </div>
                           </Button>
@@ -248,20 +243,17 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
             )}
             {isLoading.words && (
                 <div className="flex items-center justify-center pt-4">
-                    {/* ▼▼▼ [수정됨] 텍스트 색을 muted-foreground로 변경 ▼▼▼ */}
                     <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
                     <span className="ml-2 text-muted-foreground text-sm">단어 불러오는 중...</span>
                 </div>
             )}
             {error && (
-                // ▼▼▼ [수정됨] 텍스트 색을 destructive로 변경 ▼▼▼
                 <p className="text-destructive text-sm pt-2">{error}</p>
             )}
           </CardContent>
         </Card>
 
         {/* 2.2. 학습 범위 (암기 여부) */}
-        {/* ▼▼▼ [수정됨] Card 배경, Title 색, 텍스트 색 변경 ▼▼▼ */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
             <CardHeader>
                 <CardTitle className="text-lg text-foreground">2. 학습 범위</CardTitle>
@@ -290,7 +282,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
         </Card>
 
         {/* 2.3. 학습할 단어 개수 */}
-        {/* ▼▼▼ [수정됨] Card 배경, Title 색, Input 배경/텍스트, 텍스트 색 변경 ▼▼▼ */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
             <CardHeader>
                 <CardTitle className="text-lg text-foreground">3. 학습할 단어 개수</CardTitle>
@@ -321,7 +312,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
 
         {/* 2.4. (조건부) 받아쓰기 타입 */}
         {modeId === 'writing' && (
-             // ▼▼▼ [수정됨] Card 배경, Title 색, 텍스트 색 변경 ▼▼▼
              <Card className="bg-card border-border shadow-sm rounded-xl">
                 <CardHeader>
                     <CardTitle className="text-lg text-foreground">4. 받아쓰기 타입</CardTitle>
@@ -348,8 +338,8 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
       </div>
 
       {/* 3. Footer (하단 고정 버튼) */}
-      {/* ▼▼▼ [수정됨] Footer 배경을 bg-card로 변경 ▼▼▼ */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-border bg-card z-10 max-w-md mx-auto" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
+      {/* ▼▼▼ [수정됨] bottom-0 -> bottom-16, 레이아웃 정렬 수정, bg-white/dark:bg-zinc-900 -> bg-background ▼▼▼ */}
+      <div className="fixed bottom-21 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
         <Button
           size="lg"
           className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -365,3 +355,4 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
     </div>
   )
 }
+

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/ui/drawer";
 import { ArrowLeft, BookOpen, Play, PenTool, Brain, Loader2 } from "lucide-react";
 import { fetchWithAuth } from "@/lib/api";
-import { cn } from "@/lib/utils"; // [!!!] cn 유틸리티 import 추가
+import { cn } from "@/lib/utils";
 
 interface StudySession {
   id: string;
@@ -24,7 +24,7 @@ interface WordResult {
   id: string;
   word: string;
   meaning: string;
-  mastered: boolean; // [!!!] 'mastered' 필드 추가
+  mastered: boolean;
 }
 
 interface StudySessionDetailScreenProps {
@@ -50,7 +50,6 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
     setIsLoading(true);
     try {
       const data = await fetchWithAuth(`/api/study-sessions/${session.id}`);
-      // API가 'mastered'를 포함한 데이터를 반환한다고 가정합니다.
       setCorrectWords(data.correctWords || []);
       setIncorrectWords(data.incorrectWords || []);
     } catch (error) {
@@ -72,17 +71,14 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
     }
   };
 
-  // [!!!] 단어 카드를 렌더링하는 헬퍼 함수 (중복 제거)
   const renderWordCard = (item: WordResult) => (
     <Card key={item.id} className="bg-card border-border">
       <CardContent className="p-3">
         <div className="flex items-start justify-between">
-          {/* 단어/뜻 */}
           <div className="flex-1">
             <div className="font-semibold text-card-foreground">{item.word}</div>
             <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
           </div>
-          {/* 암기 상태 배지 (클릭 불가, 표시 전용) */}
           <Button
             variant="ghost"
             size="sm"
@@ -91,7 +87,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
               item.mastered
                 ? "text-green-700 bg-green-100"
                 : "text-muted-foreground bg-muted",
-              "pointer-events-none" // 클릭 이벤트 방지
+              "pointer-events-none"
             )}
           >
             {item.mastered ? "암기 완료" : "암기 미완료"}
@@ -102,7 +98,8 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
   );
 
   return (
-    <div className={cn("flex-1 overflow-y-auto pb-20 bg-background text-foreground", "page-transition-enter-from-left")}>
+    // ▼▼▼ [수정됨] overflow-y-auto 제거 ▼▼▼
+    <div className="flex-1 bg-background text-foreground">
       <div className="px-4 py-6 border-b border-border sticky top-0 bg-card z-10">
         <div className="relative flex items-center justify-center">
           <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
@@ -112,7 +109,8 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
         </div>
       </div>
 
-      <div className="p-4">
+      {/* ▼▼▼ [수정됨] 하단 패딩 pb-32 -> pb-36으로 변경 ▼▼▼ */}
+      <div className="p-4 pb-38">
         {isLoading ? (
           <div className="flex justify-center items-center h-48">
             <Loader2 className="animate-spin h-8 w-8 text-primary" />
@@ -124,26 +122,34 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
               <TabsTrigger value="incorrect">오답 ({incorrectWords.length})</TabsTrigger>
             </TabsList>
 
-            {/* [!!!] 정답 탭 수정 */}
             <TabsContent value="correct" className="mt-4">
               <div className="space-y-2">
                 {correctWords.map(renderWordCard)}
               </div>
             </TabsContent>
 
-            {/* [!!!] 오답 탭 수정 */}
             <TabsContent value="incorrect" className="mt-4">
               <div className="space-y-2">
-                {incorrectWords.map(renderWordCard)}
+                {incorrectWords.length === 0 ? (
+                  <Card className="border-border bg-card">
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                      오답 단어가 없습니다.
+                    </CardContent>
+                  </Card>
+                ) : (
+                  incorrectWords.map(renderWordCard)
+                )}
               </div>
             </TabsContent>
 
           </Tabs>
         )}
       </div>
+      {/* ▲▲▲ 스크롤 영역 끝 ▲▲▲ */}
 
-      {/* 복습 버튼 & Drawer (이하 동일) */}
-      <div className="p-4 mt-4">
+
+      {/* ▼▼▼ [수정됨] 하단 고정 버튼 (fixed, bottom-16)은 그대로 유지 ▼▼▼ */}
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
         <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
           <DrawerTrigger asChild>
             <Button
@@ -205,6 +211,9 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
           </DrawerContent>
         </Drawer>
       </div>
+      {/* ▲▲▲ [수정됨] 하단 고정 완료 ▲▲▲ */}
     </div>
   );
 }
+
+

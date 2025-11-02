@@ -9,8 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchWithAuth } from "@/lib/api";
 import { StudyPeriodSummaryCard } from "./study-period-summary-card";
 import { AggregatedStudyDetailScreen } from "./aggregated-study-detail-screen";
-import { Drawer, DrawerClose, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
-import { cn } from "@/lib/utils"
+// ▼▼▼ [수정됨] DrawerTrigger 추가 ▼▼▼
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/ui/drawer";
 
 // ... (인터페이스 정의는 이전과 동일) ...
 interface StudySession {
@@ -149,8 +149,9 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
   }
 
   return (
-    <div className={cn("flex-1 overflow-y-auto pb-20 bg-background dark:bg-zinc-900", "page-transition-enter")}>
-      <div className="px-4 py-6 sticky top-0 bg-background/80 dark:bg-zinc-900/80 backdrop-blur-sm z-10">
+    // ▼▼▼ [수정됨] overflow-y-auto, pb-20, dark:bg-zinc-900 제거 ▼▼▼
+    <div className="flex-1 bg-background">
+      <div className="px-4 py-6 sticky top-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-10">
         <div className="relative flex items-center justify-center">
           <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2"><ArrowLeft size={18} className="text-muted-foreground" /></Button>
           <h1 className="text-xl font-bold text-foreground">학습 기록</h1>
@@ -158,7 +159,8 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
         <p className="text-center text-muted-foreground text-sm mt-2">매일 오전 12시를 기준으로 갱신됩니다.</p>
       </div>
 
-      <div className="p-4 space-y-4">
+      {/* ▼▼▼ [수정됨] 하단 패딩 pb-36 추가 (fixed 버튼 공간) ▼▼▼ */}
+      <div className="p-4 space-y-4 pb-36">
         {isLoading ? (
           <>
             <Skeleton className="h-28 w-full rounded-2xl" />
@@ -188,7 +190,15 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
               totalWords={stats['30days'].correctCount + stats['30days'].incorrectCount}
               onClick={() => handlePeriodClick('30days', '최근 30일 학습 결과')}
             /> }
-            {/* ▼▼▼ [수정됨] 전체 오답 복습 버튼 추가 ▼▼▼ */}
+            {/* ▼▼▼ [수정됨] 버튼을 이 div 밖으로 이동시킴 ▼▼▼ */}
+          </>
+        )}
+      </div>
+      
+      {/* ▼▼▼ [수정됨] 하단 고정 버튼 래퍼 추가 (fixed, bottom-16) ▼▼▼ */}
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
+        <Drawer open={isDrawerOpen} onOpenChange={(isOpen) => { setIsDrawerOpen(isOpen); if (!isOpen) setDrawerContent('modes'); }}>
+          <DrawerTrigger asChild>
             <Button 
                 className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium"
                 onClick={() => setIsDrawerOpen(true)}
@@ -196,48 +206,48 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
             >
                 전체 오답 복습하기 ({allIncorrectWords.length}개)
             </Button>
-          </>
-        )}
+          </DrawerTrigger>
+          <DrawerContent>
+              <div className="mx-auto w-full max-w-sm">
+              {drawerContent === 'modes' && (
+                  <div className="p-2">
+                      {studyModes.map(mode => {
+                          if (mode.id === 'writing') {
+                              return (
+                                  <Button key={mode.id} variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => setDrawerContent('writingOptions')}>
+                                      <mode.icon className="mr-2 h-4 w-4" />
+                                      {mode.name}
+                                  </Button>
+                              );
+                          }
+                          return (
+                              <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview(mode.id)} key={mode.id}>
+                                  <mode.icon className="mr-2 h-4 w-4" />
+                                  {mode.name}
+                              </Button>
+                          );
+                      })}
+                  </div>
+              )}
+              {drawerContent === 'writingOptions' && (
+                  <div className="p-2">
+                      <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview('writing', 'word')}>
+                          뜻 보고 단어 쓰기
+                      </Button>
+                      <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview('writing', 'meaning')}>
+                          단어 보고 뜻 쓰기
+                      </Button>
+                  </div>
+              )}
+                  <DrawerFooter className="pt-2">
+                      <DrawerClose asChild><Button variant="outline">취소</Button></DrawerClose>
+                  </DrawerFooter>
+              </div>
+          </DrawerContent>
+        </Drawer>
       </div>
-      <Drawer open={isDrawerOpen} onOpenChange={(isOpen) => { setIsDrawerOpen(isOpen); if (!isOpen) setDrawerContent('modes'); }}>
-        <DrawerContent>
-            <div className="mx-auto w-full max-w-sm">
-            {drawerContent === 'modes' && (
-                <div className="p-2">
-                    {studyModes.map(mode => {
-                        if (mode.id === 'writing') {
-                            return (
-                                <Button key={mode.id} variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => setDrawerContent('writingOptions')}>
-                                    <mode.icon className="mr-2 h-4 w-4" />
-                                    {mode.name}
-                                </Button>
-                            );
-                        }
-                        return (
-                            <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview(mode.id)} key={mode.id}>
-                                <mode.icon className="mr-2 h-4 w-4" />
-                                {mode.name}
-                            </Button>
-                        );
-                    })}
-                </div>
-            )}
-            {drawerContent === 'writingOptions' && (
-                <div className="p-2">
-                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview('writing', 'word')}>
-                        뜻 보고 단어 쓰기
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start p-2 h-12 text-sm" onClick={() => handleStartDirectReview('writing', 'meaning')}>
-                        단어 보고 뜻 쓰기
-                    </Button>
-                </div>
-            )}
-                <DrawerFooter className="pt-2">
-                    <DrawerClose asChild><Button variant="outline">취소</Button></DrawerClose>
-                </DrawerFooter>
-            </div>
-        </DrawerContent>
-      </Drawer>
     </div>
   )
 }
+
+
