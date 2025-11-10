@@ -1,4 +1,3 @@
-// components/auth/AuthManager.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -18,6 +17,9 @@ import { auth } from "@/lib/firebase"
 import { onAuthStateChanged, User } from "firebase/auth"
 import { fetchWithAuth } from "@/lib/api"
 
+// [!!!] 'HomeStudyStatus' import는 AuthManager에 필요 없습니다.
+// (HomeScreen이 내부적으로 처리하므로)
+
 export default function AuthManager() {
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
@@ -31,8 +33,10 @@ export default function AuthManager() {
   const [isCreatingWordbook, setIsCreatingWordbook] = useState(false)
 
   const [communityRefreshKey, setCommunityRefreshKey] = useState(0)
-  // ✅ [추가] 학습 화면 리셋을 위한 state
   const [studyRefreshKey, setStudyRefreshKey] = useState(0)
+
+
+  const [homeRefreshKey, setHomeRefreshKey] = useState(0)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -69,6 +73,7 @@ export default function AuthManager() {
     return <EmailVerificationScreen onLogout={() => auth.signOut()} />
   }
 
+  // ... (handleLogout, handleWordbookSelect 등 다른 함수들은 동일) ...
   const handleLogout = () => {
     auth.signOut()
   }
@@ -112,6 +117,7 @@ export default function AuthManager() {
     setActiveTab("study")
   }
 
+
   const handleTabChange = (tab: string) => {
     // 단어장 탭에서 상세 화면 보고 있을 때 다시 단어장 탭 누르면 목록으로
     if (tab === "vocabulary" && activeTab === "vocabulary" && (selectedWordbookForDetail || isCreatingWordbook)) {
@@ -129,12 +135,20 @@ export default function AuthManager() {
       return
     }
 
-    // ✅ [추가] 학습 탭을 다시 눌렀을 때 메인으로 (결과 화면 등에서 복귀)
+    // 학습 탭을 다시 눌렀을 때 메인으로 (결과 화면 등에서 복귀)
     if (tab === "study" && activeTab === "study") {
       setStudyRefreshKey((prev) => prev + 1)
       setSelectedWordbookForDetail(null)
       setIsCreatingWordbook(false)
       return
+    }
+
+
+    if (tab === "home" && activeTab === "home") {
+      setHomeRefreshKey((prev) => prev + 1);
+      setSelectedWordbookForDetail(null)
+      setIsCreatingWordbook(false)
+      return;
     }
 
     if (tab !== "vocabulary") {
@@ -149,6 +163,7 @@ export default function AuthManager() {
       case "home":
         return (
           <HomeScreen
+            key={homeRefreshKey}
             onWordbookSelect={(wordbook) => {
               handleWordbookSelect(wordbook)
               setActiveTab("vocabulary")
@@ -180,7 +195,6 @@ export default function AuthManager() {
         )
 
       case "study":
-        // ✅ [수정] refreshKey 전달
         return <StudyScreen selectedWordbookId={selectedWordbookForStudy?.id ?? null} refreshKey={studyRefreshKey} />
 
       case "community":
@@ -191,6 +205,7 @@ export default function AuthManager() {
       default:
         return (
           <HomeScreen
+            key={homeRefreshKey}
             onWordbookSelect={(wordbook) => {
               handleWordbookSelect(wordbook)
               setActiveTab("vocabulary")
@@ -202,9 +217,7 @@ export default function AuthManager() {
   }
 
   return (
-    // ✅ [수정] 'min-h-screen' -> 'h-screen' (상단바 고정 문제 해결)
     <div className="h-screen bg-background flex flex-col max-w-md mx-auto">
-      {/* ✅ [수정] 'overflow-y-auto' -> 'overflow-hidden' (상단바 고정 문제 해결) */}
       <main className="flex-1 overflow-hidden">{renderScreen()}</main>
       {!(activeTab === "vocabulary" && isCreatingWordbook) && (
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
