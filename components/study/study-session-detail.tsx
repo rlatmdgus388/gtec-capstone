@@ -9,8 +9,11 @@ import { ArrowLeft, BookOpen, Play, PenTool, Brain, Loader2 } from "lucide-react
 import { fetchWithAuth } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
+// [!!!] 1. 'session' prop에 wordbookId가 있다고 가정합니다.
+// (이 컴포넌트를 부르는 부모에서 꼭 wordbookId를 넘겨줘야 합니다)
 interface StudySession {
   id: string
+  wordbookId: string // [!!!] 이 ID가 매우 중요합니다.
   wordbookName: string
   mode: string
   score: number
@@ -18,20 +21,24 @@ interface StudySession {
   completedAt: string
 }
 
+// [!!!] 2. WordResult에서 wordbookId 제거
+// (API가 안준다고 가정하고, 대신 session의 ID를 쓸 것입니다)
 interface WordResult {
   id: string
   word: string
   meaning: string
   mastered: boolean
+  // wordbookId: string // <- 제거
 }
 
 interface StudySessionDetailScreenProps {
-  session: StudySession
+  session: StudySession // [!!!] 여기에 wordbookId가 포함되어야 함
   onBack: () => void
   onStartReview: (mode: string, words: WordResult[], writingType?: "word" | "meaning") => void
 }
 
 export function StudySessionDetailScreen({ session, onBack, onStartReview }: StudySessionDetailScreenProps) {
+
   const [correctWords, setCorrectWords] = useState<WordResult[]>([])
   const [incorrectWords, setIncorrectWords] = useState<WordResult[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -69,6 +76,55 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
     }
   }
 
+  // [!!!] 3. 암기 상태 토글 함수 수정
+  // item에서 wordbookId를 받는 대신, session에서 가져옵니다.
+  const handleToggleMastered = async (wordId: string, currentMasteredStatus: boolean) => {
+
+    // [!!!] session prop에서 wordbookId를 가져옵니다.
+    const wordbookId = session.wordbookId;
+
+    // [!!!] 새로운 안전장치: session.wordbookId가 있는지 확인
+    if (!wordbookId) {
+      console.error("session.wordbookId가 없어 API를 호출할 수 없습니다.");
+      alert("세션 정보에 wordbookId가 누락되어 상태를 변경할 수 없습니다.");
+      return;
+    }
+
+    const newMasteredStatus = !currentMasteredStatus;
+
+    const toggleMasteredInList = (list: WordResult[]) => {
+      return list.map(word =>
+        word.id === wordId ? { ...word, mastered: newMasteredStatus } : word
+      );
+    };
+
+    setCorrectWords(prev => toggleMasteredInList(prev));
+    setIncorrectWords(prev => toggleMasteredInList(prev));
+
+    try {
+      // [!!!] 실제 API 주소 사용
+      await fetchWithAuth(`/api/wordbooks/${wordbookId}/words/${wordId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          mastered: newMasteredStatus,
+        }),
+      });
+
+    } catch (error) {
+      console.error("암기 상태 업데이트 실패:", error);
+      alert("암기 상태 변경에 실패했습니다. 다시 시도해주세요.");
+
+      const rollbackMasteredInList = (list: WordResult[]) => {
+        return list.map(word =>
+          word.id === wordId ? { ...word, mastered: currentMasteredStatus } : word
+        );
+      };
+      setCorrectWords(prev => rollbackMasteredInList(prev));
+      setIncorrectWords(prev => rollbackMasteredInList(prev));
+    }
+  };
+
+  // [!!!] 4. 단어 카드 렌더링 함수 수정
   const renderWordCard = (item: WordResult) => (
     <Card key={item.id} className="bg-card border-border">
       <CardContent className="p-3">
@@ -82,9 +138,12 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
             size="sm"
             className={cn(
               "text-xs font-semibold rounded-full px-3 py-1 h-auto ml-2 flex-shrink-0",
-              item.mastered ? "text-green-700 bg-green-100" : "text-muted-foreground bg-muted",
-              "pointer-events-none",
+              item.mastered
+                ? "text-green-700 bg-green-100 hover:bg-green-200"
+                : "text-muted-foreground bg-muted hover:bg-muted-foreground/20",
             )}
+            // [!!!] onClick 핸들러가 wordbookId 없이 item.id만 전달하도록 수정
+            onClick={() => handleToggleMastered(item.id, item.mastered)}
           >
             {item.mastered ? "암기 완료" : "암기 미완료"}
           </Button>
@@ -94,14 +153,11 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
   )
 
   return (
-    // ✅ [수정] 1. <Tabs> 컴포넌트를 최상위 래퍼(wrapper)로 이동
     <Tabs defaultValue="incorrect" className="h-full flex flex-col bg-background text-foreground">
-      {/* ✅ [수정] 2. 'h-full flex flex-col'을 <Tabs>의 자식 div로 이동 */}
       <div className="h-full flex flex-col">
-
-        {/* ✅ [수정] 3. 고정 헤더('shrink-0') 안에 <TabsList>를 포함시킴 */}
+        {/* 고정 헤더 */}
         <div className="shrink-0 bg-card border-b border-border z-10">
-          <div className="px-4 pt-6 pb-4"> {/* 상단 패딩 pt-6으로 조정 */}
+          <div className="px-4 pt-6 pb-4">
             <div className="relative flex items-center justify-center">
               <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
                 <ArrowLeft size={18} className="text-muted-foreground" />
@@ -110,7 +166,6 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
             </div>
           </div>
 
-          {/* 로딩이 아닐 때만 탭을 표시 */}
           {!isLoading && (
             <div className="px-4 pb-4">
               <TabsList className="grid w-full grid-cols-2 bg-popover border-border rounded-md">
@@ -121,7 +176,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
           )}
         </div>
 
-        {/* ✅ [수정] 4. 스크롤 영역에는 <TabsContent>만 남김 */}
+        {/* 스크롤 영역 */}
         <div className="flex-1 overflow-y-auto p-4 pb-38">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
@@ -129,12 +184,20 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
             </div>
           ) : (
             <>
-              {/* mt-4 제거 */}
               <TabsContent value="correct" className="mt-0">
-                <div className="space-y-2">{correctWords.map(renderWordCard)}</div>
+                <div className="space-y-2">
+                  {correctWords.length === 0 ? (
+                    <Card className="border-border bg-card">
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                        정답 단어가 없습니다.
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    correctWords.map(renderWordCard)
+                  )}
+                </div>
               </TabsContent>
 
-              {/* mt-4 제거 */}
               <TabsContent value="incorrect" className="mt-0">
                 <div className="space-y-2">
                   {incorrectWords.length === 0 ? (
@@ -151,12 +214,9 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
             </>
           )}
         </div>
-        {/* ▲▲▲ 스크롤 영역 끝 ▲▲▲ */}
-
-        {/* ▼▼▼ 하단 고정 버튼 (fixed)은 <Tabs> 컴포넌트 밖에 위치해야 함 (구조상 밖으로 이동) ▼▼▼ */}
       </div>
 
-      {/* ▼▼▼ 하단 고정 버튼은 <Tabs> 밖으로 이동 ▼▼▼ */}
+      {/* 하단 고정 버튼 */}
       <div className="fixed bottom-18 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
         <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
           <DrawerTrigger asChild>
@@ -231,7 +291,6 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
           </DrawerContent>
         </Drawer>
       </div>
-      {/* ▲▲▲ 하단 고정 완료 ▲▲▲ */}
-    </Tabs> // ✅ [수정] </Tabs> 닫기
+    </Tabs>
   )
 }

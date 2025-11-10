@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/ui/drawer"
 import { ArrowLeft, BookOpen, Play, PenTool, Brain, Loader2 } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api"
-import { cn } from "@/lib/utils" // [!!!] cn 유틸리티 import 추가
+import { cn } from "@/lib/utils"
 
 interface StudySession {
   id: string
@@ -16,11 +16,14 @@ interface StudySession {
   incorrectWords?: string[]
 }
 
+// [!!!] 1. WordResult 인터페이스는 그대로 유지합니다.
+// (백엔드가 wordbookId를 주지 않아도, 프론트에서 채워줄 것입니다)
 interface WordResult {
   id: string
+  wordbookId: string // [!!!] 이 필드를 프론트에서 채울 것입니다.
   word: string
   meaning: string
-  mastered: boolean // [!!!] 'mastered' 필드 추가
+  mastered: boolean
 }
 
 interface AggregatedStudyDetailScreenProps {
@@ -48,6 +51,7 @@ export function AggregatedStudyDetailScreen({
     { id: "quiz", name: "객관식 퀴즈", icon: Brain },
   ]
 
+  // [!!!] 2. useEffect 로직 (핵심 수정)
   useEffect(() => {
     const fetchWordDetails = async () => {
       if (sessions.length === 0) {
@@ -56,30 +60,56 @@ export function AggregatedStudyDetailScreen({
       }
       setIsLoading(true)
 
-      const correctWordIdMap = new Map<string, { wordbookId: string; wordId: string }>()
-      const incorrectWordIdMap = new Map<string, { wordbookId: string; wordId: string }>()
+      // [!!!] 맵 생성: <wordId, wordbookId>
+      const correctWordMap = new Map<string, string>()
+      const incorrectWordMap = new Map<string, string>()
+
+      const correctApiPayload: { wordbookId: string; wordId: string }[] = []
+      const incorrectApiPayload: { wordbookId: string; wordId: string }[] = []
 
       sessions.forEach((session) => {
         session.correctWords?.forEach((wordId) => {
-          correctWordIdMap.set(`${session.wordbookId}-${wordId}`, { wordbookId: session.wordbookId, wordId })
+          if (!correctWordMap.has(wordId)) { // 중복 단어 방지
+            correctWordMap.set(wordId, session.wordbookId)
+            correctApiPayload.push({ wordbookId: session.wordbookId, wordId })
+          }
         })
         session.incorrectWords?.forEach((wordId) => {
-          incorrectWordIdMap.set(`${session.wordbookId}-${wordId}`, { wordbookId: session.wordbookId, wordId })
+          if (!incorrectWordMap.has(wordId)) { // 중복 단어 방지
+            incorrectWordMap.set(wordId, session.wordbookId)
+            incorrectApiPayload.push({ wordbookId: session.wordbookId, wordId })
+          }
         })
       })
 
       try {
-        // [!!!] /api/word 엔드포인트가 'mastered' 값을 포함하여 반환한다고 가정
         const [correct, incorrect] = await Promise.all([
-          correctWordIdMap.size > 0
-            ? fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(Array.from(correctWordIdMap.values())) })
+          correctApiPayload.length > 0
+            ? fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(correctApiPayload) })
             : Promise.resolve([]),
-          incorrectWordIdMap.size > 0
-            ? fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(Array.from(incorrectWordIdMap.values())) })
+          incorrectApiPayload.length > 0
+            ? fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(incorrectApiPayload) })
             : Promise.resolve([]),
         ])
-        setCorrectWords(correct || [])
-        setIncorrectWords(incorrect || [])
+
+        // [!!!] 3. 'wordbookId' 다시 합치기 (핵심)
+        // 백엔드 응답(correct)에는 wordbookId가 없다고 가정합니다.
+        const correctWithWordbookId = (correct || []).map((word: Omit<WordResult, 'wordbookId'>) => ({
+          ...word,
+          // 맵에서 word.id를 키로 wordbookId를 찾아 추가합니다.
+          wordbookId: correctWordMap.get(word.id) || '',
+        }));
+
+        const incorrectWithWordbookId = (incorrect || []).map((word: Omit<WordResult, 'wordbookId'>) => ({
+          ...word,
+          // 맵에서 word.id를 키로 wordbookId를 찾아 추가합니다.
+          wordbookId: incorrectWordMap.get(word.id) || '',
+        }));
+
+        // [!!!] 4. 'wordbookId'가 포함된 최종 데이터를 상태에 저장
+        setCorrectWords(correctWithWordbookId)
+        setIncorrectWords(incorrectWithWordbookId)
+
       } catch (error) {
         console.error("단어 상세 정보 로딩 실패:", error)
       } finally {
@@ -98,25 +128,71 @@ export function AggregatedStudyDetailScreen({
     }
   }
 
-  // [!!!] 단어 카드를 렌더링하는 헬퍼 함수 (중복 제거)
+  // [!!!] 5. 암기 상태 토글 함수 (이제 정상 작동)
+  const handleToggleMastered = async (wordbookId: string, wordId: string, currentMasteredStatus: boolean) => {
+
+    // [!!!] 6. 안전장치 (이제 이 alert가 뜨지 않아야 합니다)
+    if (!wordbookId) {
+      console.error("wordbookId가 없어 API를 호출할 수 없습니다.");
+      alert("데이터에 wordbookId가 누락되어 상태를 변경할 수 없습니다.");
+      return;
+    }
+
+    const newMasteredStatus = !currentMasteredStatus;
+
+    const toggleMasteredInList = (list: WordResult[]) => {
+      return list.map(word =>
+        word.id === wordId ? { ...word, mastered: newMasteredStatus } : word
+      );
+    };
+
+    setCorrectWords(prev => toggleMasteredInList(prev));
+    setIncorrectWords(prev => toggleMasteredInList(prev));
+
+    try {
+      // [!!!] 7. "단어장"에서 찾은 실제 API 주소 사용
+      await fetchWithAuth(`/api/wordbooks/${wordbookId}/words/${wordId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          mastered: newMasteredStatus,
+        }),
+      });
+
+    } catch (error) {
+      console.error("암기 상태 업데이트 실패:", error);
+      alert("암기 상태 변경에 실패했습니다. 다시 시도해주세요.");
+
+      const rollbackMasteredInList = (list: WordResult[]) => {
+        return list.map(word =>
+          word.id === wordId ? { ...word, mastered: currentMasteredStatus } : word
+        );
+      };
+      setCorrectWords(prev => rollbackMasteredInList(prev));
+      setIncorrectWords(prev => rollbackMasteredInList(prev));
+    }
+  };
+
+
+  // [!!!] 8. 렌더링 함수 (변경 없음)
   const renderWordCard = (item: WordResult) => (
     <Card key={item.id} className="bg-card border-border">
       <CardContent className="p-3">
         <div className="flex items-start justify-between">
-          {/* 단어/뜻 */}
           <div className="flex-1">
             <div className="font-semibold text-foreground">{item.word}</div>
             <div className="text-sm text-muted-foreground mt-1">{item.meaning}</div>
           </div>
-          {/* 암기 상태 배지 (클릭 불가, 표시 전용) */}
           <Button
             variant="ghost"
             size="sm"
             className={cn(
               "text-xs font-semibold rounded-full px-3 py-1 h-auto ml-2 flex-shrink-0",
-              item.mastered ? "text-green-700 bg-green-100" : "text-muted-foreground bg-muted",
-              "pointer-events-none", // 클릭 이벤트 방지
+              item.mastered
+                ? "text-green-700 bg-green-100 hover:bg-green-200"
+                : "text-muted-foreground bg-muted hover:bg-muted-foreground/20",
             )}
+            // 'item.wordbookId'는 useEffect에서 채워줬기 때문에 이제 값이 있습니다.
+            onClick={() => handleToggleMastered(item.wordbookId, item.id, item.mastered)}
           >
             {item.mastered ? "암기 완료" : "암기 미완료"}
           </Button>
@@ -126,16 +202,11 @@ export function AggregatedStudyDetailScreen({
   )
 
   return (
-    // ✅ [수정] 1. <Tabs> 컴포넌트를 최상위 래퍼(wrapper)로 이동
     <Tabs defaultValue="incorrect" className="h-full flex flex-col bg-background text-foreground">
-      {/* ✅ [수정] 2. 'h-full flex flex-col'을 <Tabs>의 자식 div로 이동 */}
       <div className="h-full flex flex-col">
-
-        {/* ✅ [수정] 3. 고정 헤더('shrink-0') 안에 <TabsList>를 포함시킴 */}
+        {/* 고정 헤더 */}
         <div className="shrink-0 bg-card border-b border-border z-10">
           <div className="px-4 pt-6 pb-4">
-            {" "}
-            {/* 상단 패딩 pt-6으로 조정 */}
             <div className="relative flex items-center justify-center">
               <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
                 <ArrowLeft size={18} className="text-muted-foreground" />
@@ -144,7 +215,6 @@ export function AggregatedStudyDetailScreen({
             </div>
           </div>
 
-          {/* 로딩이 아닐 때만 탭을 표시 */}
           {!isLoading && (
             <div className="px-4 pb-4">
               <TabsList className="grid w-full grid-cols-2 bg-popover border-border rounded-md">
@@ -155,20 +225,16 @@ export function AggregatedStudyDetailScreen({
           )}
         </div>
 
-        {/* ✅ [수정] 4. 스크롤 영역('flex-1 overflow-y-auto')에는 <TabsContent>만 남김 */}
+        {/* 스크롤 영역 */}
         <div className="flex-1 overflow-y-auto p-4 pb-36">
-          {" "}
-          {/* 하단 여백 'pb-36' 적용 */}
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
             </div>
           ) : (
             <>
-              {/* [!!!] 정답 탭 수정 */}
+              {/* 정답 탭 */}
               <TabsContent value="correct" className="mt-0">
-                {" "}
-                {/* mt-4 제거 */}
                 <div className="space-y-2">
                   {correctWords.length === 0 ? (
                     <Card className="border-border bg-card">
@@ -182,10 +248,8 @@ export function AggregatedStudyDetailScreen({
                 </div>
               </TabsContent>
 
-              {/* [!!!] 오답 탭 수정 */}
+              {/* 오답 탭 */}
               <TabsContent value="incorrect" className="mt-0">
-                {" "}
-                {/* mt-4 제거 */}
                 <div className="space-y-2">
                   {incorrectWords.length === 0 ? (
                     <Card className="border-border bg-card">
@@ -201,10 +265,9 @@ export function AggregatedStudyDetailScreen({
             </>
           )}
         </div>
-        {/* ▲▲▲ 스크롤 영역 끝 ▲▲▲ */}
       </div>
 
-      {/* ▼▼▼ 하단 고정 버튼 (fixed)은 <Tabs> 밖으로 이동 ▼▼▼ */}
+      {/* 하단 고정 버튼 */}
       <div className="fixed bottom-18 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
         <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
           <DrawerTrigger asChild>
@@ -279,7 +342,6 @@ export function AggregatedStudyDetailScreen({
           </DrawerContent>
         </Drawer>
       </div>
-      {/* ▲▲▲ [수정됨] 하단 고정 완료 ▲▲▲ */}
-    </Tabs> // ✅ [수정] </Tabs> 닫기
+    </Tabs>
   )
 }
