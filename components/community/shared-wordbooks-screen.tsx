@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 
-
 // --- 인터페이스 정의 ---
 interface SharedWordbook {
   id: string
@@ -43,18 +42,21 @@ interface SharedWordbook {
 // [수정] 필터 카테고리를 DB에 저장된 한글 값으로 변경 (요청하신 목록)
 const FILTER_CATEGORIES = [
   { label: "전체", value: "all" },
-  { label: "시험", value: "시험" },     // "exam" -> "시험"
-  { label: "일상", value: "일상" },     // "daily" -> "일상"
-  { label: "여행", value: "여행" },     // "travel" -> "여행"
+  { label: "시험", value: "시험" }, // "exam" -> "시험"
+  { label: "일상", value: "일상" }, // "daily" -> "일상"
+  { label: "여행", value: "여행" }, // "travel" -> "여행"
   { label: "비즈니스", value: "비즈니스" }, // "business" -> "비즈니스"
-  { label: "자유", value: "자유" },     // "free" -> "자유"
-  { label: "기타", value: "기타" },     // "etc" -> "기타"
+  { label: "자유", value: "자유" }, // "free" -> "자유"
+  { label: "기타", value: "기타" }, // "etc" -> "기타"
 ]
 
 export function SharedWordbooksScreen({
   onBack,
   onSelectWordbook,
-}: { onBack: () => void; onSelectWordbook: (wordbookId: string) => void }) {
+}: {
+  onBack: () => void
+  onSelectWordbook: (wordbookId: string) => void
+}) {
   const [wordbooks, setWordbooks] = useState<SharedWordbook[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
@@ -120,9 +122,12 @@ export function SharedWordbooksScreen({
   return (
     <>
       <ShareWordbookDialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen} onShared={fetchWordbooks} />
-      <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter")}>
-        {/* Header */}
-        <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10 p-4">
+
+      {/* ✅ [수정] 1. 'flex-1 overflow-y-auto pb-20' -> 'h-full flex flex-col' */}
+      <div className={cn("h-full flex flex-col bg-background", "page-transition-enter")}>
+
+        {/* ✅ [수정] 2. 고정될 헤더 영역. 'sticky top-0 z-10' -> 'shrink-0' */}
+        <div className="bg-card shadow-sm border-b border-border shrink-0 p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
@@ -162,9 +167,8 @@ export function SharedWordbooksScreen({
           </ScrollArea>
         </div>
 
-        {/* Content */}
-        {/* ▼▼▼ [수정됨] 카드 간격을 space-y-3에서 space-y-2로 수정 ▼▼▼ */}
-        <div className="p-4 space-y-2">
+        {/* ✅ [수정] 3. 스크롤될 콘텐츠 영역. 'flex-1 overflow-y-auto' + 'pb-20' 적용 */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 pb-20">
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-24 w-full" />

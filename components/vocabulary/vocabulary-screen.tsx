@@ -118,7 +118,8 @@ export function VocabularyScreen({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20">
+    // 1. 'h-full flex flex-col' : 부모(AuthManager의 main)가 준 높이를 100% 채움
+    <div className="h-full flex flex-col">
       <ImageSelectionModal
         open={showImageSelection}
         onClose={() => setShowImageSelection(false)}
@@ -126,7 +127,8 @@ export function VocabularyScreen({
         onGallerySelect={handleGallerySelect}
       />
 
-      <div className="bg-card border-b border-border">
+      {/* 2. 고정될 헤더 영역. 'shrink-0' (줄어들지 않음) */}
+      <div className="bg-card border-b border-border shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -139,7 +141,10 @@ export function VocabularyScreen({
           </div>
 
           <div className="relative mb-4">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+            <Search
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+              size={20}
+            />
             <Input
               placeholder="단어장 검색..."
               value={searchQuery}
@@ -147,8 +152,6 @@ export function VocabularyScreen({
               className="pl-12 h-12 bg-muted border-0 rounded-full text-base placeholder:text-muted-foreground"
             />
           </div>
-          {/* --- [수정됨] --- */}
-          {/* grid-cols-2 gap-3를 grid-cols-1로 변경 */}
           <div className="grid grid-cols-1">
             <Button
               onClick={onStartCreate}
@@ -156,13 +159,12 @@ export function VocabularyScreen({
             >
               <Edit size={18} />새 단어장
             </Button>
-            {/* "사진으로 추가" 버튼 삭제됨 */}
           </div>
-          {/* --- [수정 끝] --- */}
         </div>
       </div>
 
-      <div className="px-4 py-6 space-y-3">
+      {/* 3. 스크롤될 목록 영역. 'flex-1' (남은 공간 다 차지), 'overflow-y-auto' (내부 스크롤) */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 pb-20">
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-28 w-full rounded-xl" />
@@ -187,19 +189,28 @@ export function VocabularyScreen({
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-card-foreground text-base">{wordbook.name}</h3>
-                        <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-0 rounded-full">
+                        <h3 className="font-semibold text-card-foreground text-base">
+                          {wordbook.name}
+                        </h3>
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-primary/10 text-primary border-0 rounded-full"
+                        >
                           {wordbook.category}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{wordbook.wordCount}개 단어</p>
+                      <p className="text-sm text-muted-foreground">
+                        {wordbook.wordCount}개 단어
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex-1 mr-4">
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span className="text-muted-foreground">학습 진도</span>
-                        <span className="font-semibold text-primary">{wordbook.progress}%</span>
+                        <span className="font-semibold text-primary">
+                          {wordbook.progress}%
+                        </span>
                       </div>
                       <div className="w-full h-2 bg-muted rounded-full">
                         <div

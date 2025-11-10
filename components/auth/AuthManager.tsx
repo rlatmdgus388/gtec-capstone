@@ -1,183 +1,214 @@
 // components/auth/AuthManager.tsx
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { LoginForm } from "@/components/auth/login-form";
-import { EmailLoginForm } from "@/components/auth/email-login-form";
-import { SignupForm } from "@/components/auth/signup-form";
-import { EmailVerificationScreen } from "@/components/auth/email-verification-screen";
-import { BottomNav } from "@/components/navigation/bottom-nav";
-import { HomeScreen } from "@/components/home/home-screen";
-import { VocabularyScreen } from "@/components/vocabulary/vocabulary-screen";
-import { StudyScreen } from "@/components/study/study-screen";
-import { CommunityScreen } from "@/components/community/community-screen";
-import { SettingsScreen } from "@/components/settings/settings-screen";
-import { WordbookDetail } from "@/components/vocabulary/wordbook-detail";
-import { CreateWordbookScreen } from "@/components/vocabulary/create-wordbook-screen";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { fetchWithAuth } from "@/lib/api"; // [수정됨] fetchWithAuth 임포트 확인
+import { useState, useEffect } from "react"
+import { LoginForm } from "@/components/auth/login-form"
+import { EmailLoginForm } from "@/components/auth/email-login-form"
+import { SignupForm } from "@/components/auth/signup-form"
+import { EmailVerificationScreen } from "@/components/auth/email-verification-screen"
+import { BottomNav } from "@/components/navigation/bottom-nav"
+import { HomeScreen } from "@/components/home/home-screen"
+import { VocabularyScreen } from "@/components/vocabulary/vocabulary-screen"
+import { StudyScreen } from "@/components/study/study-screen"
+import { CommunityScreen } from "@/components/community/community-screen"
+import { SettingsScreen } from "@/components/settings/settings-screen"
+import { WordbookDetail } from "@/components/vocabulary/wordbook-detail"
+import { CreateWordbookScreen } from "@/components/vocabulary/create-wordbook-screen"
+import { auth } from "@/lib/firebase"
+import { onAuthStateChanged, User } from "firebase/auth"
+import { fetchWithAuth } from "@/lib/api"
 
 export default function AuthManager() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
 
-  const [authScreen, setAuthScreen] = useState<"main" | "email-login" | "signup">("main");
-  const [activeTab, setActiveTab] = useState("home");
-  const [selectedWordbookForStudy, setSelectedWordbookForStudy] = useState<any>(null); // StudyScreen으로 전달될 wordbook 정보
+  const [authScreen, setAuthScreen] = useState<"main" | "email-login" | "signup">("main")
+  const [activeTab, setActiveTab] = useState("home")
+  const [selectedWordbookForStudy, setSelectedWordbookForStudy] = useState<any>(null)
 
-  const [selectedWordbookForDetail, setSelectedWordbookForDetail] = useState<any>(null);
-  const [vocabularyRefreshKey, setVocabularyRefreshKey] = useState(0); // 단어장 목록 새로고침 키
-  const [isCreatingWordbook, setIsCreatingWordbook] = useState(false);
+  const [selectedWordbookForDetail, setSelectedWordbookForDetail] = useState<any>(null)
+  const [vocabularyRefreshKey, setVocabularyRefreshKey] = useState(0)
+  const [isCreatingWordbook, setIsCreatingWordbook] = useState(false)
+
+  const [communityRefreshKey, setCommunityRefreshKey] = useState(0)
+  // ✅ [추가] 학습 화면 리셋을 위한 state
+  const [studyRefreshKey, setStudyRefreshKey] = useState(0)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+      setUser(currentUser)
+      setIsLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
 
-  const isAuthenticated = !!user;
-  const isGoogleUser = user?.providerData.some(provider => provider.providerId === 'google.com') ?? false;
-  const isEmailVerified = user?.emailVerified || isGoogleUser;
+  const isAuthenticated = !!user
+  const isGoogleUser = user?.providerData.some((provider) => provider.providerId === "google.com") ?? false
+  const isEmailVerified = user?.emailVerified || isGoogleUser
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center"><p>로딩 중...</p></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>로딩 중...</p>
+      </div>
+    )
   }
 
   if (!isAuthenticated) {
     switch (authScreen) {
       case "email-login":
-        return <EmailLoginForm onBackToMain={() => setAuthScreen("main")} onLoginSuccess={() => setAuthScreen("main")} />;
+        return <EmailLoginForm onBackToMain={() => setAuthScreen("main")} onLoginSuccess={() => setAuthScreen("main")} />
       case "signup":
-        return <SignupForm onBackToLogin={() => setAuthScreen("main")} onSignupSuccess={() => setAuthScreen("main")} />;
+        return <SignupForm onBackToLogin={() => setAuthScreen("main")} onSignupSuccess={() => setAuthScreen("main")} />
       default:
-        return <LoginForm onShowEmailLogin={() => setAuthScreen("email-login")} onShowSignup={() => setAuthScreen("signup")} />;
+        return <LoginForm onShowEmailLogin={() => setAuthScreen("email-login")} onShowSignup={() => setAuthScreen("signup")} />
     }
   }
 
   if (!isEmailVerified) {
-    return <EmailVerificationScreen onLogout={() => auth.signOut()} />;
+    return <EmailVerificationScreen onLogout={() => auth.signOut()} />
   }
 
-  const handleLogout = () => { auth.signOut(); };
+  const handleLogout = () => {
+    auth.signOut()
+  }
 
   const handleWordbookSelect = (wordbook: any) => {
-    setSelectedWordbookForDetail(wordbook);
-  };
+    setSelectedWordbookForDetail(wordbook)
+  }
 
   const handleBackToVocabularyList = () => {
-    setSelectedWordbookForDetail(null); // 상세 화면 상태 해제
-    setVocabularyRefreshKey(prev => prev + 1); // 목록 새로고침 트리거
-  };
+    setSelectedWordbookForDetail(null)
+    setVocabularyRefreshKey((prev) => prev + 1)
+  }
 
-  // [!!! 여기를 수정합니다 !!!]
   const handleWordbookUpdate = async () => {
-    // 1. 단어장 목록(VocabularyScreen)을 위한 새로고침 키
-    setVocabularyRefreshKey(prev => prev + 1);
-
-    // 2. [추가됨] 현재 상세 보기 중인 단어장 정보를 API로 다시 불러와서
-    //    state(selectedWordbookForDetail)를 갱신합니다.
+    setVocabularyRefreshKey((prev) => prev + 1)
     if (selectedWordbookForDetail) {
       try {
-        // GET /api/wordbooks/[wordbookId] API는 progress가 포함된 단어장 정보를 반환합니다.
-        const updatedWordbook = await fetchWithAuth(`/api/wordbooks/${selectedWordbookForDetail.id}`);
-        setSelectedWordbookForDetail(updatedWordbook);
+        const updatedWordbook = await fetchWithAuth(`/api/wordbooks/${selectedWordbookForDetail.id}`)
+        setSelectedWordbookForDetail(updatedWordbook)
       } catch (error) {
-        console.error("단어장 상세 정보 갱신 실패:", error);
-        // 실패 시 목록으로 돌려보내서 데이터를 일치시킴
-        handleBackToVocabularyList();
+        console.error("단어장 상세 정보 갱신 실패:", error)
+        handleBackToVocabularyList()
       }
     }
-  };
-  // [!!! 수정 끝 !!!]
+  }
 
   const handleCreateWordbook = async (newWordbookData: { name: string; description: string; category: string }) => {
     try {
-      await fetchWithAuth('/api/wordbooks', { method: 'POST', body: JSON.stringify(newWordbookData) });
-      alert("새로운 단어장이 생성되었습니다.");
-      setIsCreatingWordbook(false);
-      setVocabularyRefreshKey(prev => prev + 1);
+      await fetchWithAuth("/api/wordbooks", { method: "POST", body: JSON.stringify(newWordbookData) })
+      alert("새로운 단어장이 생성되었습니다.")
+      setIsCreatingWordbook(false)
+      setVocabularyRefreshKey((prev) => prev + 1)
     } catch (error) {
-      console.error("단어장 생성 실패:", error);
-      alert("단어장 생성에 실패했습니다.");
+      console.error("단어장 생성 실패:", error)
+      alert("단어장 생성에 실패했습니다.")
     }
-  };
+  }
 
   const handleStartStudyWithWordbook = (wordbook: any) => {
-    setSelectedWordbookForStudy(wordbook);
-    setActiveTab("study");
-  };
+    setSelectedWordbookForStudy(wordbook)
+    setActiveTab("study")
+  }
 
   const handleTabChange = (tab: string) => {
     // 단어장 탭에서 상세 화면 보고 있을 때 다시 단어장 탭 누르면 목록으로
-    if (tab === 'vocabulary' && activeTab === 'vocabulary' && selectedWordbookForDetail) {
-      handleBackToVocabularyList();
-      return;
+    if (tab === "vocabulary" && activeTab === "vocabulary" && (selectedWordbookForDetail || isCreatingWordbook)) {
+      setSelectedWordbookForDetail(null)
+      setIsCreatingWordbook(false)
+      setVocabularyRefreshKey((prev) => prev + 1) // 목록 새로고침
+      return
     }
 
-    if (tab !== 'vocabulary') {
-      setSelectedWordbookForDetail(null);
+    // 커뮤니티 탭을 다시 눌렀을 때 메인으로
+    if (tab === "community" && activeTab === "community") {
+      setCommunityRefreshKey((prev) => prev + 1)
+      setSelectedWordbookForDetail(null) // (다른 탭에서 왔을 때처럼)
+      setIsCreatingWordbook(false)
+      return
     }
-    setIsCreatingWordbook(false);
-    setActiveTab(tab);
-  };
+
+    // ✅ [추가] 학습 탭을 다시 눌렀을 때 메인으로 (결과 화면 등에서 복귀)
+    if (tab === "study" && activeTab === "study") {
+      setStudyRefreshKey((prev) => prev + 1)
+      setSelectedWordbookForDetail(null)
+      setIsCreatingWordbook(false)
+      return
+    }
+
+    if (tab !== "vocabulary") {
+      setSelectedWordbookForDetail(null)
+    }
+    setIsCreatingWordbook(false)
+    setActiveTab(tab)
+  }
 
   const renderScreen = () => {
     switch (activeTab) {
       case "home":
-        return <HomeScreen onWordbookSelect={(wordbook) => {
-          handleWordbookSelect(wordbook);
-          setActiveTab("vocabulary");
-        }} activeTab={activeTab} />;
+        return (
+          <HomeScreen
+            onWordbookSelect={(wordbook) => {
+              handleWordbookSelect(wordbook)
+              setActiveTab("vocabulary")
+            }}
+            activeTab={activeTab}
+          />
+        )
 
       case "vocabulary":
         if (isCreatingWordbook) {
-          return <CreateWordbookScreen
-            onBack={() => setIsCreatingWordbook(false)}
-            onSave={handleCreateWordbook}
-          />;
+          return <CreateWordbookScreen onBack={() => setIsCreatingWordbook(false)} onSave={handleCreateWordbook} />
         }
         if (selectedWordbookForDetail) {
           return (
             <WordbookDetail
               wordbook={selectedWordbookForDetail}
               onBack={handleBackToVocabularyList}
-              onUpdate={handleWordbookUpdate} // ✨ 수정된 함수가 여기로 전달됩니다 ✨
+              onUpdate={handleWordbookUpdate}
             />
-          );
+          )
         }
         return (
           <VocabularyScreen
             onWordbookSelect={handleWordbookSelect}
             onStartCreate={() => setIsCreatingWordbook(true)}
             refreshKey={vocabularyRefreshKey}
-            onNavigateToStudy={handleStartStudyWithWordbook} // 실제로는 VocabularyScreen 내부에 이 prop이 없음. 필요시 추가
+            onNavigateToStudy={handleStartStudyWithWordbook}
           />
-        );
+        )
 
       case "study":
-        return <StudyScreen selectedWordbookId={selectedWordbookForStudy?.id ?? null} />;
+        // ✅ [수정] refreshKey 전달
+        return <StudyScreen selectedWordbookId={selectedWordbookForStudy?.id ?? null} refreshKey={studyRefreshKey} />
 
       case "community":
-        return <CommunityScreen />;
+        return <CommunityScreen refreshKey={communityRefreshKey} />
+
       case "settings":
-        return <SettingsScreen onLogout={handleLogout} />;
+        return <SettingsScreen onLogout={handleLogout} />
       default:
-        return <HomeScreen onWordbookSelect={(wordbook) => {
-          handleWordbookSelect(wordbook);
-          setActiveTab("vocabulary");
-        }} activeTab={activeTab} />;
+        return (
+          <HomeScreen
+            onWordbookSelect={(wordbook) => {
+              handleWordbookSelect(wordbook)
+              setActiveTab("vocabulary")
+            }}
+            activeTab={activeTab}
+          />
+        )
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto">
-      <main className="flex-1 overflow-y-auto">{renderScreen()}</main>
-      {!(activeTab === 'vocabulary' && isCreatingWordbook) &&
+    // ✅ [수정] 'min-h-screen' -> 'h-screen' (상단바 고정 문제 해결)
+    <div className="h-screen bg-background flex flex-col max-w-md mx-auto">
+      {/* ✅ [수정] 'overflow-y-auto' -> 'overflow-hidden' (상단바 고정 문제 해결) */}
+      <main className="flex-1 overflow-hidden">{renderScreen()}</main>
+      {!(activeTab === "vocabulary" && isCreatingWordbook) && (
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-      }
+      )}
     </div>
-  );
+  )
 }

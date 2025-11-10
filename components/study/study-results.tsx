@@ -18,7 +18,7 @@ interface StudyResultsProps {
 }
 
 export function StudyResults({ results, mode, onRestart, onHome }: StudyResultsProps) {
-  const percentage = results.total > 0 ? Math.round((results.correct / results.total) * 100) : 0;
+  const percentage = results.total > 0 ? Math.round((results.correct / results.total) * 100) : 0
   const minutes = Math.floor(results.timeSpent / 60)
   const seconds = results.timeSpent % 60
 
@@ -33,7 +33,10 @@ export function StudyResults({ results, mode, onRestart, onHome }: StudyResultsP
   const gradeInfo = getGrade(percentage)
 
   return (
-    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
+    // ✅ [수정] 'min-h-screen' -> 'h-full overflow-y-auto pb-20'
+    // 부모(AuthManager)의 높이를 100% 채우고, 이 div가 스크롤되도록 변경
+    // 하단 버튼이 탭바에 가려지지 않도록 pb-20 추가
+    <div className={cn("h-full overflow-y-auto bg-background pb-20", "page-transition-enter")}>
       {/* Header */}
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
         <div className="px-4 py-8 text-center">
@@ -108,13 +111,16 @@ export function StudyResults({ results, mode, onRestart, onHome }: StudyResultsP
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">평균 시간</span>
-              <span className="text-sm font-medium">{results.total > 0 ? Math.round(results.timeSpent / results.total) : 0}초/문제</span>
+              <span className="text-sm font-medium">
+                {results.total > 0 ? Math.round(results.timeSpent / results.total) : 0}초/문제
+              </span>
             </div>
           </CardContent>
         </Card>
 
         {/* Action Buttons */}
-        <div className="space-y-3 pb-20">
+        {/* ✅ [수정] 'pb-20' 제거 (최상위 div로 이동) */}
+        <div className="space-y-3">
           <Button onClick={onHome} className="w-full h-12 bg-primary hover:bg-primary/90">
             확인
           </Button>
