@@ -1,4 +1,4 @@
-// rlatmdgus388/gtec-capstone/gtec-capstone-main/app/layout.tsx
+// app/layout.tsx
 
 import type React from "react"
 import type { Metadata } from "next"
@@ -9,13 +9,11 @@ import { Suspense } from "react"
 import { ThemeProvider } from "@/lib/theme-context"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
-// import { SnapVocaIcon } from "@/components/icons/SnapVocaIcon" // <-- 1. 로고 import를 삭제 (또는 주석 처리)
 
 export const metadata: Metadata = {
   title: "찍어보카 - Snap Voca",
   description: "AI-powered vocabulary learning app with photo text recognition",
   generator: "v0.app",
-  // 2. 모바일 기기 전체 화면 사용 및 상단바(노치) 대응을 위해 viewport 추가
   viewport: "initial-scale=1, width=device-width, viewport-fit=cover",
 }
 
@@ -25,20 +23,30 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    // 3. Hydration 에러를 방지하기 위해 suppressHydrationWarning 추가
     <html lang="en" suppressHydrationWarning>
-      {/* 4. 상단바(노치)와 하단 홈바 영역에 패딩을 줘서 콘텐츠가 가려지지 않게 함 */}
-      <body
-        className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]`}
-      >
+      {/* ⛔ body에 safe-area 패딩을 주면 높이 계산이 어긋나서 바운스/잘림이 생길 수 있음 */}
+      {/* → 패딩은 main 쪽으로 옮깁니다. */}
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <ThemeProvider>
-          {/* 5. '네모난 거'와 '여백'의 원인이었던 이 블록을 완전히 삭제합니다.
-            <div className="p-4">
-              <SnapVocaIcon className="w-12 h-12" />
-            </div>
-          */}
+          {/* 화면 전체 높이를 Flex로, 바디 스크롤은 막고 main만 스크롤 */}
+          <div className="flex h-dvh flex-col">
+            {/* 고정 헤더가 있다면 여기: <Header className="h-14 shrink-0" /> */}
+            <main
+              className="
+                flex-1 min-h-0
+                overflow-y-auto overscroll-contain
+                pt-[env(safe-area-inset-top)]
+                /* ▼ 하단바가 fixed로 64px라면, 아래처럼 padding-bottom에 더하세요.
+                   하단바가 '일반 흐름' 요소(sibling)면 pb는 safe-area만 주면 됩니다.
+                */
+                pb-[calc(env(safe-area-inset-bottom))]
+              "
+            >
+              <Suspense fallback={null}>{children}</Suspense>
+            </main>
+            {/* 고정 탭바(있는 경우): <TabBar className="h-16 shrink-0" /> */}
+          </div>
 
-          <Suspense fallback={null}>{children}</Suspense>
           <Toaster />
         </ThemeProvider>
         <Analytics />
