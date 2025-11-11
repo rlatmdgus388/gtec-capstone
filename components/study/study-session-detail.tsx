@@ -158,8 +158,8 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
         {/* 고정 헤더 */}
         <div className="shrink-0 bg-card border-b border-border z-10">
           <div className="px-4 pt-6 pb-4">
-            <div className="relative flex items-center justify-center">
-              <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
                 <ArrowLeft size={18} className="text-muted-foreground" />
               </Button>
               <h1 className="text-xl font-bold text-foreground">학습 결과 상세</h1>
