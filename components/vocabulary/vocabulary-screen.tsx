@@ -118,8 +118,8 @@ export function VocabularyScreen({
   }
 
   return (
-    // 1. 'h-full flex flex-col' 제거: 부모(AuthManager)의 스크롤을 따르도록 함
-    <div>
+    // 1. 'h-full flex flex-col' : 부모(AuthManager의 main)가 준 높이를 100% 채움
+    <div className="h-full flex flex-col">
       <ImageSelectionModal
         open={showImageSelection}
         onClose={() => setShowImageSelection(false)}
@@ -127,8 +127,8 @@ export function VocabularyScreen({
         onGallerySelect={handleGallerySelect}
       />
 
-      {/* 2. 'shrink-0' -> 'sticky top-0 z-10': 부모 스크롤 시 상단에 고정되도록 변경 */}
-      <div className="bg-card sticky top-0 z-10">
+      {/* 2. 고정될 헤더 영역. 'shrink-0' (줄어들지 않음) */}
+      <div className="bg-card shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -162,8 +162,8 @@ export function VocabularyScreen({
         </div>
       </div>
 
-      {/* 3. 'flex-1 overflow-y-auto' 제거: 내부 스크롤 제거 */}
-      <div className="px-4 py-6 space-y-3 pb-20">
+      {/* 3. 스크롤될 목록 영역. 'flex-1' (남은 공간 다 차지), 'overflow-y-auto' (내부 스크롤) */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 pb-20">
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-28 w-full rounded-xl" />
