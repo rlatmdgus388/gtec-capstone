@@ -596,7 +596,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
           고정될 헤더 영역입니다. 
           'sticky top-0 z-10' -> 'shrink-0' (flex 아이템이 줄어드는 것을 방지)
         */}
-        <div className="bg-card border-b border-border shrink-0">
+        <div className="bg-card shrink-0">
           <div className="px-4 py-4">
             {isEditMode ? (
               // ... (기존 코드와 동일)

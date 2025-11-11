@@ -77,21 +77,43 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
     }
   }, [fetchDiscussions, screen])
 
+// components/community/discussions-screen.tsx
+
+  // [수정] timeAgo 함수를 KST 기준으로 보정
   const timeAgo = (dateString: string) => {
-    const now = new Date()
-    const past = new Date(dateString)
-    const seconds = Math.floor((now.getTime() - past.getTime()) / 1000)
-    let interval = seconds / 31536000
-    if (interval > 1) return Math.floor(interval) + "년 전"
-    interval = seconds / 2592000
-    if (interval > 1) return Math.floor(interval) + "달 전"
-    interval = seconds / 86400
-    if (interval > 1) return Math.floor(interval) + "일 전"
-    interval = seconds / 3600
-    if (interval > 1) return Math.floor(interval) + "시간 전"
-    interval = seconds / 60
-    if (interval > 1) return Math.floor(interval) + "분 전"
-    return "방금 전"
+    const KST_OFFSET = 9 * 60 * 60 * 1000; // 9시간(ms)
+    const now = new Date();
+    
+    // 1. DB에서 온 UTC 시간(dateString)을 Date 객체로 파싱
+    //    "Z"가 없어도 UTC로 인식하도록 명시적으로 "Z"를 추가해줄 수 있습니다.
+    //    만약 이미 "Z"가 붙어서 온다면 new Date(dateString)만으로도 충분합니다.
+    const pastUTC = new Date(dateString);
+
+    // 2. 현재 시간을 KST 기준으로 보정 (이미 KST이므로 offset을 뺄 필요는 없음)
+    //    단, getTime()은 항상 UTC 기준 ms를 반환하므로 now.getTime() 사용
+    const nowMs = now.getTime();
+
+    // 3. DB 시간(UTC)과 현재 시간(UTC)의 차이를 초(seconds)로 계산
+    //    (now.getTime()이 UTC ms, pastUTC.getTime()도 UTC ms)
+    const seconds = Math.floor((nowMs - pastUTC.getTime()) / 1000);
+
+    // 4. (기존 로직 동일)
+    let interval = seconds / 31536000; // 1년 (초)
+    if (interval > 1) return Math.floor(interval) + "년 전";
+    
+    interval = seconds / 2592000; // 30일 (초)
+    if (interval > 1) return Math.floor(interval) + "달 전";
+    
+    interval = seconds / 86400; // 1일 (초)
+    if (interval > 1) return Math.floor(interval) + "일 전";
+    
+    interval = seconds / 3600; // 1시간 (초)
+    if (interval > 1) return Math.floor(interval) + "시간 전";
+    
+    interval = seconds / 60; // 1분 (초)
+    if (interval > 1) return Math.floor(interval) + "분 전";
+    
+    return "방금 전";
   }
 
   // 7번 요청: 새 글쓰기 스크린 렌더링
@@ -147,14 +169,14 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
     // ✅ [수정] 1. 'flex-1 overflow-y-auto pb-20' -> 'h-full flex flex-col'
     <div className={cn("h-full flex flex-col bg-background", "page-transition-enter")}>
       {/* ✅ [수정] 2. 고정될 헤더 영역. 'sticky' -> 'shrink-0' */}
-      <div className="bg-card shadow-sm border-b border-border shrink-0">
+      <div className="bg-card shrink-0">
         {/* ▼▼▼ [수정됨] justify-between 추가, 버튼 이동 ▼▼▼ */}
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="font-semibold text-foreground text-lg">토론 게시판</h1>
+            <h1 className="font-bold text-foreground text-lg">토론 게시판</h1>
           </div>
           <Button size="sm" onClick={() => setScreen("create")} className="flex-shrink-0">
             <PlusCircle size={16} className="mr-2" />
@@ -230,7 +252,7 @@ export function DiscussionsScreen({ onBack }: { onBack: () => void }) {
                           </span>
                           <span className="flex items-center gap-1">
                             <MessageCircle size={12} />
-                            {discussion.replies}
+                            {discussion.replies || 0}
                           </span>
                         </div>
                       </div>

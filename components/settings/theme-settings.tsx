@@ -23,12 +23,12 @@ export function ThemeSettings({ onBack }: ThemeSettingsProps) {
     // 1. 최상위 div를 flex-col로 변경
     <div className={cn("min-h-screen bg-background flex flex-col", "page-transition-enter")}>
       {/* Header */}
-      <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
-        <div className="flex items-center justify-between p-4">
+      <div className="bg-card sticky top-0 z-10">
+        <div className="flex items-center p-4 gap-2">
           <Button variant="ghost" size="sm" onClick={onBack} className="text-foreground hover:bg-accent">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-semibold text-foreground">테마</h1>
+          <h1 className="font-bold text-foreground">테마</h1>
           <div className="w-10" />
         </div>
       </div>

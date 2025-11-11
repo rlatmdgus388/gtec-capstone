@@ -462,10 +462,10 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
   return (
     <div className="h-full flex flex-col bg-background">
       {/* ... (헤더 부분은 그대로) ... */}
-      <div className="bg-card border-b border-border shrink-0">
+      <div className="bg-card shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-9 bg-primary/10 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-7 bg-primary/10 rounded-xl flex items-center justify-center">
               <GraduationCap size={24} className="text-primary" />
             </div>
             <div>
@@ -479,7 +479,6 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
         <div className="px-4 pt-4 space-y-6">
           {/* ... (학습 모드 부분은 그대로) ... */}
           <div>
-            <h2 className="text-xl font-semibold mb-3 text-foreground">학습 모드</h2>
             <div className="grid grid-cols-2 gap-3">
               {studyModes.map((mode) => (
                 <button

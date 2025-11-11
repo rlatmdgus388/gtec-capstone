@@ -127,13 +127,13 @@ export function SharedWordbooksScreen({
       <div className={cn("h-full flex flex-col bg-background", "page-transition-enter")}>
 
         {/* ✅ [수정] 2. 고정될 헤더 영역. 'sticky top-0 z-10' -> 'shrink-0' */}
-        <div className="bg-card shadow-sm border-b border-border shrink-0 p-4">
+        <div className="bg-card shrink-0 p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="font-semibold text-foreground text-lg">공유 단어장</h1>
+              <h1 className="font-bold text-foreground text-lg">공유 단어장</h1>
             </div>
             <Button size="sm" onClick={() => setIsShareDialogOpen(true)}>
               <Share2 className="h-4 w-4 mr-2" /> 공유하기

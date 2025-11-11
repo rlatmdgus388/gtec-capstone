@@ -128,7 +128,7 @@ export function VocabularyScreen({
       />
 
       {/* 2. 고정될 헤더 영역. 'shrink-0' (줄어들지 않음) */}
-      <div className="bg-card border-b border-border shrink-0">
+      <div className="bg-card shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">

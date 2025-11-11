@@ -46,10 +46,18 @@ export async function GET(request: Request) {
         }
 
         const snapshot = await query.get()
-        const discussions = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }))
+        // ⬇️ [수정] doc.data()를 변수로 받고, createdAt을 문자열로 변환
+        const discussions = snapshot.docs.map((doc) => {
+            const data = doc.data(); 
+            return {
+                id: doc.id,
+                ...data,
+                // Timestamp 객체를 .toDate()로 JS Date로 바꾸고, .toISOString()으로 문자열로 변환
+                createdAt: data.createdAt.toDate().toISOString(), 
+                // updatedAt도 형식을 맞춰주는 것이 좋습니다.
+                updatedAt: data.updatedAt.toDate().toISOString(), 
+            };
+        })
 
         return NextResponse.json(discussions, { status: 200 })
     } catch (error) {

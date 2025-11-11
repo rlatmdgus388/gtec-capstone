@@ -110,7 +110,7 @@ export function StudyHistoryScreen({
   return (
     <div className="h-full flex flex-col bg-background">
       {/* ... (헤더 부분은 그대로 유지) ... */}
-      <div className="px-4 py-3 shrink-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-10 border-b border-border">
+      <div className="px-4 py-3 shrink-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-10">
         <div className="relative flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
             <ArrowLeft size={18} className="text-muted-foreground" />

@@ -145,20 +145,32 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
   return (
     <div className={cn("min-h-screen bg-background flex flex-col", "page-transition-enter")}>
       {/* Header */}
-      <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
-        <div className="flex items-center justify-between p-4">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-foreground hover:bg-accent">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="font-semibold text-foreground">프로필 설정</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => (isEditing ? handleCancel() : setIsEditing(true))}
-            className="text-primary hover:bg-primary/10"
-          >
-            {isEditing ? "취소" : "편집"}
-          </Button>
+      <div className="bg-card sticky top-0 z-10">
+  <div className="flex items-center justify-between p-4">
+    {/* ← 왼쪽: [뒤로가기 버튼 + 제목] 묶음 */}
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onBack}
+        className="text-foreground hover:bg-accent"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
+      <h1 className="font-bold text-foreground whitespace-nowrap">
+        프로필 설정
+      </h1>
+    </div>
+
+    {/* → 오른쪽: 편집/취소 버튼 */}
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => (isEditing ? handleCancel() : setIsEditing(true))}
+      className="text-primary hover:bg-primary/10"
+    >
+      {isEditing ? "취소" : "편집"}
+    </Button>
         </div>
       </div>
 

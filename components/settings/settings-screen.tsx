@@ -56,10 +56,10 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
 
   return (
     <div className="flex-1 overflow-y-auto pb-20 bg-background">
-      <div className="bg-card border-b border-border">
+      <div className="bg-card">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-7 bg-primary/10 rounded-xl flex items-center justify-center">
               <Settings size={24} className="text-primary" />
             </div>
             <div>

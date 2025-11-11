@@ -177,10 +177,10 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
     <div className="h-full flex flex-col bg-background">
 
       {/* ✅ [수정] 고정될 헤더 영역. 'shrink-0' 추가 */}
-      <div className="bg-card border-b border-border shrink-0">
+      <div className="bg-card shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-9 bg-primary/10 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-7 bg-primary/10 rounded-xl flex items-center justify-center">
               <Users size={24} className="text-primary" />
             </div>
             <div>
