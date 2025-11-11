@@ -151,14 +151,13 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
     <div className="h-full flex flex-col bg-background">
 
       {/* ✅ [수정] 2. 고정될 헤더 영역. 'sticky' -> 'shrink-0', 'border-b' 추가 */}
-      <div className="px-4 py-6 shrink-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-10 border-b border-border">
-        <div className="relative flex items-center justify-center">
-          <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
+      <div className="px-4 py-4 shrink-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-10 border-b border-border">
+        <div className="relative flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
             <ArrowLeft size={18} className="text-muted-foreground" />
           </Button>
           <h1 className="text-xl font-bold text-foreground">학습 기록</h1>
         </div>
-        <p className="text-center text-muted-foreground text-sm mt-2">매일 오전 12시를 기준으로 갱신됩니다.</p>
       </div>
 
       {/* ✅ [수정] 3. 스크롤 영역. 'flex-1 overflow-y-auto' 적용 + 하단 패딩 'pb-36' 이동 */}

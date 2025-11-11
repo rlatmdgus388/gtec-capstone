@@ -206,9 +206,9 @@ export function AggregatedStudyDetailScreen({
       <div className="h-full flex flex-col">
         {/* 고정 헤더 */}
         <div className="shrink-0 bg-card border-b border-border z-10">
-          <div className="px-4 pt-6 pb-4">
-            <div className="relative flex items-center justify-center">
-              <Button variant="ghost" size="sm" onClick={onBack} className="absolute left-0 p-2">
+          <div className="px-4 pt-4 pb-4">
+            <div className="relative flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
                 <ArrowLeft size={18} className="text-muted-foreground" />
               </Button>
               <h1 className="text-xl font-bold text-foreground">{periodTitle}</h1>

@@ -180,7 +180,7 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
       <div className="bg-card border-b border-border shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-9 bg-primary/10 rounded-xl flex items-center justify-center">
               <Users size={24} className="text-primary" />
             </div>
             <div>
