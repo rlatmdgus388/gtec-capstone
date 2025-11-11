@@ -1,16 +1,15 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+// ✅ [제거] useState, useEffect, useMemo
+import { useState } from "react" // ✅ [수정] useState는 drawerContent용으로 유지
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, BookOpen, Brain, PenTool, Play } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { fetchWithAuth } from "@/lib/api"
+// ✅ [제거] fetchWithAuth
 import { StudyPeriodSummaryCard } from "./study-period-summary-card"
 import { AggregatedStudyDetailScreen } from "./aggregated-study-detail-screen"
-// ▼▼▼ [수정됨] DrawerTrigger 추가 ▼▼▼
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/ui/drawer"
 
-// ... (인터페이스 정의는 이전과 동일) ...
 interface StudySession {
   id: string
   wordbookName: string
@@ -29,23 +28,49 @@ interface WordResult {
   meaning: string
 }
 
+// ✅ [추가] 부모로부터 받을 Stats 타입
+interface PeriodStats {
+  correctCount: number
+  incorrectCount: number
+  sessions: StudySession[]
+}
+interface StudyStats {
+  today: PeriodStats
+  "7days": PeriodStats
+}
+
+// ✅ [수정] Props 인터페이스 변경
 interface StudyHistoryScreenProps {
   onBack: () => void
   onStartReview: (mode: string, words: WordResult[], writingType?: "word" | "meaning") => void
+  // ✅ [추가] 부모로부터 받을 상태들
+  sessions: StudySession[] // AggregatedStudyDetailScreen으로 전달하기 위해 필요
+  isLoading: boolean
+  stats: StudyStats
+  allIncorrectWords: WordResult[]
 }
 
-type Period = "today" | "7days" //| '30days';
-  ;
+type Period = "today" | "7days"
 
-export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreenProps) {
+export function StudyHistoryScreen({
+  onBack,
+  onStartReview,
+  // ✅ [추가] Props 받기
+  sessions,
+  isLoading,
+  stats,
+  allIncorrectWords,
+}: StudyHistoryScreenProps) {
   const [view, setView] = useState<"main" | "detail">("main")
   const [selectedPeriod, setSelectedPeriod] = useState<{ period: Period; title: string } | null>(null)
 
-  const [sessions, setSessions] = useState<StudySession[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  // ✅ [제거] sessions, isLoading, allIncorrectWords useState 제거
+  // const [sessions, setSessions] = useState<StudySession[]>([])
+  // const [isLoading, setIsLoading] = useState(true)
+  // const [allIncorrectWords, setAllIncorrectWords] = useState<WordResult[]>([])
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [drawerContent, setDrawerContent] = useState<"modes" | "writingOptions">("modes")
-  const [allIncorrectWords, setAllIncorrectWords] = useState<WordResult[]>([])
 
   const studyModes = [
     { id: "flashcard", name: "플래시카드", icon: BookOpen },
@@ -54,76 +79,11 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
     { id: "quiz", name: "객관식 퀴즈", icon: Brain },
   ]
 
-  useEffect(() => {
-    const fetchAllSessions = async () => {
-      setIsLoading(true)
-      try {
-        const sessionsData: StudySession[] = await fetchWithAuth("/api/study-sessions")
-        const processedSessions = sessionsData.map((s) => ({
-          ...s,
-          correctWords: s.correctWords || [],
-          incorrectWords: s.incorrectWords || [],
-        }))
-        setSessions(processedSessions || [])
-      } catch (error) {
-        console.error("전체 학습 기록 로딩 실패:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchAllSessions()
-  }, [])
+  // ✅ [제거] fetchAllSessions useEffect 제거
+  // useEffect(() => { ... }, [])
 
-  const stats = useMemo(() => {
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const sevenDaysAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000)
-    const thirtyDaysAgo = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000)
-
-    const periodStats = {
-      today: { correctCount: 0, incorrectCount: 0, sessions: [] as StudySession[] },
-      "7days": { correctCount: 0, incorrectCount: 0, sessions: [] as StudySession[] },
-      //'30days': { correctCount: 0, incorrectCount: 0, sessions: [] as StudySession[] },
-    }
-
-    const incorrectWordIdMap = new Map<string, { wordbookId: string; wordId: string }>()
-
-    for (const session of sessions) {
-      const completedAt = new Date(session.completedAt)
-      const correct = session.correctWords?.length || 0
-      const incorrect = session.incorrectWords?.length || 0
-
-      session.incorrectWords?.forEach((wordId) => {
-        incorrectWordIdMap.set(`${session.wordbookId}-${wordId}`, { wordbookId: session.wordbookId, wordId })
-      })
-
-      if (completedAt >= today) {
-        periodStats.today.correctCount += correct
-        periodStats.today.incorrectCount += incorrect
-        periodStats.today.sessions.push(session)
-      }
-      if (completedAt >= sevenDaysAgo) {
-        periodStats["7days"].correctCount += correct
-        periodStats["7days"].incorrectCount += incorrect
-        periodStats["7days"].sessions.push(session)
-      }
-      {
-        /*if (completedAt >= thirtyDaysAgo) {
-        periodStats['30days'].correctCount += correct;
-        periodStats['30days'].incorrectCount += incorrect;
-        periodStats['30days'].sessions.push(session);
-      }*/
-      }
-    }
-
-    if (incorrectWordIdMap.size > 0 && allIncorrectWords.length === 0) {
-      fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(Array.from(incorrectWordIdMap.values())) })
-        .then((words) => setAllIncorrectWords(words || []))
-        .catch((err) => console.error("전체 오답 단어 로딩 실패:", err))
-    }
-
-    return periodStats
-  }, [sessions, allIncorrectWords.length])
+  // ✅ [제거] stats useMemo 제거 (부모가 계산해서 'stats' prop으로 줌)
+  // const stats = useMemo(() => { ... }, [sessions, allIncorrectWords.length])
 
   const handlePeriodClick = (period: Period, title: string) => {
     setSelectedPeriod({ period, title })
@@ -139,6 +99,7 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
     return (
       <AggregatedStudyDetailScreen
         periodTitle={selectedPeriod.title}
+        // ✅ [수정] 'stats'에서 세션을 가져옴
         sessions={stats[selectedPeriod.period].sessions}
         onBack={() => setView("main")}
         onStartReview={onStartReview}
@@ -147,29 +108,31 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
   }
 
   return (
-    // ✅ [수정] 1. 'flex-1' -> 'h-full flex flex-col'
     <div className="h-full flex flex-col bg-background">
-
-      {/* ✅ [수정] 2. 고정될 헤더 영역. 'sticky' -> 'shrink-0', 'border-b' 추가 */}
+      {/* ... (헤더 부분은 그대로 유지) ... */}
       <div className="px-4 py-4 shrink-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-10 border-b border-border">
-        <div className="relative flex items-center gap-2">
+        <div className="relative flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
             <ArrowLeft size={18} className="text-muted-foreground" />
           </Button>
-          <h1 className="text-xl font-bold text-foreground">학습 기록</h1>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold text-foreground">학습 기록</h1>
+            <p className="text-muted-foreground text-sm">매일 00시(KST)를 기준으로 갱신됩니다.</p>
+          </div>
         </div>
+        {/* ✅ [수정] KST 기준임을 명시 */}
       </div>
 
-      {/* ✅ [수정] 3. 스크롤 영역. 'flex-1 overflow-y-auto' 적용 + 하단 패딩 'pb-36' 이동 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-36">
+        {/* ✅ [수정] 'isLoading' prop 사용 */}
         {isLoading ? (
           <>
-            <Skeleton className="h-28 w-full rounded-2xl" />
             <Skeleton className="h-28 w-full rounded-2xl" />
             <Skeleton className="h-28 w-full rounded-2xl" />
           </>
         ) : (
           <>
+            {/* ✅ [수정] 'stats' prop 사용 */}
             <StudyPeriodSummaryCard
               title="오늘 학습한 단어"
               correctCount={stats.today.correctCount}
@@ -184,18 +147,10 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
               totalWords={stats["7days"].correctCount + stats["7days"].incorrectCount}
               onClick={() => handlePeriodClick("7days", "최근 7일 학습 결과")}
             />
-            {/* <StudyPeriodSummaryCard
-              title="30일 동안 학습한 단어"
-              correctCount={stats['30days'].correctCount}
-              incorrectCount={stats['30days'].incorrectCount}
-              totalWords={stats['30days'].correctCount + stats['30days'].incorrectCount}
-              onClick={() => handlePeriodClick('30days', '최근 30일 학습 결과')}
-            /> } */}
           </>
         )}
       </div>
 
-      {/* ▼▼▼ 하단 고정 버튼 (fixed)은 그대로 유지 ▼▼▼ */}
       <div className="fixed bottom-18 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
         <Drawer
           open={isDrawerOpen}
@@ -208,12 +163,15 @@ export function StudyHistoryScreen({ onBack, onStartReview }: StudyHistoryScreen
             <Button
               className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium"
               onClick={() => setIsDrawerOpen(true)}
+              // ✅ [수정] 'allIncorrectWords' prop 사용
               disabled={allIncorrectWords.length === 0}
             >
+              {/* ✅ [수정] 'allIncorrectWords' prop 사용 */}
               전체 오답 복습하기 ({allIncorrectWords.length}개)
             </Button>
           </DrawerTrigger>
           <DrawerContent>
+            {/* ... (Drawer 내용은 그대로 유지) ... */}
             <div className="mx-auto w-full max-w-sm">
               {drawerContent === "modes" && (
                 <div className="p-2">

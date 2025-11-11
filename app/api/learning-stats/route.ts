@@ -1,142 +1,139 @@
 // app/api/learning-stats/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-// ⚠️ firebase-admin import 수정: verifyIdToken 포함 확인 (만약 별도 파일이라면 해당 파일 import)
-import { firestore as adminDb, auth as adminAuth } from '@/lib/firebase-admin'; // 'auth' import 추가 가정
-import { Timestamp } from 'firebase-admin/firestore'; // Firestore Timestamp 타입
+import { NextRequest, NextResponse } from 'next/server'
+import { firestore as adminDb, auth as adminAuth } from '@/lib/firebase-admin'
+import { Timestamp } from 'firebase-admin/firestore'
 
-// verifyIdToken 함수 정의 (만약 lib/firebase-admin.ts에 없다면 여기에 추가 또는 별도 import)
-// 예시: 실제 구현은 다를 수 있습니다.
+// verifyIdToken 함수 정의 (가정)
 async function verifyIdToken(token: string) {
-  // adminAuth.verifyIdToken이 lib/firebase-admin.ts 에서 export 되었다고 가정
-  return adminAuth.verifyIdToken(token);
+  return adminAuth.verifyIdToken(token)
 }
-
 
 // GET 요청 처리: 사용자의 학습 통계 데이터 가져오기
 export async function GET(req: NextRequest) {
   try {
-    // 1. 인증 토큰 확인 및 사용자 ID 가져오기
-    const authToken = req.headers.get('Authorization')?.split('Bearer ')[1];
+    // 1. 인증 토큰 확인
+    const authToken = req.headers.get('Authorization')?.split('Bearer ')[1]
     if (!authToken) {
-      // ⚠️ 상세 에러 메시지 추가
-      return NextResponse.json({ message: 'Authorization header is missing or invalid.' }, { status: 401 });
+      return NextResponse.json({ message: 'Authorization header is missing or invalid.' }, { status: 401 })
     }
 
-    let decodedToken;
+    let decodedToken
     try {
-      decodedToken = await verifyIdToken(authToken);
+      decodedToken = await verifyIdToken(authToken)
     } catch (authError: any) {
-      console.error('Error verifying auth token:', authError);
-      // ⚠️ 토큰 검증 실패 시 상세 에러 메시지 추가
-      return NextResponse.json({ message: `Invalid or expired token: ${authError.message}` }, { status: 401 });
+      console.error('Error verifying auth token:', authError)
+      return NextResponse.json({ message: `Invalid or expired token: ${authError.message}` }, { status: 401 })
     }
-    const userId = decodedToken.uid;
+    const userId = decodedToken.uid
 
-    console.log(`Fetching learning stats for user: ${userId}`); // 사용자 ID 로그 추가
+    console.log(`Fetching learning stats for user: ${userId}`)
 
     // --- Firebase 데이터 조회 (시작) ---
-    // !!! ⬇️ 실제 Firestore 데이터 구조에 맞게 컬렉션 및 필드 이름을 수정해야 합니다 ⬇️ !!!
-    // 예: 'studyLogs' -> 실제 학습 기록 컬렉션 이름
-    // 예: 'timestamp', 'wordsLearned', 'durationMinutes', 'streak' -> 실제 필드 이름
 
-    // --- 예시 1: 오늘의 학습 기록 조회 ('studySessions' 컬렉션 사용 가정) ---
-    const today = new Date();
-    // ⚠️ KST 시간대 고려: 한국 시간 기준으로 오늘/내일 설정
-    const KST_OFFSET = 9 * 60 * 60 * 1000; // 한국 시간 오프셋 (UTC+9)
-    // ⚠️ UTC 자정 기준으로 날짜 생성 후 KST 오프셋 적용하지 않도록 수정 (Firestore는 UTC 기준 처리)
-    const todayStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    // ✅ [수정] KST 시간대 고려: 한국 시간 기준으로 오늘/내일 설정
+    const KST_OFFSET = 9 * 60 * 60 * 1000 // 한국 시간 오프셋 (UTC+9)
+    const now = new Date()
+    const kstNow = new Date(now.getTime() + KST_OFFSET) // 현재 KST 시간
+
+    // KST 기준 "오늘"의 시작 (KST 00:00:00)
+    // KST의 00:00:00은 UTC로는 (KST - 9시간) 입니다.
+    // Date.UTC(year, month, day, hour, min, sec) -> hour에 -9 적용
+    const todayStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate(), -9, 0, 0, 0))
+
+    // KST 기준 "내일"의 시작 (KST 00:00:00)
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000)
 
     // Firestore Timestamp 객체 생성 (로깅용)
-    const todayStartTimestamp = Timestamp.fromDate(todayStart);
-    const tomorrowStartTimestamp = Timestamp.fromDate(tomorrowStart);
+    const todayStartTimestamp = Timestamp.fromDate(todayStart)
+    const tomorrowStartTimestamp = Timestamp.fromDate(tomorrowStart)
 
-    // ⚠️ console.log 수정: Firestore Timestamp 객체의 toDate() 사용
-    console.log(`Querying studySessions between ${todayStartTimestamp.toDate()} and ${tomorrowStartTimestamp.toDate()}`);
+    console.log(`Querying studySessions between ${todayStartTimestamp.toDate()} (UTC: ${todayStart.toISOString()}) and ${tomorrowStartTimestamp.toDate()} (UTC: ${tomorrowStart.toISOString()})`)
 
-    const studyLogsSnapshot = await adminDb.collection('studySessions') // ⚠️ 컬렉션 이름: 'studySessions' 로 변경 가정
-      .where('userId', '==', userId) // ⚠️ userId 필터 추가
-      // ⚠️ JavaScript Date 객체의 toISOString() 직접 사용
+    // --- 예시 1: 오늘의 학습 기록 조회 ---
+    const studyLogsSnapshot = await adminDb.collection('studySessions')
+      .where('userId', '==', userId)
+      // ✅ [수정] KST 기준으로 계산된 Date 객체 사용 (ISOString 변환 필요)
       .where('completedAt', '>=', todayStart.toISOString())
       .where('completedAt', '<', tomorrowStart.toISOString())
-      .orderBy('completedAt', 'desc') // 👈 *** 수정된 부분: 기존 색인과 일치하도록 추가 ***
-      .get();
+      .orderBy('completedAt', 'desc')
+      .get()
 
-    let wordsLearnedToday = 0;
-    let totalStudyTimeTodaySeconds = 0; // 초 단위로 변경
+    let wordsLearnedToday = 0
+    let totalStudyTimeTodaySeconds = 0
 
     studyLogsSnapshot.forEach(doc => {
-      const log = doc.data();
-      // ⚠️ 필드 이름: correctWords, incorrectWords 배열 길이 합산, duration (초 단위)
-      const correctCount = log.correctWords?.length || 0;
-      const incorrectCount = log.incorrectWords?.length || 0;
-      wordsLearnedToday += (correctCount + incorrectCount);
-      totalStudyTimeTodaySeconds += log.duration || 0; // 'duration' 필드가 초 단위라고 가정
-    });
+      const log = doc.data()
+      const correctCount = log.correctWords?.length || 0
+      const incorrectCount = log.incorrectWords?.length || 0
+      wordsLearnedToday += (correctCount + incorrectCount)
+      totalStudyTimeTodaySeconds += log.duration || 0
+    })
 
-    const totalStudyTimeToday = Math.round(totalStudyTimeTodaySeconds / 60); // 분 단위로 변환
-
-    console.log(`Today's stats: ${wordsLearnedToday} words, ${totalStudyTimeToday} minutes`);
+    const totalStudyTimeToday = Math.round(totalStudyTimeTodaySeconds / 60) // 분 단위로 변환
+    console.log(`Today's stats: ${wordsLearnedToday} words, ${totalStudyTimeToday} minutes`)
 
     // --- 예시 2: 연속 학습일 조회 ('users' 컬렉션 가정) ---
-    const userProfileDoc = await adminDb.collection('users').doc(userId).get();
-    const streak = userProfileDoc.data()?.streak || 0; // 'streak' 필드 이름 가정
-    console.log(`User streak: ${streak}`);
+    const userProfileDoc = await adminDb.collection('users').doc(userId).get()
+    const streak = userProfileDoc.data()?.streak || 0
+    console.log(`User streak: ${streak}`)
 
-    // --- 예시 3: 주간 학습 데이터 조회 (그래프용, 'studySessions' 컬렉션 가정) ---
-    const weeklyData = [];
-    // ⚠️ UTC 자정 기준으로 7일 전 계산
-    const weekAgo = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000); // 7일 전 (오늘 포함)
-    const weekAgoTimestamp = Timestamp.fromDate(weekAgo); // 로깅용 Firestore Timestamp
+    // --- 예시 3: 주간 학습 데이터 조회 (그래프용) ---
+    const weeklyData = []
+    // ✅ [수정] KST 기준 "7일 전"의 시작 (오늘 포함 7일)
+    const weekAgo = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000)
+    const weekAgoTimestamp = Timestamp.fromDate(weekAgo) // 로깅용
 
-    // ⚠️ console.log 수정: Firestore Timestamp 객체의 toDate() 사용
-    console.log(`Querying weekly studySessions from ${weekAgoTimestamp.toDate()}`);
+    console.log(`Querying weekly studySessions from ${weekAgoTimestamp.toDate()} (UTC: ${weekAgo.toISOString()})`)
 
     const weeklyLogsSnapshot = await adminDb.collection('studySessions')
-      .where('userId', '==', userId) // ⚠️ userId 필터 추가
-      // ⚠️ JavaScript Date 객체의 toISOString() 직접 사용
+      .where('userId', '==', userId)
+      // ✅ [수정] KST 기준으로 계산된 Date 객체 사용
       .where('completedAt', '>=', weekAgo.toISOString())
       .where('completedAt', '<', tomorrowStart.toISOString()) // 오늘까지
-      // 👇 --- 이 부분은 이전에 수정한 대로 'desc' 유지 --- 👇
-      .orderBy('completedAt', 'desc') // ⚠️ 필드 이름: 'completedAt'
-      .get();
+      .orderBy('completedAt', 'desc')
+      .get()
 
-    // 날짜별로 데이터 집계 (차트 표시는 로컬 시간 기준 MM/DD로)
-    const dailyStats: { [key: string]: { words: number; time: number } } = {};
+    // 날짜별로 데이터 집계 (차트 표시는 KST 기준 MM/DD로)
+    const dailyStats: { [key: string]: { words: number; time: number } } = {}
+    
+    // ✅ [수정] KST 기준으로 7일간의 날짜 문자열 생성
     for (let i = 0; i < 7; i++) {
-      // 로컬 시간 기준으로 날짜 계산 (표시용)
-      const dLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-      const dateString = `${dLocal.getMonth() + 1}/${dLocal.getDate()}`; // 'MM/DD' 형식
-      dailyStats[dateString] = { words: 0, time: 0 };
+      const d = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000)
+      // KST로 변환된 날짜 객체 (표시용)
+      const dKst = new Date(d.getTime() + KST_OFFSET)
+      // KST 날짜의 월/일 사용
+      const dateString = `${dKst.getUTCMonth() + 1}/${dKst.getUTCDate()}`
+      dailyStats[dateString] = { words: 0, time: 0 }
     }
 
     weeklyLogsSnapshot.forEach(doc => {
-      const log = doc.data();
-      const logDate = new Date(log.completedAt);
-      // 로컬 시간 기준으로 날짜 문자열 생성 (표시용)
-      const dateString = `${logDate.getMonth() + 1}/${logDate.getDate()}`;
+      const log = doc.data()
+      const logDate = new Date(log.completedAt)
+      
+      // ✅ [수정] KST 기준으로 날짜 문자열 생성 (표시용)
+      const logKstDate = new Date(logDate.getTime() + KST_OFFSET)
+      const dateString = `${logKstDate.getUTCMonth() + 1}/${logKstDate.getUTCDate()}`
 
       if (dailyStats[dateString]) {
-        // ⚠️ 필드 이름: correctWords, incorrectWords 배열 길이 합산, duration (초 단위)
-        const correctCount = log.correctWords?.length || 0;
-        const incorrectCount = log.incorrectWords?.length || 0;
-        dailyStats[dateString].words += (correctCount + incorrectCount);
-        dailyStats[dateString].time += Math.round((log.duration || 0) / 60); // 분 단위로 변환
+        const correctCount = log.correctWords?.length || 0
+        const incorrectCount = log.incorrectWords?.length || 0
+        dailyStats[dateString].words += (correctCount + incorrectCount)
+        dailyStats[dateString].time += Math.round((log.duration || 0) / 60) // 분 단위로 변환
       }
     });
 
     // 배열로 변환 (날짜 순서대로 - 최근 7일)
+    // ✅ [수정] KST 기준으로 7일간의 날짜 문자열 생성 (역순)
     for (let i = 6; i >= 0; i--) {
-      // 로컬 시간 기준으로 날짜 계산 (표시용)
-      const dLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-      const dateString = `${dLocal.getMonth() + 1}/${dLocal.getDate()}`;
-      weeklyData.push({ date: dateString, ...dailyStats[dateString] });
+      const d = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000)
+      const dKst = new Date(d.getTime() + KST_OFFSET)
+      const dateString = `${dKst.getUTCMonth() + 1}/${dKst.getUTCDate()}`
+      weeklyData.push({ date: dateString, ...dailyStats[dateString] })
     }
 
-    console.log('Weekly data calculated:', weeklyData);
+    console.log('Weekly data calculated:', weeklyData)
 
     // --- Firebase 데이터 조회 (끝) ---
-
 
     // 3. 데이터 가공 및 응답 반환
     const statsData = {
@@ -144,19 +141,14 @@ export async function GET(req: NextRequest) {
       studyTime: totalStudyTimeToday, // 분 단위
       streak: streak,
       weeklyData: weeklyData, // 그래프용 주간 데이터
-    };
+    }
 
-    console.log('Successfully fetched learning stats:', statsData);
-    return NextResponse.json(statsData);
+    console.log('Successfully fetched learning stats:', statsData)
+    return NextResponse.json(statsData)
 
-  } catch (error: any) { // ⚠️ 'any' 타입 사용 (혹은 더 구체적인 타입 정의)
-    // ⚠️ 상세 에러 로깅 추가
-    console.error('Error fetching learning stats:', error);
-
-    // ⚠️ 클라이언트에 구체적인 에러 메시지 반환
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    // ⚠️ 에러 응답 본문에 'message' 필드를 포함하도록 수정
-    return NextResponse.json({ message: `Failed to fetch learning stats: ${errorMessage}` }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error fetching learning stats:', error)
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+    return NextResponse.json({ message: `Failed to fetch learning stats: ${errorMessage}` }, { status: 500 })
   }
 }
-
