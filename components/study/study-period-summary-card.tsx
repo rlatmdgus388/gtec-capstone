@@ -36,8 +36,8 @@ export function StudyPeriodSummaryCard({
       className="bg-card border-border hover:shadow-md transition-shadow cursor-pointer rounded-3xl"
       onClick={onClick}
     >
-<CardContent className="px-5 py-5">
-        <div className="flex flex-col gap-y-5">
+<CardContent className="px-5 py-3">
+        <div className="flex flex-col gap-y-3">
           <p className="text-muted-foreground font-medium">{title}</p>
           <p className="text-3xl font-bold text-foreground">{totalWords}</p>
           <div className="flex gap-2">

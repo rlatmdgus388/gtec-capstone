@@ -169,8 +169,20 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
           {!isLoading && (
             <div className="px-4 pb-4">
               <TabsList className="grid w-full grid-cols-2 bg-popover border-border rounded-md">
-                <TabsTrigger value="correct">정답 ({correctWords.length})</TabsTrigger>
-                <TabsTrigger value="incorrect">오답 ({incorrectWords.length})</TabsTrigger>
+                {/* ▼▼▼ [수정] className 추가 ▼▼▼ */}
+                <TabsTrigger
+                  value="correct"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  정답 ({correctWords.length})
+                </TabsTrigger>
+                {/* ▼▼▼ [수정] className 추가 ▼▼▼ */}
+                <TabsTrigger
+                  value="incorrect"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  오답 ({incorrectWords.length})
+                </TabsTrigger>
               </TabsList>
             </div>
           )}
