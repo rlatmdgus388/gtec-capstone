@@ -136,7 +136,6 @@ export function VocabularyScreen({
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">단어장</h1>
-              <p className="text-sm text-muted-foreground">나만의 단어장을 관리하세요</p>
             </div>
           </div>
 

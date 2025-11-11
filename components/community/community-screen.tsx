@@ -185,7 +185,6 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">커뮤니티</h1>
-              <p className="text-sm text-muted-foreground">다른 사용자들과 단어장을 공유하세요</p>
             </div>
           </div>
         </div>

@@ -359,7 +359,6 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">학습하기</h1>
-              <p className="text-sm text-muted-foreground">다양한 방법으로 단어를 학습하세요</p>
             </div>
           </div>
         </div>
