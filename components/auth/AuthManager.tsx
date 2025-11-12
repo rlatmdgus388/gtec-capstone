@@ -1,3 +1,4 @@
+// components/auth/AuthManager.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -17,9 +18,6 @@ import { auth } from "@/lib/firebase"
 import { onAuthStateChanged, User } from "firebase/auth"
 import { fetchWithAuth } from "@/lib/api"
 
-// [!!!] 'HomeStudyStatus' import는 AuthManager에 필요 없습니다.
-// (HomeScreen이 내부적으로 처리하므로)
-
 export default function AuthManager() {
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
@@ -34,9 +32,8 @@ export default function AuthManager() {
 
   const [communityRefreshKey, setCommunityRefreshKey] = useState(0)
   const [studyRefreshKey, setStudyRefreshKey] = useState(0)
-
-
   const [homeRefreshKey, setHomeRefreshKey] = useState(0)
+  const [settingsRefreshKey, setSettingsRefreshKey] = useState(0) // [!!!] 설정 탭 refreshKey 추가
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -73,7 +70,6 @@ export default function AuthManager() {
     return <EmailVerificationScreen onLogout={() => auth.signOut()} />
   }
 
-  // ... (handleLogout, handleWordbookSelect 등 다른 함수들은 동일) ...
   const handleLogout = () => {
     auth.signOut()
   }
@@ -151,9 +147,21 @@ export default function AuthManager() {
       return;
     }
 
+    // [!!!] 설정 탭을 다시 눌렀을 때 메인으로 (하위 메뉴에서 복귀)
+    if (tab === "settings" && activeTab === "settings") {
+      setSettingsRefreshKey((prev) => prev + 1); // 설정 탭 key 업데이트
+      setSelectedWordbookForDetail(null)
+      setIsCreatingWordbook(false)
+      return;
+    }
+
     if (tab !== "vocabulary") {
       setSelectedWordbookForDetail(null)
     }
+
+    // 다른 탭으로 이동 시 모든 refreshKey를 리셋할 필요는 없지만,
+    // (탭 이동 시 컴포넌트가 unmount/mount 되므로)
+    // vocabulary 관련 상태는 초기화
     setIsCreatingWordbook(false)
     setActiveTab(tab)
   }
@@ -201,7 +209,8 @@ export default function AuthManager() {
         return <CommunityScreen refreshKey={communityRefreshKey} />
 
       case "settings":
-        return <SettingsScreen onLogout={handleLogout} />
+        // [!!!] SettingsScreen에 key={settingsRefreshKey} 추가
+        return <SettingsScreen key={settingsRefreshKey} onLogout={handleLogout} />
       default:
         return (
           <HomeScreen
@@ -225,3 +234,5 @@ export default function AuthManager() {
     </div>
   )
 }
+
+// 이거

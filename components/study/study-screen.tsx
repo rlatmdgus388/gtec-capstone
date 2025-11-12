@@ -385,7 +385,7 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
       meaning: wr.meaning
       // mastered는 어차피 리뷰 대상이므로 중요하지 않음
     }));
-    
+
     setReviewWords(reviewWordsAsWordType)
     setSelectedModeInfo({ id: mode, name: studyModes.find((m) => m.id === mode)!.name })
     setStudyWords([])
@@ -518,42 +518,42 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
                   <Skeleton className="h-20 w-full rounded-xl" />
                 </div>
               ) : // ✅ [수정] 'recentSessions' -> 'allSessions'
-              allSessions.length === 0 ? (
-                <Card className="border border-border rounded-xl bg-card">
-                  <CardContent className="p-6 text-center text-muted-foreground">
-                    최근 학습 기록이 없습니다.
-                  </CardContent>
-                </Card>
-              ) : (
-                // ✅ [수정] 'recentSessions' -> 'allSessions'
-                allSessions.slice(0, 5).map((session) => (
-                  <Card
-                    key={session.id}
-                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-border shadow-sm bg-card rounded-xl"
-                    onClick={() => setSelectedSession(session)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-foreground mb-0.5 text-base">{session.wordbookName}</h3>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <span>{session.mode}</span>
-                            <span className="flex items-center gap-1">
-                              <Clock size={12} />
-                              {session.duration < 60 ? `${session.duration}초` : `${Math.floor(session.duration / 60)}분`}
-                            </span>
-                            <span>{formatRelativeTime(session.completedAt)}</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-primary">{session.score}%</div>
-                          <div className="text-[16px] text-muted-foreground">점수</div>
-                        </div>
-                      </div>
+                allSessions.length === 0 ? (
+                  <Card className="border border-border rounded-xl bg-card">
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                      최근 학습 기록이 없습니다.
                     </CardContent>
                   </Card>
-                ))
-              )}
+                ) : (
+                  // ✅ [수정] 'recentSessions' -> 'allSessions'
+                  allSessions.slice(0, 5).map((session) => (
+                    <Card
+                      key={session.id}
+                      className="hover:shadow-md transition-all duration-200 cursor-pointer border border-border shadow-sm bg-card rounded-xl"
+                      onClick={() => setSelectedSession(session)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-foreground mb-0.5 text-base">{session.wordbookName}</h3>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <span>{session.mode}</span>
+                              <span className="flex items-center gap-1">
+                                <Clock size={12} />
+                                {session.duration < 60 ? `${session.duration}초` : `${Math.floor(session.duration / 60)}분`}
+                              </span>
+                              <span>{formatRelativeTime(session.completedAt)}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-primary">{session.score}%</div>
+                            <div className="text-[16px] text-muted-foreground">점수</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
             </div>
           </div>
         </div>

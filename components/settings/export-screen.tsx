@@ -4,11 +4,11 @@
 import { useState, useEffect } from "react"
 import { ArrowLeft, BookDown, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
 import { fetchWithAuth } from "@/lib/api"
 import { auth } from "@/lib/firebase"
+import { Card, CardContent } from "@/components/ui/card" // [!!!] Card, CardContent 임포트
 
 interface Wordbook {
     id: string
@@ -27,7 +27,6 @@ export function ExportScreen({ onBack }: ExportScreenProps) {
     const { toast } = useToast()
 
     useEffect(() => {
-        // ... (단어장 로드 로직은 동일) ...
         const loadWordbooks = async () => {
             setIsLoading(true);
             try {
@@ -46,7 +45,6 @@ export function ExportScreen({ onBack }: ExportScreenProps) {
         loadWordbooks();
     }, [toast]);
 
-    // ... (handleExport 함수는 동일) ...
     const handleExport = async (wordbookId: string, wordbookName: string) => {
         if (isExporting) return
         setIsExporting(wordbookId)
@@ -107,9 +105,6 @@ export function ExportScreen({ onBack }: ExportScreenProps) {
     }
 
     return (
-        // [!!!] 수정된 레이아웃:
-        // study-screen.tsx, home-screen.tsx와 동일한 구조
-        // (flex flex-col h-full)
         <div className="flex flex-col h-full bg-background page-transition-enter">
             {/* 헤더 (고정) */}
             <div className="flex items-center p-4 border-b border-border shrink-0">
@@ -121,62 +116,55 @@ export function ExportScreen({ onBack }: ExportScreenProps) {
                 </div>
             </div>
 
-            {/* [!!!] 수정된 스크롤 영역 */}
-            {/* flex-1: 남은 공간을 모두 차지
-              overflow-y-auto: 이 영역만 스크롤
-              pb-20: 하단 네비게이션 바(h-20)에 가려지지 않도록 패딩 추가
-            */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
-                <Card className="border shadow-sm rounded-xl">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <BookDown className="w-5 h-5 text-primary" />
-                            단어장 백업
-                        </CardTitle>
-                        <CardDescription>
-                            백업할 단어장을 선택하여 CSV 파일로 내보냅니다.
-                        </CardDescription>
-                    </CardHeader>
-                    {/* (이전 '카드 스타일' 수정은 일단 되돌렸습니다. 
-                       레이아웃 문제부터 해결하는 것이 우선입니다.)
-                    */}
-                    <CardContent className="space-y-2">
-                        {isLoading ? (
-                            <>
-                                <Skeleton className="h-12 w-full" />
-                                <Skeleton className="h-12 w-full" />
-                            </>
-                        ) : wordbooks.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center">
+            {/* [!!!] 수정된 스크롤 영역 (study-screen.tsx 스타일 적용) */}
+            <div className="flex-1 overflow-y-auto pb-20">
+                {/* [!!!] px-4 pt-4 space-y-3 적용 */}
+                <div className="px-4 pt-4 space-y-3">
+                    {isLoading ? (
+                        // [!!!] 스켈레톤 스타일 (study-screen 참조)
+                        <div className="space-y-2">
+                            <Skeleton className="h-20 w-full rounded-xl" />
+                            <Skeleton className="h-20 w-full rounded-xl" />
+                        </div>
+                    ) : wordbooks.length === 0 ? (
+                        // [!!!] 빈 상태 (study-screen 참조)
+                        <Card className="border border-border rounded-xl bg-card">
+                            <CardContent className="p-6 text-center text-muted-foreground">
                                 단어장이 없습니다.
-                            </p>
-                        ) : (
-                            wordbooks.map((wb) => (
-                                <div
-                                    key={wb.id}
-                                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                                >
-                                    <div>
-                                        <p className="font-medium">{wb.name}</p>
-                                        <p className="text-sm text-muted-foreground">{wb.wordCount} 단어</p>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        wordbooks.map((wb) => (
+                            // [!!!] Card 스타일 적용 (study-screen 참조)
+                            <Card
+                                key={wb.id}
+                                className="transition-all duration-200 border border-border shadow-sm bg-card rounded-xl"
+                            >
+                                {/* [!!!] CardContent 패딩 p-3 적용 */}
+                                <CardContent className="p-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                            <p className="font-medium text-foreground mb-0.5 text-base">{wb.name}</p>
+                                            <p className="text-sm text-muted-foreground">{wb.wordCount} 단어</p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleExport(wb.id, wb.name)}
+                                            disabled={!!isExporting}
+                                        >
+                                            {isExporting === wb.id ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <BookDown className="w-4 h-4" />
+                                            )}
+                                        </Button>
                                     </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleExport(wb.id, wb.name)}
-                                        disabled={!!isExporting}
-                                    >
-                                        {isExporting === wb.id ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <BookDown className="w-4 h-4" />
-                                        )}
-                                    </Button>
-                                </div>
-                            ))
-                        )}
-                    </CardContent>
-                </Card>
+                                </CardContent>
+                            </Card>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     )

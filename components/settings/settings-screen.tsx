@@ -6,28 +6,38 @@ import { ProfileSettings } from "./profile-settings"
 import { NotificationSettings } from "./notification-settings"
 import { ThemeSettings } from "./theme-settings"
 import { ExportScreen } from "./export-screen"
-import { ImportDialog } from "./import-dialog"
+// [!!!] 1. ImportDialog 대신 ImportScreen을 임포트합니다.
+// (파일 경로는 실제 파일 위치에 맞게 조정하세요.)
+import { ImportScreen } from "./import-screen"
 
 interface SettingsScreenProps {
   onLogout?: () => void
+  // [!!!] AuthManager로부터 key를 받을 수 있도록 prop 추가 (선택 사항이지만 권장)
+  refreshKey?: number
 }
 
-export function SettingsScreen({ onLogout }: SettingsScreenProps) {
-  // [!!!] "export" 뷰(View) 추가
-  const [currentView, setCurrentView] = useState<"main" | "profile" | "notifications" | "theme" | "export">("main")
+export function SettingsScreen({ onLogout, refreshKey }: SettingsScreenProps) {
+  // [!!!] 2. currentView 상태에 "import" 추가
+  const [currentView, setCurrentView] = useState<"main" | "profile" | "notifications" | "theme" | "export" | "import">("main")
 
-  // [!!!] 불러오기 다이얼로그 상태 추가
-  const [showImportDialog, setShowImportDialog] = useState(false)
+  // [!!!] 3. ImportDialog 관련 상태 제거
+  // const [showImportDialog, setShowImportDialog] = useState(false) // 이 줄 삭제
+
+  // [!!!] (선택 사항) AuthManager의 key 변경 시 메인 뷰로 리셋
+  // useEffect(() => {
+  //   setCurrentView("main")
+  // }, [refreshKey])
 
   const handleViewProfile = () => setCurrentView("profile")
   const handleViewNotifications = () => setCurrentView("notifications")
   const handleViewTheme = () => setCurrentView("theme")
-  const handleViewExport = () => setCurrentView("export") // [!!!] 내보내기 화면 이동 핸들러
+  const handleViewExport = () => setCurrentView("export")
   const handleBackToMain = () => setCurrentView("main")
 
-  // [!!!] 불러오기 버튼 클릭 시 다이얼로그 띄우기
+  // [!!!] 4. 불러오기 버튼 클릭 시 'import' 뷰로 변경
   const handleImportClick = () => {
-    setShowImportDialog(true)
+    setCurrentView("import")
+    // setShowImportDialog(true) // 이 줄 삭제
   }
 
   const handleLogout = () => {
@@ -48,9 +58,14 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
     return <ThemeSettings onBack={handleBackToMain} />
   }
 
-  // [!!!] 내보내기 화면 렌더링
   if (currentView === "export") {
     return <ExportScreen onBack={handleBackToMain} />
+  }
+
+  // [!!!] 5. ImportScreen 렌더링 블록 추가
+  if (currentView === "import") {
+    // ImportScreen이 components/settings/import-screen.tsx에 정의되어 있어야 합니다.
+    return <ImportScreen onBack={handleBackToMain} />
   }
 
   return (
@@ -104,7 +119,7 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
           <ChevronRight size={20} className="text-muted-foreground" />
         </button>
 
-        {/* [!!!] '불러오기' 버튼 -> 다이얼로그 띄우기 */}
+        {/* [!!!] '불러오기' 버튼 -> 전용 페이지로 이동 (핸들러 변경됨) */}
         <button
           onClick={handleImportClick}
           className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
@@ -116,7 +131,7 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
           <ChevronRight size={20} className="text-muted-foreground" />
         </button>
 
-        {/* [!!!] '내보내기' 버튼 -> 전용 페이지로 이동 */}
+        {/* '내보내기' 버튼 -> 전용 페이지로 이동 */}
         <button
           onClick={handleViewExport}
           className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
@@ -142,8 +157,8 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
         </div>
       </div>
 
-      {/* [!!!] 불러오기 다이얼로그 컴포넌트 렌더링 */}
-      <ImportDialog open={showImportDialog} onOpenChange={setShowImportDialog} />
+      {/* [!!!] 6. 다이얼로그 렌더링 부분 삭제 */}
+      {/* <ImportDialog open={showImportDialog} onOpenChange={setShowImportDialog} /> */}
     </div>
   )
 }
