@@ -27,13 +27,9 @@ if (!admin.apps.length) {
   }
 }
 
-// [수정]
-// 기존 파일은 'firestore'를, 새 파일은 'db'를 사용합니다.
-// 둘 다 동일한 admin.firestore() 인스턴스를 가리키도록 합니다.
 const firestore = admin.firestore();
-const db = firestore; // 'db'는 'firestore'와 동일한 객체입니다.
+const db = firestore;
 const auth = admin.auth();
 
-// [수정]
-// 'firestore', 'db', 'auth' 세 가지 모두 내보냅니다.
-export { firestore, db, auth };
+// [!!!] 수정된 부분: 'admin' 객체도 함께 export 합니다.
+export { firestore, db, auth, admin };

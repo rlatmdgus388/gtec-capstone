@@ -1,4 +1,5 @@
 // components/settings/import-screen.tsx
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
-import { fetchWithAuth } from "@/lib/api"
+import { fetchWithAuth } from "@/lib/api" // [!!!] 'useAuthState' 대신 'fetchWithAuth'를 사용합니다.
 import Papa from "papaparse"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -308,7 +309,7 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
                                     <Input
                                         placeholder="새 단어장 이름 입력..."
                                         value={newWordbookName}
-                                        onChange={(e) => setNewWordbookName(e.target.value)}
+                                        onChange={(e) => setNewWordbookName(e.targe.value)}
                                     />
                                 </div>
                             )}

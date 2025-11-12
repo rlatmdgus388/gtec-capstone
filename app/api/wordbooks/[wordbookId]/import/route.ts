@@ -1,7 +1,9 @@
 // app/api/wordbooks/[wordbookId]/import/route.ts
+// (이 코드로 파일을 덮어쓰세요)
+
 import { NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
-import { db, admin } from '@/lib/firebase-admin'; // admin 유틸리티 임포트
+import { db, admin } from '@/lib/firebase-admin';
 
 // 불러올 단어의 예상 구조
 interface ImportedWord {
@@ -41,22 +43,27 @@ export async function POST(
 
         // 3. Batch Write를 사용하여 모든 단어를 원자적으로 추가
         const batch = db.batch();
-        const wordsCollectionRef = db.collection('words');
+        const wordsCollectionRef = wordbookRef.collection('words');
         const timestamp = admin.firestore.FieldValue.serverTimestamp();
-
         let importedCount = 0;
 
         for (const word of wordsToImport) {
-            // 기본 유효성 검사 (original과 meaning은 필수)
             if (word.original && word.meaning) {
-                const newWordRef = wordsCollectionRef.doc(); // 새 문서 참조 생성
+                const newWordRef = wordsCollectionRef.doc();
+
+                // [!!!] 최종 스키마 통일: 'original' 대신 'word' 필드에 저장하고, 'original' 필드는 제거
                 batch.set(newWordRef, {
                     userId: userId,
                     wordbookId: wordbookId,
-                    original: word.original,
-                    text: word.text || word.original, // text가 없으면 original로 대체
-                    partOfSpeech: word.partOfSpeech || 'n', // 기본값 'n'
+                    word: word.original, // <--- word 필드에 저장
                     meaning: word.meaning,
+                    // CSV에서 가져온 부가 정보
+                    text: word.text || word.original, // text 필드 유지
+                    partOfSpeech: word.partOfSpeech || 'n', // partOfSpeech 필드 유지
+                    // 표준 스키마를 위한 빈 필드
+                    example: '',
+                    pronunciation: '',
+                    mastered: false,
                     createdAt: timestamp,
                     lastStudied: null,
                     studyCount: 0,
@@ -69,10 +76,10 @@ export async function POST(
         }
 
         if (importedCount === 0) {
-            return NextResponse.json({ message: 'Words array was empty or invalid' }, { status: 400 });
+            return NextResponse.json({ message: 'Words array was empty or invalid (check original/meaning headers)' }, { status: 400 });
         }
 
-        // 4. 단어장
+        // 4. 단어장 메타데이터 업데이트 (총 단어 수 증가)
         batch.update(wordbookRef, {
             wordCount: admin.firestore.FieldValue.increment(importedCount),
         });
