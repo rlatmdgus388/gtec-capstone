@@ -1,3 +1,5 @@
+// components/home/home-study-status.tsx
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -104,8 +106,12 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
                 {/* 스크롤 영역 */}
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-4 space-y-6">
-                        <Skeleton className="h-32 w-full" />
-                        <Skeleton className="h-96 w-full" />
+                        {/* 스켈레톤에도 동일한 스타일 적용을 위해 Card로 감쌀 수 있지만,
+                            home-screen.tsx의 스켈레톤은 Card로 감싸지 않았으므로 일단 유지합니다.
+                            원하시면 이 부분도 Card로 감쌀 수 있습니다.
+                        */}
+                        <Skeleton className="h-32 w-full rounded-xl" />
+                        <Skeleton className="h-96 w-full rounded-xl" />
                     </div>
                 </div>
             </div>
@@ -135,7 +141,8 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
                 {/* 스크롤 영역 */}
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-4 space-y-6">
-                        <Card>
+                        {/* [!!!] 수정된 부분: Card에 스타일 적용 */}
+                        <Card className="border shadow-sm rounded-xl">
                             <CardContent className="p-6 text-center text-muted-foreground">
                                 학습 데이터를 불러오는데 실패했습니다.
                             </CardContent>
@@ -166,8 +173,9 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
     };
 
     return (
+        // [!!!] 수정된 부분: 메인 배경색 `bg-background` 적용 (기존에도 있었지만 확인)
         <div className={cn("max-w-lg mx-auto bg-background h-full flex flex-col", "page-transition-enter")}>
-            {/* 헤더 */}
+            {/* 헤더 (기존 `bg-card` 유지) */}
             <div className="bg-card border-b border-border shrink-0">
                 <div className="px-4 py-4">
                     <div className="flex items-center gap-2">
@@ -179,103 +187,103 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* 스크롤 영역 */}
-                <div className="flex-1 overflow-y-auto">
-                    <div className="p-4 space-y-6">
-                        {/* 오늘의 학습 현황 탭 */}
-                        <Card className="bg-card">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
-                                    <TrendingUp className="w-5 h-5 text-primary" />
-                                    오늘의 학습 현황
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-3 gap-4 text-center">
-                                    <div>
-                                        <p className="text-2xl font-bold text-primary">{stats.wordsLearned}</p>
-                                        <p className="text-xs text-muted-foreground">학습 단어</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold text-primary">{stats.studyTime}<span className="text-sm">분</span></p>
-                                        <p className="text-xs text-muted-foreground">학습 시간</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold text-primary">{stats.streak}<span className="text-sm">일</span></p>
-                                        <p className="text-xs text-muted-foreground">연속 학습</p>
-                                    </div>
+            {/* 스크롤 영역 */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="p-4 space-y-6">
+                    {/* [!!!] 수정된 부분: Card에 스타일 적용 (기존 `bg-card` 제거, `border` 등 추가) */}
+                    <Card className="border shadow-sm rounded-xl">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
+                                <TrendingUp className="w-5 h-5 text-primary" />
+                                오늘의 학습 현황
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <p className="text-2xl font-bold text-primary">{stats.wordsLearned}</p>
+                                    <p className="text-xs text-muted-foreground">학습 단어</p>
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <div>
+                                    <p className="text-2xl font-bold text-primary">{stats.studyTime}<span className="text-sm">분</span></p>
+                                    <p className="text-xs text-muted-foreground">학습 시간</p>
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-primary">{stats.streak}<span className="text-sm">일</span></p>
+                                    <p className="text-xs text-muted-foreground">연속 학습</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                        {/* 주간 학습 리포트 */}
-                        <Card className="bg-card w-full">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <BarChart className="w-5 h-5 text-primary" />
-                                    주간 학습 리포트
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="h-80">
-                                {stats.weeklyData && stats.weeklyData.length > 0 ? (
-                                    <ChartContainer config={chartConfig} className="w-full h-full">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 5 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                <XAxis
-                                                    dataKey="name"
-                                                    fontSize={12}
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                    tick={{ fill: "var(--foreground)" }}
-                                                    stroke="var(--foreground)"
-                                                    interval={0}
-                                                />
-                                                <YAxis
-                                                    yAxisId="left"
+                    {/* [!!!] 수정된 부분: Card에 스타일 적용 (기존 `bg-card` 제거, `border` 등 추가) */}
+                    <Card className="border shadow-sm rounded-xl w-full">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <BarChart className="w-5 h-5 text-primary" />
+                                주간 학습 리포트
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-80">
+                            {stats.weeklyData && stats.weeklyData.length > 0 ? (
+                                <ChartContainer config={chartConfig} className="w-full h-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tick={{ fill: "var(--foreground)" }}
+                                                stroke="var(--foreground)"
+                                                interval={0}
+                                            />
+                                            <YAxis
+                                                yAxisId="left"
+                                                dataKey="단어 (개)"
+                                                type="number"
+                                                allowDecimals={false}
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                stroke="var(--color-words)"
+                                                width={40}
+                                            />
+                                            <YAxis
+                                                yAxisId="right"
+                                                dataKey="시간 (분)"
+                                                type="number"
+                                                allowDecimals={false}
+                                                orientation="right"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                stroke="var(--color-time)"
+                                                width={40}
+                                            />
+                                            <Tooltip content={<ChartTooltipContent hideIndicator />} />
+                                            <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                            <Bar yAxisId="left" dataKey="단어 (개)" fill="var(--color-words)" radius={[4, 4, 0, 0]}>
+                                                <LabelList
                                                     dataKey="단어 (개)"
-                                                    type="number"
-                                                    allowDecimals={false}
-                                                    fontSize={12}
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                    stroke="var(--color-words)"
-                                                    width={40}
+                                                    position="top"
+                                                    content={renderLabel}
                                                 />
-                                                <YAxis
-                                                    yAxisId="right"
-                                                    dataKey="시간 (분)"
-                                                    type="number"
-                                                    allowDecimals={false}
-                                                    orientation="right"
-                                                    fontSize={12}
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                    stroke="var(--color-time)"
-                                                    width={40}
-                                                />
-                                                <Tooltip content={<ChartTooltipContent hideIndicator />} />
-                                                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                                                <Bar yAxisId="left" dataKey="단어 (개)" fill="var(--color-words)" radius={[4, 4, 0, 0]}>
-                                                    <LabelList
-                                                        dataKey="단어 (개)"
-                                                        position="top"
-                                                        content={renderLabel}
-                                                    />
-                                                </Bar>
-                                                <Line yAxisId="right" dataKey="시간 (분)" stroke="var(--color-time)" type="monotone" dot={false} strokeWidth={2} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    </ChartContainer>
-                                ) : (
-                                    <p className="text-sm text-center text-muted-foreground mt-4">
-                                        주간 학습 데이터가 없습니다.
-                                    </p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
+                                            </Bar>
+                                            <Line yAxisId="right" dataKey="시간 (분)" stroke="var(--color-time)" type="monotone" dot={false} strokeWidth={2} />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </ChartContainer>
+                            ) : (
+                                <p className="text-sm text-center text-muted-foreground mt-4">
+                                    주간 학습 데이터가 없습니다.
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>);
