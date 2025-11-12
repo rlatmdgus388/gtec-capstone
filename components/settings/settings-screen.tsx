@@ -1,39 +1,33 @@
+// components/settings/settings-screen.tsx
 "use client"
 import { Bell, Download, ChevronRight, User, Upload, LogOut, Settings, Palette } from "lucide-react"
 import { useState } from "react"
 import { ProfileSettings } from "./profile-settings"
 import { NotificationSettings } from "./notification-settings"
 import { ThemeSettings } from "./theme-settings"
+import { ExportScreen } from "./export-screen"
+import { ImportDialog } from "./import-dialog"
 
 interface SettingsScreenProps {
   onLogout?: () => void
 }
 
 export function SettingsScreen({ onLogout }: SettingsScreenProps) {
-  const [currentView, setCurrentView] = useState<"main" | "profile" | "notifications" | "theme">("main")
+  // [!!!] "export" 뷰(View) 추가
+  const [currentView, setCurrentView] = useState<"main" | "profile" | "notifications" | "theme" | "export">("main")
+
+  // [!!!] 불러오기 다이얼로그 상태 추가
+  const [showImportDialog, setShowImportDialog] = useState(false)
 
   const handleViewProfile = () => setCurrentView("profile")
   const handleViewNotifications = () => setCurrentView("notifications")
   const handleViewTheme = () => setCurrentView("theme")
+  const handleViewExport = () => setCurrentView("export") // [!!!] 내보내기 화면 이동 핸들러
   const handleBackToMain = () => setCurrentView("main")
 
-  const handleCSVImport = () => {
-    const input = document.createElement("input")
-    input.type = "file"
-    input.accept = ".csv"
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (file) {
-        console.log("Importing CSV file:", file.name)
-        alert("CSV 파일을 가져오는 기능이 곧 추가됩니다.")
-      }
-    }
-    input.click()
-  }
-
-  const handleCSVExport = () => {
-    console.log("Exporting words to CSV")
-    alert("CSV 파일로 내보내는 기능이 곧 추가됩니다.")
+  // [!!!] 불러오기 버튼 클릭 시 다이얼로그 띄우기
+  const handleImportClick = () => {
+    setShowImportDialog(true)
   }
 
   const handleLogout = () => {
@@ -54,8 +48,14 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
     return <ThemeSettings onBack={handleBackToMain} />
   }
 
+  // [!!!] 내보내기 화면 렌더링
+  if (currentView === "export") {
+    return <ExportScreen onBack={handleBackToMain} />
+  }
+
   return (
     <div className="flex-1 overflow-y-auto pb-20 bg-background">
+      {/* ... (헤더 부분은 기존과 동일) ... */}
       <div className="bg-card">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
@@ -70,6 +70,7 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
       </div>
 
       <div className="px-6 py-4 space-y-1.5">
+        {/* ... (프로필, 테마, 알림 버튼은 기존과 동일) ... */}
         <button
           onClick={handleViewProfile}
           className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
@@ -103,8 +104,9 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
           <ChevronRight size={20} className="text-muted-foreground" />
         </button>
 
+        {/* [!!!] '불러오기' 버튼 -> 다이얼로그 띄우기 */}
         <button
-          onClick={handleCSVImport}
+          onClick={handleImportClick}
           className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
         >
           <div className="flex items-center gap-4">
@@ -114,8 +116,9 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
           <ChevronRight size={20} className="text-muted-foreground" />
         </button>
 
+        {/* [!!!] '내보내기' 버튼 -> 전용 페이지로 이동 */}
         <button
-          onClick={handleCSVExport}
+          onClick={handleViewExport}
           className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
         >
           <div className="flex items-center gap-4">
@@ -125,6 +128,7 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
           <ChevronRight size={20} className="text-muted-foreground" />
         </button>
 
+        {/* ... (로그아웃 버튼은 기존과 동일) ... */}
         <div className="pt-4 mt-4 border-t border-border">
           <button
             onClick={handleLogout}
@@ -137,6 +141,9 @@ export function SettingsScreen({ onLogout }: SettingsScreenProps) {
           </button>
         </div>
       </div>
+
+      {/* [!!!] 불러오기 다이얼로그 컴포넌트 렌더링 */}
+      <ImportDialog open={showImportDialog} onOpenChange={setShowImportDialog} />
     </div>
   )
 }
