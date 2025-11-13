@@ -8,12 +8,8 @@ import {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-const MODEL_CANDIDATES = [
-  "gemini-2.5-flash",
-  "gemini-2.5-pro",
-  "gemini-1.5-pro-001",
-  "gemini-1.5-flash-001",
-] as const;
+// 하나의 모델만 사용 (원하면 2.5-flash 로 바꿔도 됨)
+const MODEL_ID = "gemini-2.0-flash";
 
 /** 긴 입력을 안전하게 분할 */
 function splitTextByLength(s: string, max = 2000) {
@@ -23,67 +19,7 @@ function splitTextByLength(s: string, max = 2000) {
   return parts;
 }
 
-/** 문자열 내부 JSON 탐색 */
-function findFirstValidJsonSpan(s: string): { start: number; end: number } | null {
-  const openers = ["[", "{"];
-  const closers: Record<string, string> = { "[": "]", "{": "}" };
-  let inStr = false,
-    esc = false,
-    stack: string[] = [],
-    start = -1;
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    if (inStr) {
-      if (esc) esc = false;
-      else if (ch === "\\") esc = true;
-      else if (ch === '"') inStr = false;
-    } else {
-      if (ch === '"') {
-        inStr = true;
-        esc = false;
-        continue;
-      }
-      if (openers.includes(ch)) {
-        if (!stack.length) start = i;
-        stack.push(ch);
-      } else if (stack.length) {
-        const top = stack[stack.length - 1];
-        if (ch === closers[top]) {
-          stack.pop();
-          if (!stack.length && start !== -1) {
-            const cand = s.slice(start, i + 1);
-            try {
-              JSON.parse(cand);
-              return { start, end: i };
-            } catch {}
-          }
-        }
-      }
-    }
-  }
-  return null;
-}
-
-/** JSON 안전 파싱 */
-function tryParseJSON(s: string) {
-  let t = s
-    .replace(/^\uFEFF/, "")
-    .replace(/^```json\s*|\s*```$/g, "")
-    .replace(/^```\s*|\s*```$/g, "")
-    .replace(/[“”]/g, '"')
-    .replace(/[‘’]/g, "'")
-    .replace(/,\s*([}\]])/g, "$1")
-    .trim();
-
-  try {
-    return JSON.parse(t);
-  } catch {}
-  const idx = findFirstValidJsonSpan(t);
-  if (idx) return JSON.parse(t.slice(idx.start, idx.end + 1));
-  throw new SyntaxError("Failed to parse tool arguments as JSON.");
-}
-
-/** 임시 오류 여부 판별 */
+/** 임시 오류 여부 판별 (재시도 판단용) */
 function isTransient(err: any) {
   const st = Number(err?.status || err?.code || 0);
   const msg = String(err?.message || "").toLowerCase();
@@ -91,10 +27,10 @@ function isTransient(err: any) {
   return /overloaded|temporar|timeout|deadline|rate|quota|unavailable/i.test(msg);
 }
 
-/** 재시도 로직 */
+/** 간단 재시도 로직 */
 async function callWithRetry<T>(
   fn: () => Promise<T>,
-  { retries = 4, baseMs = 400, maxMs = 6000 }: { retries?: number; baseMs?: number; maxMs?: number } = {}
+  { retries = 1, baseMs = 400, maxMs = 4000 }: { retries?: number; baseMs?: number; maxMs?: number } = {}
 ): Promise<T> {
   let lastErr: any;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -110,38 +46,78 @@ async function callWithRetry<T>(
   throw lastErr;
 }
 
-// 단어 필터링 정리
-function sanitizeTerms(arr: any[]) {
-  return arr
-    .filter(
-      (x: any) =>
-        x &&
-        typeof x.original === "string" &&
-        typeof x.text === "string" &&
-        typeof x.partOfSpeech === "string" &&
-        typeof x.meaning === "string"
-    )
-    .map((x: any) => ({
-      original: x.original.trim(),
-      text: x.text.trim(),
-      partOfSpeech: x.partOfSpeech.trim(),
-      meaning: x.meaning.trim(),
-    }));
+/** 줄 단위 결과 파싱 */
+function parseLines(raw: string) {
+  const results: { original: string; text: string; partOfSpeech: string; meaning: string }[] = [];
+
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // 혹시 모델이 "1. ~" 이런 식으로 번호를 붙이면 제거
+    const noNumber = trimmed.replace(/^\d+[\).\s-]+/, "").trim();
+
+    const parts = noNumber.split("|||").map((p) => p.trim());
+    if (parts.length < 4) continue;
+
+    const [original, text, partOfSpeech, meaning] = parts;
+
+    if (!original || !text || !partOfSpeech || !meaning) continue;
+
+    results.push({ original, text, partOfSpeech, meaning });
+  }
+
+  return results;
 }
 
-/** 분석 함수 */
-async function analyzeChunk(genAI: GoogleGenerativeAI, text: string) {
+/** 개별 청크 분석 함수 (텍스트 포맷 버전) */
+async function analyzeChunk(text: string) {
   const prompt = `
-다음 텍스트에서 중요한 영어 단어들을 추출해 아래 스키마에 맞춰 함수(return_terms)를 반드시 호출하세요.
-- original: 원형
-- text: 원문 그대로
-- partOfSpeech: n|v|adj|adv 등
-- meaning: 한국어 뜻
+You are helping a student build an English vocabulary list from a short passage.
 
-반드시 함수 호출을 하세요. **단어가 없어도 return_terms({ "terms": [] })를 호출**하세요.
-설명/주석/코드펜스 없이 함수 호출만 하세요.
+Your job is to EXTRACT MANY USEFUL VOCABULARY WORDS that are worth studying.
 
-텍스트:
+Please follow these rules:
+
+1. What to INCLUDE
+- nouns
+- main verbs
+- adjectives and adverbs
+- TOEIC-style business / academic / workplace vocabulary
+- words related to technology, society, business, leadership, marketing, etc.
+- words that are CEFR **B1 level or higher**
+- when unsure whether a word is important → INCLUDE it
+
+2. What to EXCLUDE
+- articles (a, an, the)
+- very basic prepositions (of, in, on, at, for, to, from, with)
+- personal pronouns (he, she, they, it, etc.)
+- auxiliary verbs (be, have, do, will, can…)
+- conjunctions (and, but, or, so, that, because…)
+- **very basic everyday A1–A2 words such as:**
+  - music, album, people, day, year, good, bad, big, small, go, make, take, come, look, get
+- DO NOT include overly trivial vocabulary that every middle school student knows
+
+### OUTPUT FORMAT (VERY IMPORTANT)
+
+Return the result as PLAIN TEXT.
+Each line = one word, formatted EXACTLY like this:
+
+original ||| text ||| partOfSpeech ||| meaning_in_Korean
+
+- original: dictionary base form (lemma), e.g. "democratize"
+- text: the form as it appeared in the passage
+- partOfSpeech: n / v / adj / adv
+- meaning_in_Korean: concise Korean dictionary meaning of the *original*
+
+Examples:
+democratize ||| democratized ||| v ||| 민주화하다, 민주화시키다
+hallmark ||| hallmark ||| n ||| 특징, 상징적인 요소
+
+Do NOT include explanations, comments, markdown, or JSON.
+If there are no words, return an empty string.
+
+Text to analyze:
 """
 ${text}
 """
@@ -151,150 +127,61 @@ ${text}
     temperature: 0.1,
     topK: 1,
     topP: 1,
-    maxOutputTokens: 2048,
+    maxOutputTokens: 1024,
   };
 
   const safetySettings = [
-    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-  ];
-
-  const functionDeclarations = [
     {
-      name: "return_terms",
-      description:
-        "Extract important English words from the input text and return them in a strict schema.",
-      parameters: {
-        type: "object",
-        properties: {
-          terms: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                original: { type: "string" },
-                text: { type: "string" },
-                partOfSpeech: { type: "string" },
-                meaning: { type: "string" },
-              },
-              required: ["original", "text", "partOfSpeech", "meaning"],
-            },
-          },
-        },
-        required: ["terms"],
-      },
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
     },
   ];
 
-  const tryToolCall = async (modelId: string, forcePrompt = prompt) => {
-    const model = genAI.getGenerativeModel({ model: modelId });
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 25_000);
+  const model = genAI.getGenerativeModel({
+    model: MODEL_ID,
+    generationConfig,
+    safetySettings,
+  });
 
-    try {
-      const result = await callWithRetry(
-        () =>
-          model.generateContent(
-            {
-              contents: [{ role: "user", parts: [{ text: forcePrompt }] }],
-              tools: [{ functionDeclarations }],
-              toolConfig: {
-                functionCallingConfig: {
-                  mode: "ANY",
-                  allowedFunctionNames: ["return_terms"],
-                },
-              },
-              generationConfig,
-              safetySettings,
-            },
-            // @ts-ignore
-            { signal: controller.signal }
-          ),
-        { retries: 3, baseMs: 400, maxMs: 6000 }
-      );
-      return result;
-    } finally {
-      clearTimeout(timer);
-    }
-  };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000); // 15초 타임아웃
 
-  for (const modelId of MODEL_CANDIDATES) {
-    try {
-      const result = await tryToolCall(modelId);
-
-      const fb = result.response.promptFeedback;
-      if (fb?.blockReason) console.warn("Prompt blocked:", fb.blockReason);
-
-      const cand = result.response.candidates?.[0];
-      const parts = cand?.content?.parts ?? [];
-      const call = parts.find((p: any) => p.functionCall);
-
-      if (call) {
-        const { args } = call.functionCall;
-        const parsed = typeof args === "string" ? tryParseJSON(args) : args;
-        return sanitizeTerms(parsed?.terms ?? []);
-      }
-
-      // 재시도
-      console.warn("No function call. Retrying with nudge…");
-      const nudgedPrompt = prompt + `
-
-반드시 return_terms({...}) 함수를 호출해야 합니다. 단어가 없으면 {"terms": []}로 호출하세요.`;
-      const retry = await tryToolCall(modelId, nudgedPrompt);
-
-      const c2 = retry.response.candidates?.[0];
-      const p2 = c2?.content?.parts ?? [];
-      const call2 = p2.find((p: any) => p.functionCall);
-      if (call2) {
-        const { args } = call2.functionCall;
-        const parsed = typeof args === "string" ? tryParseJSON(args) : args;
-        return sanitizeTerms(parsed?.terms ?? []);
-      }
-
-      // 스키마 모드로 우회
-      console.warn("Still no function call. Falling back to JSON mode…");
-      const schemaResult = await genAI.getGenerativeModel({ model: modelId }).generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          ...generationConfig,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              terms: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    original: { type: "string" },
-                    text: { type: "string" },
-                    partOfSpeech: { type: "string" },
-                    meaning: { type: "string" },
-                  },
-                  required: ["original", "text", "partOfSpeech", "meaning"],
-                },
-              },
-            },
-            required: ["terms"],
+  try {
+    const result = await callWithRetry(
+      () =>
+        model.generateContent(
+          {
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
           },
-        },
-        safetySettings,
-      });
+          // @ts-ignore
+          { signal: controller.signal }
+        ),
+      { retries: 1, baseMs: 400, maxMs: 4000 }
+    );
 
-      const raw = schemaResult.response.text();
-      const obj = tryParseJSON(raw);
-      return sanitizeTerms(obj?.terms ?? []);
+    const raw = result.response.text() ?? "";
+    const terms = parseLines(raw);
 
-    } catch (err) {
-      if (!isTransient(err)) throw err;
-      console.warn(`Transient error on ${modelId}, trying next model…`, err?.message || err);
-      continue;
-    }
+    console.log(
+      `[Gemini-analysis] model=${MODEL_ID}, textLength=${text.length}, terms=${terms.length}`
+    );
+
+    return terms;
+  } finally {
+    clearTimeout(timer);
   }
-
-  throw new Error("All models failed to return structured output.");
 }
 
 export async function POST(request: Request) {
@@ -304,24 +191,57 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "텍스트가 필요합니다." }, { status: 400 });
     }
 
+    // 🔍 디버깅용: 실제로 OCR에서 얼마나 길게 들어오는지 확인해보고 싶으면 아래 주석 해제
+    // console.log("[Gemini-analysis] OCR text:", text);
+
     const chunks = splitTextByLength(text, 2000)
       .map((s) => s.trim())
       .filter((s) => /[A-Za-z]/.test(s));
 
-    const all: any[] = [];
-    for (const chunk of chunks) {
-      const part = await analyzeChunk(genAI, chunk);
-      all.push(...part);
+    if (!chunks.length) {
+      return NextResponse.json([]);
     }
 
+    const chunkPromises = chunks.map((chunk, idx) =>
+      analyzeChunk(chunk)
+        .then((result) => {
+          console.log(
+            `[Gemini-analysis] chunk #${idx} finished: length=${chunk.length}, terms=${result.length}`
+          );
+          return result;
+        })
+        .catch((err) => {
+          console.error(
+            `[Gemini-analysis] chunk #${idx} 처리 실패:`,
+            err?.message || err
+          );
+          return null;
+        })
+    );
+
+    const allChunkResults = await Promise.all(chunkPromises);
+    const successful = allChunkResults.filter(
+      (r): r is any[] => Array.isArray(r)
+    );
+
+    if (successful.length === 0) {
+      throw new Error("모든 청크 처리에 실패했습니다.");
+    }
+
+    const all = successful.flat();
+
+    // text + original 기준으로 중복 제거
     const key = (t: any) => `${t.text}@@${t.original}`.toLowerCase();
     const dedup = Array.from(new Map(all.map((r) => [key(r), r])).values());
 
     return NextResponse.json(dedup);
   } catch (error: any) {
-    console.error("Gemini API 오류:", error);
+    console.error("Gemini API 전체 처리 오류:", error);
     return NextResponse.json(
-      { message: "AI 단어 분석 중 오류가 발생했습니다.", detail: String(error?.message || error) },
+      {
+        message: "AI 단어 분석 중 오류가 발생했습니다.",
+        detail: String(error?.message || error),
+      },
       { status: 500 }
     );
   }
