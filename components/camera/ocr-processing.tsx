@@ -108,25 +108,41 @@ export function OCRProcessing({ imageData, onWordsSelected, onBack }: OCRProcess
     onWordsSelected(selectedWords)
   }
   
-  const renderHighlightedText = () => {
-    if (!fullText) return null;
-    // 'original' (원형) 대신 'text' (실제 텍스트) 기준으로 Set 생성
-    const detectedWordTextSet = new Set(detectedWords.map(w => w.text.toLowerCase())); // [수정]
-    const parts = fullText.split(/(\s+)/);
+const renderHighlightedText = () => {
+  if (!fullText) return null;
 
-    return parts.map((part, index) => {
-      const cleanedPart = part.replace(/[^a-zA-Z]/g, '').toLowerCase();
-      // 수정된 Set으로 검사
-      if (detectedWordTextSet.has(cleanedPart)) { // [수정]
-        return (
-          <span key={index} className="bg-primary text-primary-foreground rounded-sm px-0.5">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
-  };
+  // 공통 정규화 함수: 알파벳만 남기고 소문자로
+  const normalize = (s: string) =>
+    s.replace(/[^a-zA-Z]/g, "").toLowerCase();
+
+  // Gemini 단어들을 text/original 둘 다 고려해서 Set 생성
+  const highlightSet = new Set(
+    detectedWords
+      .flatMap((w) => [w.text, w.original])
+      .filter(Boolean)
+      .map((w) => normalize(w as string))
+  );
+
+  const parts = fullText.split(/(\s+)/); // 공백 유지해서 다시 합치기 좋게
+
+  return parts.map((part, index) => {
+    const cleanedPart = normalize(part);
+
+    if (cleanedPart && highlightSet.has(cleanedPart)) {
+      return (
+        <span
+          key={index}
+          className="bg-primary text-primary-foreground rounded-sm px-0.5"
+        >
+          {part}
+        </span>
+      );
+    }
+
+    return part;
+  });
+};
+
 
   return (
     <div className="flex flex-col h-dvh bg-background">
