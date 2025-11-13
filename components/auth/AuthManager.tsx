@@ -226,8 +226,13 @@ export default function AuthManager() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col max-w-md mx-auto">
-      <main className="flex-1 overflow-hidden">{renderScreen()}</main>
+    <div className="min-h-dvh bg-background flex flex-col max-w-md mx-auto w-full overflow-hidden">
+      {/* 이 영역만 세로 스크롤 허용 */}
+      <main className="flex-1 overflow-y-auto">
+        {renderScreen()}
+      </main>
+
+      {/* 하단 탭바 고정 */}
       {!(activeTab === "vocabulary" && isCreatingWordbook) && (
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
       )}
