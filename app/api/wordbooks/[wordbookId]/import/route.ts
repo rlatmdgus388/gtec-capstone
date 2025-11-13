@@ -1,26 +1,26 @@
 // app/api/wordbooks/[wordbookId]/import/route.ts
-// [수정] W, M, D, P 헤더를 매핑하도록 변경
+// [Final Fix] 'memorized' 대신 'mastered' 필드를 기준으로 진행도 계산
+// [Fix] Next.js 15 'params' 경고 수정
+// [Fix] validWordsToAdd 타입 추론 오류 수정 (any[] 명시)
 
 import { NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { db, admin } from '@/lib/firebase-admin';
 
-// [수정] 불러올 단어의 예상 구조 (any[]로 변경하여 W, M, D, P 키를 동적으로 받음)
 interface ImportedWord {
-    W?: string; // 단어
-    M?: string; // 뜻
-    D?: string; // 메모
-    P?: string; // 발음
-    [key: string]: any; // 다른 행은 무시
+    W?: string;
+    M?: string;
+    D?: string;
+    P?: string;
+    [key: string]: any;
 }
 
 export async function POST(
     request: Request,
-    { params }: { params: { wordbookId: string } }
+    { params }: { params: Promise<{ wordbookId: string }> }
 ) {
     try {
-        const { wordbookId } = params;
-        // [수정] 타입을 any[] 또는 ImportedWord[]로 받음
+        const { wordbookId } = await params;
         const wordsToImport = (await request.json()) as ImportedWord[];
 
         if (!Array.isArray(wordsToImport) || wordsToImport.length === 0) {
@@ -37,35 +37,32 @@ export async function POST(
 
         // 2. 단어장 소유권 확인
         const wordbookRef = db.collection('wordbooks').doc(wordbookId);
-        const wordbookDoc = await wordbookRef.get();
+        const initialWordbookDoc = await wordbookRef.get();
 
-        if (!wordbookDoc.exists || wordbookDoc.data()?.userId !== userId) {
+        if (!initialWordbookDoc.exists || initialWordbookDoc.data()?.userId !== userId) {
             return NextResponse.json({ message: 'Wordbook not found or access denied' }, { status: 404 });
         }
 
-        // 3. Batch Write를 사용하여 모든 단어를 원자적으로 추가
-        const batch = db.batch();
         const wordsCollectionRef = wordbookRef.collection('words');
         const timestamp = admin.firestore.FieldValue.serverTimestamp();
         let importedCount = 0;
 
+        // 3. 유효한 단어 목록 준비
+        // [!!!] 여기가 수정된 부분입니다. (any[] 타입 추가)
+        const validWordsToAdd: any[] = [];
         for (const word of wordsToImport) {
-            // [수정] W(단어)와 M(뜻)이 있는지 확인
             if (word.W && word.M) {
-                const newWordRef = wordsCollectionRef.doc();
-
-                // [!!!] 최종 스키마 통일: W, M, D, P를 DB 필드에 매핑
-                batch.set(newWordRef, {
+                importedCount++;
+                validWordsToAdd.push({
                     userId: userId,
                     wordbookId: wordbookId,
-                    word: word.W,           // W -> word (단어)
-                    meaning: word.M,       // M -> meaning (뜻)
-                    example: word.D || '', // D -> example (메모)
-                    pronunciation: word.P || '', // P -> pronunciation (발음)
+                    word: word.W,
+                    meaning: word.M,
+                    example: word.D || '',
+                    pronunciation: word.P || '',
 
-                    // 기존 스키마 호환 및 기본값
-                    text: word.W, // text 필드는 word.W (단어) 값으로 채움
-                    partOfSpeech: 'n', // partOfSpeech는 기본값 'n'으로 설정
+                    text: word.W,
+                    partOfSpeech: 'n',
                     mastered: false,
                     createdAt: timestamp,
                     lastStudied: null,
@@ -74,27 +71,66 @@ export async function POST(
                     incorrectCount: 0,
                     memorized: false,
                 });
-                importedCount++;
             }
         }
 
         if (importedCount === 0) {
-            // [수정] 오류 메시지 변경
             return NextResponse.json({ message: 'Words array was empty or invalid (check W and M headers)' }, { status: 400 });
         }
 
-        // 4. 단어장 메타데이터 업데이트 (총 단어 수 증가)
-        batch.update(wordbookRef, {
-            wordCount: admin.firestore.FieldValue.increment(importedCount),
+        // 4. db.runTransaction 사용
+        await db.runTransaction(async (transaction) => {
+            const wordbookDoc = await transaction.get(wordbookRef);
+            if (!wordbookDoc.exists) {
+                throw new Error("단어장이 존재하지 않습니다.");
+            }
+            const wordbookData = wordbookDoc.data()!;
+
+            // 'mastered' 단어를 쿼리
+            const masteredWordsSnapshot = await transaction.get(
+                wordsCollectionRef.where('mastered', '==', true)
+            );
+
+            const currentMasteredCount = masteredWordsSnapshot.size;
+            const currentWordCount = wordbookData.wordCount || 0;
+
+            // 5. 트랜잭션 내에서 단어 추가
+            for (const newWordData of validWordsToAdd) {
+                const newWordRef = wordsCollectionRef.doc();
+                transaction.set(newWordRef, newWordData);
+            }
+
+            // 6. 트랜잭션 내에서 단어장 업데이트
+            const newTotalWordCount = currentWordCount + importedCount;
+
+            const newProgress = (newTotalWordCount > 0)
+                ? Math.floor((currentMasteredCount / newTotalWordCount) * 100)
+                : 0;
+
+            transaction.update(wordbookRef, {
+                wordCount: newTotalWordCount,
+                progress: newProgress,
+                masteredCount: currentMasteredCount,
+            });
         });
 
-        // 5. 배치 커밋
-        await batch.commit();
-
+        // 7. 트랜잭션 성공
         return NextResponse.json({ message: 'Import successful', importedCount });
 
     } catch (error: any) {
         console.error('Failed to import words:', error);
+
+        if (error.code === 9 || (error.message && error.message.includes("index"))) {
+            console.error("===================================================================");
+            console.error(">>> Firestore 색인이 필요합니다! 터미널의 오류 메시지에 포함된 URL을 클릭하여 색인을 생성하세요.");
+            console.error(">>> (쿼리: 'words' 컬렉션의 'mastered' 필드 단일 색인)");
+            console.error("===================================================================");
+            return NextResponse.json(
+                { message: '데이터베이스 색인 작업이 필요합니다. 잠시 후 다시 시도해주세요.', detail: error.message },
+                { status: 500 }
+            );
+        }
+
         if (error.code === 'auth/id-token-expired') {
             return NextResponse.json({ message: 'Token expired' }, { status: 401 });
         }
@@ -104,3 +140,5 @@ export async function POST(
         );
     }
 }
+
+//이거 
