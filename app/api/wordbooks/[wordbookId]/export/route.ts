@@ -1,7 +1,5 @@
 // app/api/wordbooks/[wordbookId]/export/route.ts
 import { NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-// db와 auth를 모두 가져옵니다
 import { db, auth as adminAuth } from '@/lib/firebase-admin';
 
 // CSV 필드 이스케이프 헬퍼 함수
@@ -19,32 +17,33 @@ function escapeCSV(field: string | undefined | null): string {
 // Word 타입을 가정 (프로젝트에 맞게 수정)
 interface Word {
     id: string;
-    original: string;
-    text: string;
-    partOfSpeech: string;
-    meaning: string;
+    original: string; // W
+    text: string; // D
+    partOfSpeech: string; // P
+    meaning: string; // M
     // ... other fields
 }
 
-// [!!!] CSV 열 순서 (original, meaning, partOfSpeech, text) - 변경 없음
+// [!!!] CSV 열 순서 (W, M, D, P) - 요청대로 수정됨
 function convertToCSV(words: Word[]): string {
     if (!words.length) {
         // 헤더만 있는 CSV 파일 (BOM 문자 추가 - Excel 한글 깨짐 방지)
-        return '\uFEFForiginal,meaning,partOfSpeech,text\n';
+        // [수정] 헤더 변경
+        return '\uFEFFW,M,D,P\n';
     }
 
-    // [수정] 헤더 순서 변경 (이전 요청대로)
-    const headers = ['original', 'meaning', 'partOfSpeech', 'text'];
+    // [수정] 헤더 순서 변경 (요청대로)
+    const headers = ['W', 'M', 'D', 'P'];
     // Excel에서 한글이 깨지지 않도록 BOM(Byte Order Mark) 추가
     const csvRows = ['\uFEFF' + headers.join(',')]; // 헤더 행
 
     for (const word of words) {
-        // [수정] 값(value) 순서를 헤더와 동일하게 변경
+        // [수정] 값(value) 순서를 W, M, D, P 순서로 변경
         const values = [
-            escapeCSV(word.original),
-            escapeCSV(word.meaning),
-            escapeCSV(word.partOfSpeech), // 3번째: 품사 (발음)
-            escapeCSV(word.text),         // 4번째: 텍스트 (메모)
+            escapeCSV(word.original),     // W
+            escapeCSV(word.meaning),      // M
+            escapeCSV(word.text),         // D (4번째: 텍스트 (메모))
+            escapeCSV(word.partOfSpeech), // P (3번째: 품사 (발음))
         ];
         csvRows.push(values.join(','));
     }
@@ -88,25 +87,26 @@ export async function GET(
 
         // [!!!] 4. 데이터 매핑 수정 (매핑 교체)
         // Firestore 필드명을 CSV 필드명에 맞게 매핑합니다.
+        // 이 부분은 그대로 둡니다. CSV 변환 함수에서 순서만 바꿉니다.
         const words: Word[] = wordsSnapshot.docs.map(doc => {
             const data = doc.data();
             return {
                 id: doc.id,
-                // 'original' (CSV) <- data.word 또는 data.original (Firestore)
+                // 'original' (W) <- data.word 또는 data.original (Firestore)
                 original: data.word || data.original || "",
 
-                // [수정] 'text' (CSV) <- data.example (Firestore '메모메모')
+                // 'text' (D) <- data.example (Firestore '메모메모')
                 text: data.example || data.text || data.Text || "",
 
-                // [수정] 'partOfSpeech' (CSV) <- data.pronunciation (Firestore '발음')
+                // 'partOfSpeech' (P) <- data.pronunciation (Firestore '발음')
                 partOfSpeech: data.pronunciation || data.partOfSpeech || data.PartOfSpeech || "",
 
-                // 'meaning' (CSV) <- data.meaning (Firestore)
+                // 'meaning' (M) <- data.meaning (Firestore)
                 meaning: data.meaning || data.Meaning || "",
             };
         });
 
-        // 5. CSV 데이터로 변환
+        // 5. CSV 데이터로 변환 (수정된 convertToCSV 함수 사용)
         const csvData = convertToCSV(words);
 
         // 6. 안전한 파일명 생성

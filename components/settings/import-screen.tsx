@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
-import { fetchWithAuth } from "@/lib/api" // [!!!] 'useAuthState' 대신 'fetchWithAuth'를 사용합니다.
+import { fetchWithAuth } from "@/lib/api"
 import Papa from "papaparse"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -21,11 +21,12 @@ interface Wordbook {
     wordCount: number
 }
 
+// API가 요구하는 W, M, D, P 구조
 interface ParsedWord {
-    original: string
-    text: string
-    partOfSpeech: string
-    meaning: string
+    W: string
+    M: string
+    D: string
+    P: string
 }
 
 interface ImportScreenProps {
@@ -87,23 +88,27 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
         if (!file) return
 
         setIsParsing(true)
+        setWordsToImport(null) // 이전 파싱 결과 초기화
+        setParsedFileInfo(null) // 이전 파싱 결과 초기화
+
         Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
             complete: async (results) => {
                 try {
+                    // CSV 파싱 로직: W, M, D, P를 찾도록 변경
                     const words = results.data.map((row: any) => ({
-                        original: row.original || row.text || '',
-                        text: row.text || row.original || '',
-                        partOfSpeech: row.partOfSpeech || 'n',
-                        meaning: row.meaning || '',
-                    })).filter(word => word.original && word.meaning)
+                        W: row.W || '', // W (단어)
+                        M: row.M || '', // M (뜻)
+                        D: row.D || '', // D (메모)
+                        P: row.P || '', // P (발음)
+                    })).filter(word => word.W && word.M) // W와 M을 기준으로 필터링
 
                     if (words.length === 0) {
-                        throw new Error("CSV에서 유효한 단어를 찾을 수 없습니다. (original, meaning 컬럼 확인)")
+                        throw new Error("CSV에서 유효한 단어를 찾을 수 없습니다. (W, M 컬럼 확인)")
                     }
 
-                    setWordsToImport(words)
+                    setWordsToImport(words as ParsedWord[])
                     setParsedFileInfo({ count: words.length, fileName: file.name })
 
                 } catch (error: any) {
@@ -155,8 +160,8 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
                 throw new Error("기존 단어장을 선택하세요.")
             }
 
-            // API 호출
-            const response = await fetchWithAuth(
+            // API 호출 (fetchWithAuth는 이미 JSON을 반환)
+            const result = await fetchWithAuth(
                 `/api/wordbooks/${targetWordbookId}/import`,
                 {
                     method: "POST",
@@ -164,9 +169,6 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
                     body: JSON.stringify(wordsToImport),
                 }
             )
-
-            const result = await response.json()
-            if (!response.ok) throw new Error(result.message || "Import failed")
 
             toast({
                 title: "불러오기 성공",
@@ -186,6 +188,7 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
     }
 
     const isImportDisabled = isImporting ||
+        !wordsToImport ||
         (destination === 'existing' && !selectedWordbookId) ||
         (destination === 'new' && !newWordbookName.trim())
 
@@ -237,7 +240,7 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
                             {isParsing ? "파일 분석 중..." : "CSV 파일 선택"}
                         </Button>
                         <p className="text-xs text-muted-foreground">
-                            * `original`, `meaning` 컬럼은 필수입니다.
+                            * `W`, `M` 컬럼은 필수입니다. <br /> (W: 단어, M: 뜻, D: 메모, P: 발음)
                         </p>
                     </CardContent>
                 </Card>
@@ -309,7 +312,7 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
                                     <Input
                                         placeholder="새 단어장 이름 입력..."
                                         value={newWordbookName}
-                                        onChange={(e) => setNewWordbookName(e.targe.value)}
+                                        onChange={(e) => setNewWordbookName(e.target.value)}
                                     />
                                 </div>
                             )}

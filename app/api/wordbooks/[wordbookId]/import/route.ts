@@ -1,16 +1,17 @@
 // app/api/wordbooks/[wordbookId]/import/route.ts
-// (이 코드로 파일을 덮어쓰세요)
+// [수정] W, M, D, P 헤더를 매핑하도록 변경
 
 import { NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { db, admin } from '@/lib/firebase-admin';
 
-// 불러올 단어의 예상 구조
+// [수정] 불러올 단어의 예상 구조 (any[]로 변경하여 W, M, D, P 키를 동적으로 받음)
 interface ImportedWord {
-    original: string;
-    text: string;
-    partOfSpeech: string;
-    meaning: string;
+    W?: string; // 단어
+    M?: string; // 뜻
+    D?: string; // 메모
+    P?: string; // 발음
+    [key: string]: any; // 다른 행은 무시
 }
 
 export async function POST(
@@ -19,6 +20,7 @@ export async function POST(
 ) {
     try {
         const { wordbookId } = params;
+        // [수정] 타입을 any[] 또는 ImportedWord[]로 받음
         const wordsToImport = (await request.json()) as ImportedWord[];
 
         if (!Array.isArray(wordsToImport) || wordsToImport.length === 0) {
@@ -48,21 +50,22 @@ export async function POST(
         let importedCount = 0;
 
         for (const word of wordsToImport) {
-            if (word.original && word.meaning) {
+            // [수정] W(단어)와 M(뜻)이 있는지 확인
+            if (word.W && word.M) {
                 const newWordRef = wordsCollectionRef.doc();
 
-                // [!!!] 최종 스키마 통일: 'original' 대신 'word' 필드에 저장하고, 'original' 필드는 제거
+                // [!!!] 최종 스키마 통일: W, M, D, P를 DB 필드에 매핑
                 batch.set(newWordRef, {
                     userId: userId,
                     wordbookId: wordbookId,
-                    word: word.original, // <--- word 필드에 저장
-                    meaning: word.meaning,
-                    // CSV에서 가져온 부가 정보
-                    text: word.text || word.original, // text 필드 유지
-                    partOfSpeech: word.partOfSpeech || 'n', // partOfSpeech 필드 유지
-                    // 표준 스키마를 위한 빈 필드
-                    example: '',
-                    pronunciation: '',
+                    word: word.W,           // W -> word (단어)
+                    meaning: word.M,       // M -> meaning (뜻)
+                    example: word.D || '', // D -> example (메모)
+                    pronunciation: word.P || '', // P -> pronunciation (발음)
+
+                    // 기존 스키마 호환 및 기본값
+                    text: word.W, // text 필드는 word.W (단어) 값으로 채움
+                    partOfSpeech: 'n', // partOfSpeech는 기본값 'n'으로 설정
                     mastered: false,
                     createdAt: timestamp,
                     lastStudied: null,
@@ -76,7 +79,8 @@ export async function POST(
         }
 
         if (importedCount === 0) {
-            return NextResponse.json({ message: 'Words array was empty or invalid (check original/meaning headers)' }, { status: 400 });
+            // [수정] 오류 메시지 변경
+            return NextResponse.json({ message: 'Words array was empty or invalid (check W and M headers)' }, { status: 400 });
         }
 
         // 4. 단어장 메타데이터 업데이트 (총 단어 수 증가)
