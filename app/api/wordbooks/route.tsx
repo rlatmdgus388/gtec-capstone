@@ -1,74 +1,107 @@
-// app/api/wordbooks/route.ts
+// [!!!] 이 한 줄을 파일 맨 위에 추가하세요
+export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server';
-import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
-import { headers } from 'next/headers';
+import { getAuth } from 'firebase-admin/auth';
+import { db, admin } from '@/lib/firebase-admin';
 
-// 사용자의 모든 단어장 목록을 가져옵니다. (GET 함수는 수정 없음)
-export async function GET() {
+// (기존 GET 함수)
+export async function GET(request: Request) {
   try {
-    const headersList = await headers();
-    const token = headersList.get('Authorization')?.split('Bearer ')[1];
-    if (!token) {
-      return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
+    const idToken = request.headers.get('Authorization')?.split('Bearer ')[1];
+    if (!idToken) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await getAuth().verifyIdToken(idToken);
     const userId = decodedToken.uid;
 
-    const wordbooksSnapshot = await firestore.collection('wordbooks').where('userId', '==', userId).orderBy('createdAt', 'desc').get();
-    const wordbooks = wordbooksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    //
+    // [!!! 여기가 수정된 부분입니다 !!!]
+    // 'lastStudied' (최신 활동순)으로 정렬하는 쿼리를 추가합니다.
+    const snapshot = await db.collection('wordbooks')
+      .where('userId', '==', userId)
+      .orderBy('lastStudied', 'desc') // <-- 이 줄이 추가되었습니다!
+      .get();
+    // [!!! 수정 완료 !!!]
+    //
+
+    if (snapshot.empty) {
+      return NextResponse.json([]);
+    }
+
+    const wordbooks = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
     return NextResponse.json(wordbooks);
-  } catch (error) {
-    console.error("단어장 목록 조회 오류:", error);
-    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+
+  } catch (error: any) {
+    console.error('Failed to fetch wordbooks:', error);
+
+    // [추가] Firestore 색인 오류 감지
+    if (error.code === 'FAILED_PRECONDITION' && error.message.includes('index')) {
+      console.error("===================================================================");
+      console.error(">>> Firestore 복합 색인이 필요합니다!");
+      console.error(">>> 오류 메시지에 포함된 URL을 클릭하여 색인을 생성하세요.");
+      console.error(">>> (대상: 'wordbooks' 컬렉션, 필드: userId (오름차순), lastStudied (내림차순))");
+      console.error("===================================================================");
+      return NextResponse.json(
+        { message: '데이터베이스 색인 작업이 필요합니다. 잠시 후 다시 시도해주세요.', detail: error.message },
+        { status: 500 }
+      );
+    }
+
+    if (error.code === 'auth/id-token-expired') {
+      return NextResponse.json({ message: 'Token expired' }, { status: 401 });
+    }
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
 
-// 새로운 단어장을 생성합니다. (POST 함수 수정됨)
+// (기존 POST 함수 - 단어장 생성)
 export async function POST(request: Request) {
   try {
-    const headersList = headers();
-    const token = headersList.get('Authorization')?.split('Bearer ')[1];
-    if (!token) {
-      return NextResponse.json({ message: '인증되지 않은 사용자입니다.' }, { status: 401 });
+    const idToken = request.headers.get('Authorization')?.split('Bearer ')[1];
+    if (!idToken) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await getAuth().verifyIdToken(idToken);
     const userId = decodedToken.uid;
+    const userEmail = decodedToken.email || 'Unknown User'; // 이메일이 없을 경우 대비
 
     const { name, description, category } = await request.json();
 
-    // [!!!] 수정 1: 'name'만 필수 항목으로 변경
     if (!name) {
-      return NextResponse.json({ message: '단어장 이름은 필수입니다.' }, { status: 400 });
+      return NextResponse.json({ message: 'Name is required' }, { status: 400 });
     }
 
-    const currentTime = new Date().toISOString();
+    const timestamp = admin.firestore.FieldValue.serverTimestamp();
 
-    // [!!!] 수정 2: DB에 저장할 데이터 (기본값 설정)
-    const newWordbookData = {
-      userId,
-      name,
+    const newWordbookRef = await db.collection('wordbooks').add({
+      userId: userId,
+      userName: userEmail, // 또는 사용자의 다른 식별자
+      name: name,
       description: description || '',
-      category: category || "imported", // category가 없으면 "imported"로 기본값
-      progress: 0,
+      category: category || '일반',
       wordCount: 0,
-      createdAt: currentTime,
-      lastStudied: currentTime,
-    };
+      masteredCount: 0,
+      progress: 0,
+      createdAt: timestamp,
+      lastStudied: timestamp, // [중요] 생성 시에도 lastStudied를 설정해야 정렬됨
+      isShared: false,
+      likes: 0,
+      downloads: 0,
+      views: 0,
+    });
 
-    const newWordbookRef = await firestore.collection('wordbooks').add(newWordbookData);
+    return NextResponse.json({ id: newWordbookRef.id, message: 'Wordbook created' }, { status: 201 });
 
-    // [!!!] 수정 3: 프론트엔드(import-screen)가 ID를 포함한 전체 객체를 기대함
-    const newWordbook = {
-      id: newWordbookRef.id, // 생성된 ID 포함
-      ...newWordbookData
-    };
-
-    return NextResponse.json(newWordbook, { status: 201 }); // 201 Created
-
-  } catch (error) {
-    console.error("단어장 생성 오류:", error);
-    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Failed to create wordbook:', error);
+    if (error.code === 'auth/id-token-expired') {
+      return NextResponse.json({ message: 'Token expired' }, { status: 401 });
+    }
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }

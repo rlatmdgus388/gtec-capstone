@@ -3,10 +3,11 @@
 // [Fix] Next.js 15 'params' 경고 수정
 // [Fix] validWordsToAdd 타입 추론 오류 수정 (any[] 명시)
 // [수정] CSV 순서 보장을 위한 importOrder 필드 추가
+// [수정] CSV 가져오기 시 lastStudied 필드 갱신
 
 import { NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
-import { db, admin } from '@/lib/firebase-admin';
+import { db, admin } from '@/lib/firebase-admin'; // admin을 가져오는지 확인
 
 interface ImportedWord {
     W?: string;
@@ -49,10 +50,8 @@ export async function POST(
         let importedCount = 0;
 
         // 3. 유효한 단어 목록 준비
-        // [!!!] 여기가 수정된 부분입니다. (any[] 타입 추가)
         const validWordsToAdd: any[] = [];
 
-        // [수정] CSV 순서 보장을 위해 for...of 대신 for 루프 사용
         for (let i = 0; i < wordsToImport.length; i++) {
             const word = wordsToImport[i];
 
@@ -69,13 +68,13 @@ export async function POST(
                     text: word.W,
                     partOfSpeech: 'n',
                     mastered: false,
-                    createdAt: timestamp,
+                    createdAt: timestamp, // 단어의 생성 시간
                     lastStudied: null,
                     studyCount: 0,
                     correctCount: 0,
                     incorrectCount: 0,
                     memorized: false,
-                    importOrder: i, // [수정] 순서 필드(importOrder) 추가
+                    importOrder: i,
                 });
             }
         }
@@ -113,11 +112,18 @@ export async function POST(
                 ? Math.floor((currentMasteredCount / newTotalWordCount) * 100)
                 : 0;
 
+            //
+            // [!!! 여기가 수정된 부분입니다 !!!]
+            //
             transaction.update(wordbookRef, {
                 wordCount: newTotalWordCount,
                 progress: newProgress,
                 masteredCount: currentMasteredCount,
+                // [추가] 단어장을 최신 활동으로 갱신
+                lastStudied: admin.firestore.FieldValue.serverTimestamp()
             });
+            // [!!! 수정 완료 !!!]
+            //
         });
 
         // 7. 트랜잭션 성공
