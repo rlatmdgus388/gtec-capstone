@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, TrendingUp } from "lucide-react"
+import { BookOpen, TrendingUp, Home } from "lucide-react"
 import { PhotoWordCapture } from "@/components/camera/photo-word-capture"
 import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "../ui/skeleton"
@@ -104,9 +104,8 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
     onWordbookSelect(wordbook);
   };
 
-  // [!!!] 6. '학습 현황' 카드 클릭 핸들러 수정
   const handleStatsCardClick = () => {
-    setShowStatsScreen(true); // 내부 상태를 변경
+    setShowStatsScreen(true);
   };
 
   // --- 렌더링 ---
@@ -124,13 +123,24 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
 
   // (기본) 홈 메인 화면
   return (
-    <div className="flex-1 overflow-y-auto bg-background pb-20">
-      <div className="p-4 space-y-6">
-        {/* 환영 메시지 */}
-        <div className="px-2">
-          <h1 className="text-2xl font-bold text-foreground">안녕하세요! 👋</h1>
-          <p className="text-muted-foreground">오늘도 즐겁게 단어를 학습해 보세요.</p>
+    // 1. 'vocabulary-list-screen.tsx'와 동일하게 h-full flex flex-col 적용
+    <div className="h-full flex flex-col bg-background">
+      {/* 2. 'fixed' 대신 'shrink-0' 헤더 영역으로 변경 */}
+      <div className="bg-card shrink-0">
+        <div className="px-4 py-4"> {/* h-14, border-b 등 제거, py-4 추가 */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Home size={24} className="text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">홈</h1>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* 3. 스크롤되는 컨텐츠 영역: 'pt-14' 제거, 'px-4 py-6' 적용 */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 pb-20">
 
         {/* Today's Learning Status Card */}
         <div onClick={handleStatsCardClick} className="cursor-pointer">
@@ -172,7 +182,6 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
         <div>
           <div className="flex justify-between items-center mb-3 px-2">
             <h2 className="text-lg font-semibold text-foreground">최근 단어장</h2>
-            {/* <Button variant="link" size="sm" onClick={() => router.push('/vocabulary')} className="text-primary">모두 보기</Button> */}
           </div>
           {isLoading ? (
             <div className="space-y-3">
@@ -183,7 +192,6 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
             <Card className="border border-border rounded-xl">
               <CardContent className="p-6 text-center text-muted-foreground">
                 <p className="mb-4">아직 단어장이 없어요.</p>
-                {/* <Button size="sm" onClick={() => router.push('/vocabulary')}>단어장 만들러 가기</Button> */}
               </CardContent>
             </Card>
           ) : (

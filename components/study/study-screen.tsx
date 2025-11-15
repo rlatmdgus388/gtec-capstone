@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react" // ✅ [추가] useMemo
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -461,11 +461,12 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
   // 6. 메인 학습 화면 (기본)
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* ... (헤더 부분은 그대로) ... */}
+      {/* --- 헤더 수정 --- */}
       <div className="bg-card shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-7 bg-primary/10 rounded-xl flex items-center justify-center">
+            {/* 아이콘 박스 h-7 -> h-10으로 수정 */}
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
               <GraduationCap size={24} className="text-primary" />
             </div>
             <div>
@@ -475,8 +476,11 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
         </div>
       </div>
 
+      {/* --- 컨텐츠 영역 수정 --- */}
       <div className="flex-1 overflow-y-auto pb-20">
-        <div className="px-4 pt-4 space-y-6">
+        {/* 컨텐츠 패딩 pt-4 -> py-6로 수정 */}
+        <div className="px-4 py-6 space-y-6">
+
           {/* ... (학습 모드 부분은 그대로) ... */}
           <div>
             <div className="grid grid-cols-2 gap-3">

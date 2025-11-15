@@ -173,14 +173,15 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
   }
 
   return (
-    // ✅ [수정] 상단바 고정을 위해 'h-full flex flex-col' 적용
+    // 레이아웃: h-full flex flex-col 적용
     <div className="h-full flex flex-col bg-background">
 
-      {/* ✅ [수정] 고정될 헤더 영역. 'shrink-0' 추가 */}
+      {/* 헤더: shrink-0 적용 */}
       <div className="bg-card shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-7 bg-primary/10 rounded-xl flex items-center justify-center">
+            {/* 아이콘 박스: h-7 -> h-10 수정 */}
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
               <Users size={24} className="text-primary" />
             </div>
             <div>
@@ -190,9 +191,10 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
         </div>
       </div>
 
-      {/* ✅ [수정] 스크롤 영역을 새 div로 감싸고 'flex-1 overflow-y-auto pb-20' 적용 */}
+      {/* 컨텐츠 스크롤 영역 */}
       <div className="flex-1 overflow-y-auto pb-20">
-        <div className="px-4 py-4 space-y-4">
+        {/* 내부 패딩: py-4 -> py-6, space-y-4 -> space-y-6 수정 */}
+        <div className="px-4 py-6 space-y-6">
           {/* Shared Wordbooks */}
           <div>
             <div className="flex items-center justify-between mb-2">
