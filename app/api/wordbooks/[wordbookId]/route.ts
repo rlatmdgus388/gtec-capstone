@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
-import admin from 'firebase-admin'; // admin 객체 (serverTimestamp를 위해)
+import admin from 'firebase-admin';
 
 // 특정 단어장 정보와 포함된 단어 목록을 가져옵니다.
 export async function GET(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
@@ -26,18 +26,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ word
       return NextResponse.json({ message: '단어장을 찾을 수 없거나 권한이 없습니다.' }, { status: 404 });
     }
 
-    //
-    // [!!! 여기가 수정된 부분입니다 !!!]
-    // lastStudied 필드를 'ISO 문자열' 대신 'Firestore Timestamp'로 업데이트합니다.
+    // [수정] lastStudied를 Firestore Timestamp로 갱신 (형식 통일)
     await wordbookRef.update({
       lastStudied: admin.firestore.FieldValue.serverTimestamp()
     });
-    // [!!! 수정 완료 !!!]
-    //
 
-    // 단어 목록을 2단계 정렬로 가져옵니다. (모든 단어 포함)
+    // createdAt 기준으로만 정렬하여 *모든* 단어를 불러옵니다.
     const wordsSnapshot = await wordbookRef.collection('words')
-      .orderBy("createdAt", "desc") // 1순위: 생성시간 내림차순 (최신순)
+      .orderBy("createdAt", "desc")
       .get();
 
     const words = wordsSnapshot.docs.map(doc => {
@@ -61,21 +57,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ word
   }
 }
 
-// [!!! 여기를 수정합니다 !!!]
 // 특정 단어장 정보를 수정합니다.
 export async function PUT(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
   try {
     const { wordbookId } = await params;
-    // 1. 요청 본문(body)을 통째로 받습니다.
     const body = await request.json();
 
-    // 2. 업데이트할 데이터 객체를 동적으로 구성합니다.
     const updateData: { [key: string]: any } = {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      lastStudied: admin.firestore.FieldValue.serverTimestamp() // [추가] 정보 수정도 최신 활동으로 간주
+      // [수정] 정보 수정도 최신 활동으로 간주 (형식 통일)
+      lastStudied: admin.firestore.FieldValue.serverTimestamp()
     };
 
-    // 3. body에 'name' 필드가 있으면 updateData에 추가합니다.
     if (body.name !== undefined) {
       if (body.name === "") {
         return NextResponse.json({ message: '단어장 이름은 비워둘 수 없습니다.' }, { status: 400 });
@@ -83,17 +76,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ word
       updateData.name = body.name;
     }
 
-    // 4. body에 'category' 필드가 있으면 updateData에 추가합니다.
     if (body.category !== undefined) {
       updateData.category = body.category;
     }
 
-    // 5. body에 'description' 필드가 있으면 updateData에 추가합니다. (미래의 확장성을 위해)
     if (body.description !== undefined) {
       updateData.description = body.description;
     }
 
-    // 6. 동적으로 구성된 updateData 객체로 Firestore 문서를 업데이트합니다.
     await firestore.collection('wordbooks').doc(wordbookId).update(updateData);
 
     return NextResponse.json({ message: '단어장이 성공적으로 수정되었습니다.' });
@@ -102,23 +92,40 @@ export async function PUT(request: Request, { params }: { params: Promise<{ word
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
 }
-// [!!! 수정 끝 !!!]
 
 
-// 특정 단어장을 삭제합니다.
+//
+// [!!! 여기가 핵심 수정 사항입니다 !!!]
+//
+// 특정 단어장을 삭제합니다. (관련 학습 기록 포함)
 export async function DELETE(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
-  // ... (기존 DELETE 함수와 동일)
   try {
     const { wordbookId } = await params;
 
-    const wordsRef = firestore.collection('wordbooks').doc(wordbookId).collection('words');
+    const wordbookRef = firestore.collection('wordbooks').doc(wordbookId);
+
+    // 2. [수정] 'studySessions' 컬렉션에서 'wordbookId'가 일치하는 문서를 찾음
+    const studySessionsRef = firestore.collection('studySessions');
+    const studySessionsSnapshot = await studySessionsRef.where('wordbookId', '==', wordbookId).get();
+
+    // 3. 단어장 내부의 'words' 서브컬렉션 쿼리
+    const wordsRef = wordbookRef.collection('words');
     const wordsSnapshot = await wordsRef.get();
 
+    // 4. 하나의 배치(batch)로 모든 삭제 작업을 준비
     const batch = firestore.batch();
-    wordsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
 
-    await firestore.collection('wordbooks').doc(wordbookId).delete();
+    // 4a. 모든 'words' 문서를 배치에 추가
+    wordsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+
+    // 4b. [추가] 모든 관련 'studySessions' 문서를 배치에 추가
+    studySessionsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+
+    // 4c. 'wordbook' (부모 문서) 자체를 배치에 추가
+    batch.delete(wordbookRef);
+
+    // 5. 모든 삭제 작업을 한 번에 커밋
+    await batch.commit();
 
     return new Response(null, { status: 204 });
   } catch (error) {

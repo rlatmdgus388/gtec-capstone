@@ -1,4 +1,8 @@
+// [!!! 1. 수정 !!!] 캐시 비활성화를 위해 이 줄은 *유지*합니다.
+export const dynamic = 'force-dynamic'
+
 import { NextResponse } from 'next/server';
+// [!!! 2. 수정 !!!] admin은 더 이상 필요 없으므로 제거 (또는 두셔도 됩니다)
 import { firestore, auth as adminAuth } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 
@@ -66,6 +70,7 @@ export async function POST(request: Request) {
       mode,
       score,
       duration,
+      // [!!! 3. 수정 !!!] 다시 "문자열" 형식으로 되돌립니다.
       completedAt: new Date().toISOString(),
       correctWords,
       incorrectWords,

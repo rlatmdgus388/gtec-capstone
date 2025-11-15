@@ -34,7 +34,7 @@ interface StudySession {
   mode: string
   score: number
   duration: number // 초 단위
-  completedAt: string
+  completedAt: string // [!!! 1. 수정 !!!] any -> string (원래대로)
   correctWords?: string[] // ✅ [추가]
   incorrectWords?: string[] // ✅ [추가]
 }
@@ -56,6 +56,9 @@ interface StudyStats {
   today: PeriodStats
   "7days": PeriodStats
 }
+
+// [!!! 2. 제거 !!!]
+// getTimestampInMillis 헬퍼 함수 제거
 
 interface StudyScreenProps {
   selectedWordbookId?: string | null
@@ -105,7 +108,8 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
     fetchAllSessions()
   }, [fetchAllSessions])
 
-  // ✅ [추가] KST 기준으로 통계를 계산하는 useMemo를 StudyHistoryScreen에서 가져옴
+  // [!!! 3. 수정 !!!]
+  // ✅ [수정] KST 기준으로 통계를 계산하는 useMemo (헬퍼 함수 제거)
   const stats: StudyStats = useMemo(() => {
     // KST (UTC+9) 오프셋
     const KST_OFFSET = 9 * 60 * 60 * 1000
@@ -126,8 +130,9 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
     const incorrectWordIdMap = new Map<string, { wordbookId: string; wordId: string }>()
 
     for (const session of allSessions) {
-      // DB에서 온 completedAt은 UTC ISO 문자열이므로 new Date()로 파싱하면 UTC 시간 객체가 됨
+      // [!!! 수정 !!!] new Date()로 "문자열"을 직접 파싱 (원래대로)
       const completedAt = new Date(session.completedAt)
+
       const correct = session.correctWords?.length || 0
       const incorrect = session.incorrectWords?.length || 0
 
@@ -352,7 +357,7 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
     window.scrollTo(0, 0)
   }
 
-  // ... (handleBackFromStudy, formatRelativeTime, handleStartReview, wordsForSession는 그대로) ...
+  // ... (handleBackFromStudy, wordsForSession는 그대로) ...
   const handleBackFromStudy = () => {
     setSelectedModeInfo(null)
     setReviewWords(null)
@@ -360,8 +365,10 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
     setStudyContext(null)
   }
 
+  // [!!! 4. 수정 !!!]
+  // [수정] 헬퍼 함수 제거, new Date()로 "문자열" 직접 파싱
   const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString); // "문자열"을 직접 파싱
     const now = new Date()
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
     if (diffInSeconds < 60) return "방금 전"
@@ -546,6 +553,7 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
                                 <Clock size={12} />
                                 {session.duration < 60 ? `${session.duration}초` : `${Math.floor(session.duration / 60)}분`}
                               </span>
+                              {/* [!!! 5. 수정 !!!] 헬퍼 함수 제거, "문자열" 직접 사용 */}
                               <span>{formatRelativeTime(session.completedAt)}</span>
                             </div>
                           </div>

@@ -1,5 +1,3 @@
-// 10_16_7/components/study/writing-mode.tsx
-
 "use client"
 
 import type React from "react"
@@ -56,17 +54,17 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
 
   if (!currentWord) {
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-            <Card><CardContent className="p-6 text-center">
-                <h2 className="text-xl font-bold text-foreground mb-4">단어를 불러오는 중 오류가 발생했습니다.</h2>
-                <Button onClick={onBack}>돌아가기</Button>
-            </CardContent></Card>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card><CardContent className="p-6 text-center">
+          <h2 className="text-xl font-bold text-foreground mb-4">단어를 불러오는 중 오류가 발생했습니다.</h2>
+          <Button onClick={onBack}>돌아가기</Button>
+        </CardContent></Card>
+      </div>
     )
   }
-  
+
   const progress = ((currentIndex + 1) / words.length) * 100
-  
+
   const question = type === 'meaning' ? currentWord.word : currentWord.meaning;
   const answer = type === 'meaning' ? currentWord.meaning : currentWord.word;
   const placeholder = type === 'meaning' ? "단어의 뜻을 입력하세요" : "영어 단어를 입력하세요";
@@ -97,11 +95,11 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
     } else {
       const timeSpent = Math.round((Date.now() - startTime) / 1000)
       onComplete({
-          correct: score,
-          total: words.length,
-          timeSpent,
-          correctWords: correctWordIds,
-          incorrectWords: incorrectWordIds,
+        correct: score,
+        total: words.length,
+        timeSpent,
+        correctWords: correctWordIds,
+        incorrectWords: incorrectWordIds,
       })
     }
   }
@@ -157,7 +155,8 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
 
       {showResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md bg-white rounded-2xl">
+          {/* [!!! 여기가 수정되었습니다 !!!] bg-white -> bg-card */}
+          <Card className="w-full max-w-md bg-card rounded-2xl">
             <CardContent className="p-6 text-center">
               <div className="flex flex-col items-center gap-4">
                 {isCorrectOnResult ? (
@@ -168,10 +167,22 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
                 <div className="space-y-2">
                   <h3 className={`text-xl font-bold ${isCorrectOnResult ? "text-green-600" : "text-red-600"}`}>{isCorrectOnResult ? "정답입니다!" : "틀렸습니다"}</h3>
                   <div className="space-y-3 text-left">
-                    <div><p className="text-sm text-muted-foreground mb-1">문제</p><p className="font-medium">{question}</p></div>
-                    <div><p className="text-sm text-muted-foreground mb-1">정답</p><p className="font-medium text-green-600">{answer}</p></div>
+                    <div>
+                      {/* [!!! 텍스트 색상 수정 !!!] */}
+                      <p className="text-sm text-muted-foreground mb-1">문제</p>
+                      <p className="font-medium text-foreground">{question}</p>
+                    </div>
+                    <div>
+                      {/* [!!! 텍스트 색상 수정 !!!] */}
+                      <p className="text-sm text-muted-foreground mb-1">정답</p>
+                      <p className="font-medium text-green-600">{answer}</p>
+                    </div>
                     {!isCorrectOnResult && (
-                      <div><p className="text-sm text-muted-foreground mb-1">입력한 답</p><p className="font-medium text-red-600">{userAnswer}</p></div>
+                      <div>
+                        {/* [!!! 텍스트 색상 수정 !!!] */}
+                        <p className="text-sm text-muted-foreground mb-1">입력한 답</p>
+                        <p className="font-medium text-red-600">{userAnswer}</p>
+                      </div>
                     )}
                   </div>
                 </div>

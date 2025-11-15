@@ -32,9 +32,9 @@ interface Word {
 }
 
 interface Wordbook {
-    id: string;
-    name: string;
-    wordCount: number;
+  id: string;
+  name: string;
+  wordCount: number;
 }
 
 interface StudyOptionsScreenProps {
@@ -53,13 +53,17 @@ interface StudyOptionsScreenProps {
 type MasteryFilter = "all" | "unmastered" | "mastered";
 
 export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: StudyOptionsScreenProps) {
-  
+
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
   const [selectedWordbook, setSelectedWordbook] = useState<Wordbook | null>(null);
-  
+
   const [allWords, setAllWords] = useState<Word[]>([]); // 선택한 단어장의 모든 단어
   const [masteryFilter, setMasteryFilter] = useState<MasteryFilter>("unmastered"); // 기본값 '암기 미완료'
-  const [wordCount, setWordCount] = useState(10); // 학습할 단어 개수
+
+  // [!!! 1. 여기가 수정되었습니다 !!!]
+  // 'number'에서 'number | string'으로 변경하여 빈 문자열("") 상태 허용
+  const [wordCount, setWordCount] = useState<number | string>(10); // 학습할 단어 개수
+
   const [writingModeType, setWritingModeType] = useState<'word' | 'meaning'>('word');
 
   const [isLoading, setIsLoading] = useState({ wordbooks: true, words: false });
@@ -95,7 +99,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
       try {
         // API에서 'mastered'를 포함한 단어 목록을 가져옴
         const data = await fetchWithAuth(`/api/wordbooks/${selectedWordbook.id}`);
-        setAllWords(data.words || []); 
+        setAllWords(data.words || []);
       } catch (error) {
         console.error("단어 목록 로딩 실패:", error);
         setAllWords([]);
@@ -134,55 +138,65 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
     setSelectedWordbook(wordbook);
   };
 
+  // [!!! 2. 여기가 수정되었습니다 !!!]
+  // Slider 또는 Input에서 호출되는 핸들러
   const handleCountChange = (value: number) => {
     const max = filteredWords.length;
     if (max === 0) {
       setWordCount(0);
       return;
     }
-    if (value < 1) setWordCount(1);
+
+    // (문제의 코드 수정) value < 1 (즉, 0)을 허용합니다. (음수만 방지)
+    if (value < 0) setWordCount(0);
     else if (value > max) setWordCount(max);
     else setWordCount(value);
   };
 
   // 학습 시작 버튼 클릭
   const handleStartClick = () => {
-    if (!selectedWordbook || filteredWords.length === 0 || wordCount === 0) {
-        alert("학습할 단어를 선택해주세요.");
-        return;
+    // [!!! 3. 여기가 수정되었습니다 !!!]
+    // Number()로 변환하여 확인
+    const numericWordCount = Number(wordCount);
+    if (!selectedWordbook || filteredWords.length === 0 || numericWordCount <= 0) {
+      alert("학습할 단어를 선택해주세요.");
+      return;
     }
 
     // 1. 필터된 단어 복사
     let wordsToStudy = [...filteredWords];
-    
+
     // 2. 랜덤 셔플
     for (let i = wordsToStudy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [wordsToStudy[i], wordsToStudy[j]] = [wordsToStudy[j], wordsToStudy[i]];
+      const j = Math.floor(Math.random() * (i + 1));
+      [wordsToStudy[i], wordsToStudy[j]] = [wordsToStudy[j], wordsToStudy[i]];
     }
 
-    // 3. 개수만큼 자르기
-    wordsToStudy = wordsToStudy.slice(0, wordCount);
+    // 3. 개수만큼 자르기 (Number()로 변환)
+    wordsToStudy = wordsToStudy.slice(0, numericWordCount);
 
     // 4. study-screen으로 옵션 전달
     onStartStudy({
-        words: wordsToStudy,
-        modeId: modeId,
-        wordbookId: selectedWordbook.id,
-        wordbookName: selectedWordbook.name,
-        writingType: modeId === 'writing' ? writingModeType : undefined
+      words: wordsToStudy,
+      modeId: modeId,
+      wordbookId: selectedWordbook.id,
+      wordbookName: selectedWordbook.name,
+      writingType: modeId === 'writing' ? writingModeType : undefined
     });
   };
 
   const selectedWordbookName = selectedWordbook?.name || "단어장을 선택하세요";
   const maxWords = filteredWords.length;
-  const canStart = selectedWordbook && !isLoading.words && maxWords > 0 && wordCount > 0;
+
+  // [!!! 4. 여기가 수정되었습니다 !!!]
+  // Number()로 변환하여 확인
+  const numericWordCount = Number(wordCount);
+  const canStart = selectedWordbook && !isLoading.words && maxWords > 0 && numericWordCount > 0;
 
   return (
-    // ▼▼▼ [수정됨] overflow-y-auto, pb-20 제거 ▼▼▼
-    <div className="flex-1 bg-background">
+    <div className="h-full flex flex-col bg-background">
       {/* 1. Header */}
-      <div className="bg-card border-b border-border">
+      <div className="bg-card border-b border-border shrink-0">
         <div className="px-4 py-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
             <ArrowLeft size={20} className="text-foreground" />
@@ -191,11 +205,10 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
         </div>
       </div>
 
-      {/* 2. Options Content */}
-      {/* ▼▼▼ [수정됨] 하단 패딩 pb-36 추가 (fixed 버튼 공간) ▼▼▼ */}
-      <div className="p-4 space-y-6 pb-36">
-        
-        {/* 2.1. 단어장 선택 */}
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-[10rem]">
+
+        {/* 2.1. 단어장 선택 (이하 동일) */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="text-lg text-foreground">1. 단어장 선택</CardTitle>
@@ -204,8 +217,8 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
             {isLoading.wordbooks ? <Skeleton className="h-12 w-full rounded-lg" /> : (
               <Drawer>
                 <DrawerTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="h-12 w-full justify-start text-left font-normal bg-card border-border rounded-lg text-foreground hover:bg-accent"
                   >
                     <BookOpen size={18} className="text-primary mr-3" />
@@ -225,8 +238,8 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
                             onClick={() => handleWordbookSelect(wordbook)}
                           >
                             <div className="flex items-center justify-between w-full">
-                                <span>{wordbook.name}</span>
-                                <span className="text-xs text-muted-foreground ml-2">{wordbook.wordCount}개</span>
+                              <span>{wordbook.name}</span>
+                              <span className="text-xs text-muted-foreground ml-2">{wordbook.wordCount}개</span>
                             </div>
                           </Button>
                         </DrawerClose>
@@ -242,117 +255,132 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
               </Drawer>
             )}
             {isLoading.words && (
-                <div className="flex items-center justify-center pt-4">
-                    <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
-                    <span className="ml-2 text-muted-foreground text-sm">단어 불러오는 중...</span>
-                </div>
+              <div className="flex items-center justify-center pt-4">
+                <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground text-sm">단어 불러오는 중...</span>
+              </div>
             )}
             {error && (
-                <p className="text-destructive text-sm pt-2">{error}</p>
+              <p className="text-destructive text-sm pt-2">{error}</p>
             )}
           </CardContent>
         </Card>
 
-        {/* 2.2. 학습 범위 (암기 여부) */}
+        {/* 2.2. 학습 범위 (암기 여부) (이하 동일) */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
-            <CardHeader>
-                <CardTitle className="text-lg text-foreground">2. 학습 범위</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <RadioGroup 
-                    value={masteryFilter} 
-                    onValueChange={(value: string) => setMasteryFilter(value as MasteryFilter)}
-                    disabled={!selectedWordbook || isLoading.words}
-                    className="text-foreground"
-                >
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="all" id="filter-all" />
-                        <Label htmlFor="filter-all" className="flex-1">전체</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="unmastered" id="filter-unmastered" />
-                        <Label htmlFor="unmastered" className="flex-1">암기 미완료</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="mastered" id="filter-mastered" />
-                        <Label htmlFor="mastered" className="flex-1">암기 완료</Label>
-                    </div>
-                </RadioGroup>
-            </CardContent>
+          <CardHeader>
+            <CardTitle className="text-lg text-foreground">2. 학습 범위</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup
+              value={masteryFilter}
+              onValueChange={(value: string) => setMasteryFilter(value as MasteryFilter)}
+              disabled={!selectedWordbook || isLoading.words}
+              className="text-foreground"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="all" id="filter-all" />
+                <Label htmlFor="filter-all" className="flex-1">전체</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="unmastered" id="filter-unmastered" />
+                <Label htmlFor="unmastered" className="flex-1">암기 미완료</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mastered" id="filter-mastered" />
+                <Label htmlFor="mastered" className="flex-1">암기 완료</Label>
+              </div>
+            </RadioGroup>
+          </CardContent>
         </Card>
 
         {/* 2.3. 학습할 단어 개수 */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
-            <CardHeader>
-                <CardTitle className="text-lg text-foreground">3. 학습할 단어 개수</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <Input 
-                            type="number" 
-                            value={wordCount}
-                            onChange={(e) => handleCountChange(parseInt(e.target.value) || 0)}
-                            className="w-20 text-center text-lg font-bold border-border bg-background text-foreground"
-                            disabled={!selectedWordbook || isLoading.words || maxWords === 0}
-                        />
-                        <span className="text-muted-foreground text-sm">/ {maxWords}개</span>
-                    </div>
-                    <Slider
-                        value={[wordCount]}
-                        onValueChange={(value) => handleCountChange(value[0])}
-                        max={maxWords}
-                        min={maxWords > 0 ? 1 : 0}
-                        step={1}
-                        disabled={!selectedWordbook || isLoading.words || maxWords === 0}
-                    />
-                </div>
-            </CardContent>
+          <CardHeader>
+            <CardTitle className="text-lg text-foreground">3. 학습할 단어 개수</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                {/* [!!! 5. 여기가 수정되었습니다 !!!] */}
+                <Input
+                  type="number"
+                  value={wordCount}
+                  onChange={(e) => {
+                    // 사용자가 입력 필드를 비울 수 있도록 허용
+                    if (e.target.value === "") {
+                      setWordCount("");
+                    } else {
+                      handleCountChange(parseInt(e.target.value) || 0);
+                    }
+                  }}
+                  onBlur={() => {
+                    // 포커스가 떠날 때, 값이 0이거나 비어있으면 1로 보정
+                    const num = Number(wordCount) || 0;
+                    if (num < 1 && maxWords > 0) {
+                      setWordCount(1);
+                    } else if (maxWords === 0) {
+                      setWordCount(0);
+                    }
+                  }}
+                  className="w-20 text-center text-lg font-bold border-border bg-background text-foreground"
+                  disabled={!selectedWordbook || isLoading.words || maxWords === 0}
+                />
+                <span className="text-muted-foreground text-sm">/ {maxWords}개</span>
+              </div>
+              <Slider
+                value={[Number(wordCount) || 0]} // [수정] Number()로 변환
+                onValueChange={(value) => handleCountChange(value[0])}
+                max={maxWords}
+                min={maxWords > 0 ? 1 : 0}
+                step={1}
+                disabled={!selectedWordbook || isLoading.words || maxWords === 0}
+              />
+            </div>
+          </CardContent>
         </Card>
 
-        {/* 2.4. (조건부) 받아쓰기 타입 */}
+        {/* 2.4. (조건부) 받아쓰기 타입 (이하 동일) */}
         {modeId === 'writing' && (
-             <Card className="bg-card border-border shadow-sm rounded-xl">
-                <CardHeader>
-                    <CardTitle className="text-lg text-foreground">4. 받아쓰기 타입</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <RadioGroup 
-                        value={writingModeType} 
-                        onValueChange={(value: string) => setWritingModeType(value as 'word' | 'meaning')}
-                        className="text-foreground"
-                    >
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="word" id="write-word" />
-                            <Label htmlFor="write-word" className="flex-1">뜻 보고 단어 쓰기</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="meaning" id="write-meaning" />
-                            <Label htmlFor="write-meaning" className="flex-1">단어 보고 뜻 쓰기</Label>
-                        </div>
-                    </RadioGroup>
-                </CardContent>
-            </Card>
+          <Card className="bg-card border-border shadow-sm rounded-xl">
+            <CardHeader>
+              <CardTitle className="text-lg text-foreground">4. 받아쓰기 타입</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={writingModeType}
+                onValueChange={(value: string) => setWritingModeType(value as 'word' | 'meaning')}
+                className="text-foreground"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="word" id="write-word" />
+                  <Label htmlFor="write-word" className="flex-1">뜻 보고 단어 쓰기</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="meaning" id="write-meaning" />
+                  <Label htmlFor="write-meaning" className="flex-1">단어 보고 뜻 쓰기</Label>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
         )}
 
       </div>
 
-      {/* 3. Footer (하단 고정 버튼) */}
-      {/* ▼▼▼ [수정됨] bottom-0 -> bottom-16, 레이아웃 정렬 수정, bg-white/dark:bg-zinc-900 -> bg-background ▼▼▼ */}
-      <div className="fixed bottom-18 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
+      {/* 3. Footer (하단 고정 버튼) (이하 동일) */}
+      <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4">
         <Button
           size="lg"
-          className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+          className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
           disabled={!canStart}
           onClick={handleStartClick}
         >
-          {canStart ? `학습 시작 (${wordCount}개)` : 
-           !selectedWordbook ? "단어장을 선택하세요" : 
-           isLoading.words ? "단어 로딩 중..." :
-           "학습할 단어가 없습니다"}
+          {canStart ? `학습 시작 (${numericWordCount}개)` : // [수정] numericWordCount 사용
+            !selectedWordbook ? "단어장을 선택하세요" :
+              isLoading.words ? "단어 로딩 중..." :
+                "학습할 단어가 없습니다"}
         </Button>
       </div>
     </div>
   )
 }
-
