@@ -2,6 +2,7 @@
 // [Final Fix] 'memorized' 대신 'mastered' 필드를 기준으로 진행도 계산
 // [Fix] Next.js 15 'params' 경고 수정
 // [Fix] validWordsToAdd 타입 추론 오류 수정 (any[] 명시)
+// [수정] CSV 순서 보장을 위한 importOrder 필드 추가
 
 import { NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
@@ -50,7 +51,11 @@ export async function POST(
         // 3. 유효한 단어 목록 준비
         // [!!!] 여기가 수정된 부분입니다. (any[] 타입 추가)
         const validWordsToAdd: any[] = [];
-        for (const word of wordsToImport) {
+
+        // [수정] CSV 순서 보장을 위해 for...of 대신 for 루프 사용
+        for (let i = 0; i < wordsToImport.length; i++) {
+            const word = wordsToImport[i];
+
             if (word.W && word.M) {
                 importedCount++;
                 validWordsToAdd.push({
@@ -70,6 +75,7 @@ export async function POST(
                     correctCount: 0,
                     incorrectCount: 0,
                     memorized: false,
+                    importOrder: i, // [수정] 순서 필드(importOrder) 추가
                 });
             }
         }
@@ -140,5 +146,3 @@ export async function POST(
         );
     }
 }
-
-//이거 

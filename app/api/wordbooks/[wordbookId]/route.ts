@@ -6,7 +6,6 @@ import admin from 'firebase-admin';
 
 // 특정 단어장 정보와 포함된 단어 목록을 가져옵니다.
 export async function GET(request: Request, { params }: { params: Promise<{ wordbookId: string }> }) {
-  // ... (기존 GET 함수와 동일)
   try {
     const { wordbookId } = await params;
 
@@ -30,7 +29,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ word
     // lastStudied 필드를 현재 시간으로 업데이트합니다.
     await wordbookRef.update({ lastStudied: new Date().toISOString() });
 
-    const wordsSnapshot = await wordbookRef.collection('words').get();
+    //
+    // [!!! 여기가 수정된 부분입니다 !!!]
+    // createdAt 기준으로만 정렬하여 *모든* 단어를 불러옵니다.
+    const wordsSnapshot = await wordbookRef.collection('words')
+      .orderBy("createdAt", "desc") // 1순위: 생성시간 내림차순 (최신순)
+      .get();
+    // [!!! 수정 완료 !!!]
+    //
 
     const words = wordsSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -47,8 +53,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ word
       id: wordbookDoc.id,
       words: words
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("단어장 상세 조회 오류:", error);
+    // (색인 오류 감지 코드 제거)
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
 }

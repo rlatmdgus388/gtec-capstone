@@ -53,6 +53,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 
+//
+// [!!! 1. 여기가 수정되었습니다 !!!]
+//
 // --- 인터페이스 정의 ---
 interface Word {
   id: string
@@ -61,8 +64,12 @@ interface Word {
   example?: string
   pronunciation?: string
   mastered: boolean
-  createdAt: string
+  createdAt: any // [수정] string에서 any로 변경 (Timestamp 객체와 문자열 모두 받기 위해)
+  importOrder?: number
 }
+// [!!! 1. 수정 완료 !!!]
+//
+
 interface Wordbook {
   id: string
   name: string
@@ -80,6 +87,29 @@ interface DetectedWord {
   selected: boolean
   meaning?: string
 }
+
+//
+// [!!! 2. 여기가 수정되었습니다 !!!]
+//
+// Firestore timestamp (객체 또는 문자열)를 밀리초(ms)로 변환하는 헬퍼 함수
+const getTimestampInMillis = (timestamp: any): number => {
+  if (!timestamp) {
+    return 0;
+  }
+  // Case 1: Firestore Timestamp 객체 ({ _seconds, _nanoseconds })
+  if (timestamp._seconds !== undefined && timestamp._nanoseconds !== undefined) {
+    return timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000;
+  }
+  // Case 2: ISO 문자열 또는 기타 Date.parse가 가능한 형식
+  const date = new Date(timestamp);
+  if (!isNaN(date.getTime())) {
+    return date.getTime();
+  }
+  // Fallback
+  return 0;
+};
+// [!!! 2. 수정 완료 !!!]
+//
 
 export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailProps) {
   // --- 상태 관리 ---
@@ -115,19 +145,35 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   const [isEditingWordbookInfo, setIsEditingWordbookInfo] = useState(false)
   // [!!! 수정 끝 !!!] (기존 Drawer 관련 상태 3줄 제거)
 
+  //
+  // [!!! 3. 여기가 수정되었습니다 !!!]
+  //
   const fetchWords = useCallback(async () => {
-    // ... (기존 코드와 동일)
     if (!wordbook.id) return
     setIsLoading(true)
     try {
       const data = await fetchWithAuth(`/api/wordbooks/${wordbook.id}`)
       const fetchedWords = data.words || []
 
+      // [수정] 2단계 정렬 로직 (헬퍼 함수 사용)
       fetchedWords.sort((a: Word, b: Word) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
-        return dateB - dateA // 최신순
+        // [수정] 헬퍼 함수를 사용하여 안전하게 timestamp 비교
+        const dateA = getTimestampInMillis(a.createdAt);
+        const dateB = getTimestampInMillis(b.createdAt);
+
+        // 1순위: createdAt 내림차순 (최신순)
+        if (dateB !== dateA) {
+          return dateB - dateA
+        }
+
+        // 2순위: createdAt이 같으면 importOrder 오름차순 (CSV 순서)
+        // importOrder가 없는 기존/직접추가 단어는 맨 뒤로 (Infinity)
+        const orderA = a.importOrder ?? Infinity
+        const orderB = b.importOrder ?? Infinity
+
+        return orderA - orderB
       })
+      // [수정 끝]
 
       setWords(fetchedWords)
       setShuffledWords([...fetchedWords].sort(() => Math.random() - 0.5))
@@ -138,6 +184,9 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       setIsLoading(false)
     }
   }, [wordbook.id])
+  //
+  // [!!! 3. 수정 완료 !!!]
+  //
 
   useEffect(() => {
     fetchWords()
