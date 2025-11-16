@@ -35,6 +35,11 @@ export async function POST(
 
     // 1) 내 단어장 컬렉션에 문서 생성
     const newWordbookRef = firestore.collection('wordbooks').doc();
+
+    // [!!! 수정 1 !!!]
+    // 타임스탬프를 변수로 선언하여 createdAt, updatedAt, lastStudied에 동일하게 적용
+    const timestamp = admin.firestore.FieldValue.serverTimestamp();
+
     await newWordbookRef.set({
       userId: userId, // 403 해결 (uid를 userId 필드에 저장)
       name: wordbookData.name ?? '',
@@ -43,15 +48,15 @@ export async function POST(
       wordCount: words.length, // [수정됨] words.length로 통일
       progress: 0,
       source: wordbookId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: timestamp, // [!!! 수정 2 !!!]
+      updatedAt: timestamp, // [!!! 수정 3 !!!]
+      lastStudied: timestamp, // [!!! 수정 4 (핵심) !!!] 목록 조회를 위한 'lastStudied' 필드 추가
     });
 
     // 2) 단어들(words)을 서브컬렉션으로 복사
     if (words.length > 0) {
       const batch = firestore.batch();
       for (const w of words) {
-
         // 404 에러 해결: 원본 단어의 ID(w.id)를 새 문서의 ID로 사용합니다.
         const wordId = w.id || firestore.collection('dummy').doc().id;
         const wordRef = newWordbookRef.collection('words').doc(wordId);
@@ -66,7 +71,7 @@ export async function POST(
           pronunciation: w.pronunciation || '',
           // id: w.id, // [제거] id 필드를 데이터 안에 저장하지 않습니다.
           mastered: false, // 다운로드 시 암기 상태 초기화
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(), // 단어 생성/수정 시간은 별도 관리
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       }
