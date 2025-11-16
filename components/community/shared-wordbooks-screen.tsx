@@ -1,16 +1,18 @@
 "use client"
 
-import type React from "react"
-
+// [!!! 1. 여기가 수정되었습니다 !!!]
+import type React from "react" // 'e'의 타입을 위해 React import
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input" // [추가] Input 컴포넌트
 import { ArrowLeft, BookOpen, Download, Heart, Share2, Search, Trash2, Eye, MoreVertical } from "lucide-react"
+// [!!! 1. 수정 완료 !!!]
+
 import { fetchWithAuth } from "@/lib/api"
 import { auth } from "@/lib/firebase"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "../ui/skeleton"
 import { ShareWordbookDialog } from "./share-wordbook-dialog"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import {
@@ -36,8 +38,6 @@ interface SharedWordbook {
   views: number
   category: string // e.g., '시험', '일상' (한글)
 }
-
-// [수정] CATEGORY_MAP과 getCategoryLabel 삭제
 
 // [수정] 필터 카테고리를 DB에 저장된 한글 값으로 변경 (요청하신 목록)
 const FILTER_CATEGORIES = [
@@ -114,8 +114,6 @@ export function SharedWordbooksScreen({
       wb.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       wb.author.name.toLowerCase().includes(searchQuery.toLowerCase())
 
-    // const matchesCategory = ... (제거)
-
     return matchesSearch
   })
 
@@ -141,12 +139,17 @@ export function SharedWordbooksScreen({
           </div>
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+
+            {/* [!!! 2. 여기가 수정되었습니다 !!!] */}
+            {/* 'e'에 타입을 명시해줍니다. */}
             <Input
               placeholder="단어장 이름 또는 작성자로 검색"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               className="pl-9 h-10 bg-muted/50 border-border rounded-md"
             />
+            {/* [!!! 2. 수정 완료 !!!] */}
+
           </div>
 
           {/* ✨ 카테고리 필터 렌더링 수정 */}
@@ -222,7 +225,13 @@ export function SharedWordbooksScreen({
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
+
+                      {/* [!!! 여기가 수정되었습니다 !!!] (아이콘 순서 변경) */}
                       <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          <Eye size={14} />
+                          {wordbook.views}
+                        </span>
                         <span className="flex items-center gap-1">
                           <Heart size={14} />
                           {wordbook.likes}
@@ -231,11 +240,9 @@ export function SharedWordbooksScreen({
                           <Download size={14} />
                           {wordbook.downloads}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Eye size={14} />
-                          {wordbook.views}
-                        </span>
                       </div>
+                      {/* [!!! 수정 완료 !!!] */}
+
                       <Button
                         size="sm"
                         onClick={(e) => handleDownload(e, wordbook)}

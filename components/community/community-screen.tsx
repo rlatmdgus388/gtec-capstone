@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Users, MessageCircle, Heart, BookOpen, Download, MoreVertical, Edit, Trash2, Eye } from "lucide-react"
+import { Users, MessageCircle, Heart, BookOpen, Download, MoreVertical, Edit, Trash2, Eye } from "lucide-react" // Eye 아이콘 확인
 import { UserProfile } from "./user-profile"
 import { SharedWordbookDetail } from "./shared-wordbook-detail"
 import { DiscussionDetailScreen } from "./discussion-detail-screen"
@@ -29,22 +29,56 @@ interface SharedWordbook {
   category: string
 }
 
+// [!!! 1. 여기가 수정되었습니다 !!!]
+// discussion-detail-screen.tsx와 동일하게 Comment 인터페이스 추가
+interface Comment {
+  id: string
+  content: string
+  author: {
+    uid: string
+    name: string
+  }
+  createdAt: any
+}
+
+// [!!! 2. 여기가 수정되었습니다 !!!]
+// discussion-detail-screen.tsx와 동일하게 필드 추가 및 수정
 interface DiscussionPost {
   id: string
   title: string
   content: string
   author: { uid: string; name: string }
-  replies: number
+  commentCount: number // 'replies' -> 'commentCount'
   likes: number
-  views: number // 조회수
-  createdAt: string
+  views: number
+  likedBy: string[] // [추가]
+  createdAt: any    // 'string' -> 'any'
   category: string
+  comments: Comment[] // [추가]
 }
+// [!!! 2. 수정 완료 !!!]
+
 
 // ✅ [추가] props 인터페이스 정의
 interface CommunityScreenProps {
   refreshKey: number;
 }
+
+// [추가] Firestore timestamp 헬퍼 함수
+const getTimestampInMillis = (timestamp: any): number => {
+  if (!timestamp) {
+    return 0;
+  }
+  if (timestamp._seconds !== undefined && timestamp._nanoseconds !== undefined) {
+    return timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000;
+  }
+  const date = new Date(timestamp);
+  if (!isNaN(date.getTime())) {
+    return date.getTime();
+  }
+  return 0;
+};
+
 
 export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [수정] props 받기
   const [currentView, setCurrentView] = useState<
@@ -88,10 +122,12 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
     }
   }, [refreshKey]); // refreshKey에 의존
 
-  const timeAgo = (dateString: string) => {
+  // timeAgo 함수 (헬퍼 함수 사용)
+  const timeAgo = (dateString: any) => { // any 타입으로 받음
     const now = new Date()
-    const past = new Date(dateString)
+    const past = new Date(getTimestampInMillis(dateString)) // 헬퍼 함수 사용
     const seconds = Math.floor((now.getTime() - past.getTime()) / 1000)
+
     let interval = seconds / 31536000
     if (interval > 1) return Math.floor(interval) + "년 전"
     interval = seconds / 2592000
@@ -104,6 +140,7 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
     if (interval > 1) return Math.floor(interval) + "분 전"
     return "방금 전"
   }
+
 
   const handleViewProfile = (userId: string) => {
     setSelectedUserId(userId)
@@ -143,6 +180,7 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
   }
 
   if (currentView === "profile") return <UserProfile userId={selectedUserId} onBack={handleBackToMain} />
+
   if (currentView === "wordbook")
     return <SharedWordbookDetail wordbookId={selectedWordbookId} onBack={() => setCurrentView("allWordbooks")} />
 
@@ -150,12 +188,14 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
     return (
       <DiscussionDetailScreen
         postId={selectedPostId}
-        onBack={handleBackToMain}
-        onEdit={handleEditClick}
+        onBack={() => setCurrentView("allDiscussions")}
+        onEdit={handleEditClick} // [!!!] 이제 이 줄은 오류가 나지 않습니다.
       />
     )
 
-  if (currentView === "allDiscussions") return <DiscussionsScreen onBack={handleBackToMain} />
+  if (currentView === "allDiscussions")
+    return <DiscussionsScreen onBack={handleBackToMain} onViewDiscussion={handleViewDiscussion} />
+
   if (currentView === "allWordbooks")
     return <SharedWordbooksScreen onBack={handleBackToMain} onSelectWordbook={handleViewWordbook} />
 
@@ -246,7 +286,13 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
                           <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
                         </div>
                       </div>
+
+                      {/* 아이콘 순서: 조회 -> 하트 -> 다운로드 */}
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Eye size={14} />
+                          {wordbook.views}
+                        </span>
                         <span className="flex items-center gap-1">
                           <Heart size={14} />
                           {wordbook.likes}
@@ -255,11 +301,8 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
                           <Download size={14} />
                           {wordbook.downloads}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Eye size={14} />
-                          {wordbook.views}
-                        </span>
                       </div>
+
                     </CardContent>
                   </Card>
                 ))}
@@ -312,16 +355,22 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
                             {discussion.category}
                           </Badge>
                         </div>
+
+                        {/* 아이콘 순서 및 댓글 수(commentCount || 0) 수정 */}
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span>{discussion.author.name}</span>
                           <span>{timeAgo(discussion.createdAt)}</span>
+                          <span className="flex items-center gap-1">
+                            <Eye size={12} />
+                            {discussion.views}
+                          </span>
                           <span className="flex items-center gap-1">
                             <Heart size={12} />
                             {discussion.likes}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Eye size={12} />
-                            {discussion.views}
+                            <MessageCircle size={12} />
+                            {discussion.commentCount || 0} {/* replies -> commentCount */}
                           </span>
                         </div>
                       </div>
@@ -339,7 +388,13 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
                                   <Button
                                     variant="ghost"
                                     className="w-full justify-start p-2 h-12 text-sm"
-                                    onClick={() => handleEditClick(discussion)}
+                                    onClick={() => {
+                                      // [!!!] 린터가 post가 null이 아님을 확신하도록
+                                      // if (post) 블록을 추가합니다. (이전 답변 내용)
+                                      // [정정] discussion 객체를 사용해야 합니다.
+                                      // [재수정] handleEditClick은 DiscussionPost 타입을 받으므로 OK
+                                      handleEditClick(discussion)
+                                    }}
                                   >
                                     <Edit className="mr-2 h-4 w-4" />
                                     수정

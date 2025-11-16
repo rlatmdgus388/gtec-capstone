@@ -94,97 +94,106 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
   }
 
   return (
-    <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter-from-left")}>
-      {/* Header */}
-      <div className="bg-card sticky top-0 z-10 p-4 flex items-center">
+    // [!!! 1. 여기가 수정되었습니다 !!!]
+    // 'flex-1 overflow-y-auto pb-20' -> 'h-full flex flex-col'
+    <div className={cn("h-full flex flex-col bg-background", "page-transition-enter-from-left")}>
+
+      {/* [!!! 2. 여기가 수정되었습니다 !!!]
+      // 'sticky top-0 z-10' -> 'shrink-0' (고정 헤더) */}
+      <div className="bg-card shrink-0 p-4 flex items-center border-b border-border">
         <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="font-semibold text-foreground text-lg truncate">{wordbook?.name || "단어장 정보"}</h1>
       </div>
 
-      <div className="p-4">
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        ) : wordbook ? (
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <Badge variant="outline" className="mb-2 w-fit">
-                  {wordbook.category}
-                </Badge>
-                <h2 className="text-2xl font-bold">{wordbook.name}</h2>
-                {/* 4번 요청: p 태그는 원래 클릭 불가능 */}
-                <p className="text-sm text-muted-foreground">by {wordbook.author.name}</p>
-                <p className="text-sm text-foreground mt-2">{wordbook.description}</p>
-              </CardHeader>
-              <CardContent>
-                {/* ▼▼▼ [수정됨] "좋아요", "다운로드", "조회수" 텍스트 제거 ▼▼▼ */}
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Heart size={14} /> {wordbook.likes}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Download size={14} /> {wordbook.downloads}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Eye size={14} /> {wordbook.views}
-                  </span>
-                </div>
-                {/* ▲▲▲ [수정됨] "좋아요", "다운로드", "조회수" 텍스트 제거 ▲▲▲ */}
-              </CardContent>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Button className="flex-1" onClick={handleDownload}>
-                    <Download className="mr-2 h-4 w-4" /> 내 단어장에 추가
-                  </Button>
-                  {/* 1번 요청: 좋아요 버튼 스타일 수정 */}
-                  <Button
-                    variant="outline"
-                    onClick={handleLike}
-                    className={cn(
-                      "transition-colors",
-                      isLiked
-                        ? "text-red-500 border-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <Heart
+      {/* [!!! 3. 여기가 수정되었습니다 !!!]
+      // 스크롤이 필요한 콘텐츠 영역을 새 div로 감쌈
+      // 'flex-1 overflow-y-auto pb-18' (하단 네비바 공간) 추가
+      */}
+      <div className="flex-1 overflow-y-auto pb-18">
+        <div className="p-4">
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-64 w-full" />
+            </div>
+          ) : wordbook ? (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <Badge variant="outline" className="mb-2 w-fit">
+                    {wordbook.category}
+                  </Badge>
+                  <h2 className="text-2xl font-bold">{wordbook.name}</h2>
+                  {/* 4번 요청: p 태그는 원래 클릭 불가능 */}
+                  <p className="text-sm text-muted-foreground">by {wordbook.author.name}</p>
+                  <p className="text-sm text-foreground mt-2">{wordbook.description}</p>
+                </CardHeader>
+                <CardContent>
+                  {/* ▼▼▼ [!!! 여기가 수정되었습니다 !!!] (아이콘 순서 변경) ▼▼▼ */}
+                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Eye size={14} /> {wordbook.views}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Heart size={14} /> {wordbook.likes}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Download size={14} /> {wordbook.downloads}
+                    </span>
+                  </div>
+                  {/* ▲▲▲ [!!! 수정 완료 !!!] ▲▲▲ */}
+                </CardContent>
+                <CardContent>
+                  <div className="flex gap-2">
+                    <Button className="flex-1" onClick={handleDownload}>
+                      <Download className="mr-2 h-4 w-4" /> 내 단어장에 추가
+                    </Button>
+                    {/* 1번 요청: 좋아요 버튼 스타일 수정 */}
+                    <Button
+                      variant="outline"
+                      onClick={handleLike}
                       className={cn(
-                        "mr-2 h-4 w-4 transition-all",
-                        isLiked && "fill-current" // text-red-500가 적용됨
+                        "transition-colors",
+                        isLiked
+                          ? "text-red-500 border-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600 dark:bg-red-900/50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900" // [추가] 다크모드 좋아요
+                          : "text-muted-foreground"
                       )}
-                    />
-                    {isLiked ? "좋아요" : "좋아요"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    >
+                      <Heart
+                        className={cn(
+                          "mr-2 h-4 w-4 transition-all",
+                          isLiked && "fill-current" // text-red-500가 적용됨
+                        )}
+                      />
+                      {isLiked ? "좋아요" : "좋아요"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">단어 목록 ({wordbook.wordCount}개)</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {wordbook.words.map((word) => (
-                    <div key={word.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                      <span className="font-medium text-sm">{word.word}</span>
-                      <span className="text-sm text-muted-foreground">{word.meaning}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <p>단어장 정보를 불러올 수 없습니다.</p>
-        )}
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">단어 목록 ({wordbook.wordCount}개)</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {wordbook.words.map((word) => (
+                      <div key={word.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                        <span className="font-medium text-sm">{word.word}</span>
+                        <span className="text-sm text-muted-foreground">{word.meaning}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <p>단어장 정보를 불러올 수 없습니다.</p>
+          )}
+        </div>
       </div>
     </div>
   )
 }
-
