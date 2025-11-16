@@ -119,7 +119,7 @@ export function VocabularyScreen({
 
   return (
     // 1. 'h-full flex flex-col' : 부모(AuthManager의 main)가 준 높이를 100% 채움
-    <div className="h-full flex flex-col">
+    <div className="h-screen flex flex-col">
       <ImageSelectionModal
         open={showImageSelection}
         onClose={() => setShowImageSelection(false)}

@@ -549,7 +549,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         2. 'h-full flex flex-col'을 추가합니다. 
            (부모 AuthManager가 잡아준 높이를 100% 채우고, flex 레이아웃으로 변경)
       */}
-      <div className={cn("h-full flex flex-col bg-background", "page-transition-enter-from-left")}>
+      <div className={cn("h-screen flex flex-col bg-background", "page-transition-enter-from-left")}>
         {/* --- 다이얼로그 및 모달 --- */}
         <AlertDialog open={!!wordToDelete} onOpenChange={(open) => !open && setWordToDelete(null)}>
           {/* ... (기존 코드와 동일) */}
