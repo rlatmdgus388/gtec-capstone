@@ -117,12 +117,14 @@
 
 html,
 body {
-  height: 100%;
+  /* height: 100%; */
+  margin: 0;
+  padding: 0;
 }
 
 /* 바깥 페이지 전체 스크롤 막기 */
-body {
-  margin: 0;
-  overflow: hidden;
+.safe-area {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
