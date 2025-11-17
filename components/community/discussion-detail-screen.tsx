@@ -250,7 +250,7 @@ export function DiscussionDetailScreen({
     <>
       <div className={cn("h-full flex flex-col bg-background", "page-transition-enter-from-left")}>
 
-        <div className="bg-card shadow-sm border-b border-border shrink-0 p-4 flex items-center">
+        <div className="bg-card shrink-0 p-4 flex items-center">
           <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
             <ArrowLeft className="h-5 w-5" />
           </Button>

@@ -87,18 +87,14 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
         return (
             <div className={cn("max-w-lg mx-auto bg-background h-full flex flex-col", "page-transition-enter")}>
                 {/* 스켈레톤 헤더 */}
-                <div className="bg-card border-b border-border shrink-0">
+                <div className="bg-card shrink-0">
                     <div className="px-4 py-4">
                         <div className="flex items-center gap-3">
                             <Button variant="ghost" size="icon" onClick={handleBack} className="-ml-2">
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
-                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                                <TrendingUp size={24} className="text-primary" />
-                            </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-foreground">학습 현황</h1>
-                                <p className="text-sm text-muted-foreground">주간 학습 리포트와 통계를 확인하세요.</p>
                             </div>
                         </div>
                     </div>
@@ -122,18 +118,14 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
         return (
             <div className={cn("max-w-lg mx-auto bg-background h-full flex flex-col", "page-transition-enter")}>
                 {/* 오류 시 헤더 */}
-                <div className="bg-card border-b border-border shrink-0">
+                <div className="bg-card shrink-0">
                     <div className="px-4 py-4">
                         <div className="flex items-center gap-3">
                             <Button variant="ghost" size="icon" onClick={handleBack} className="-ml-2">
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
-                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                                <TrendingUp size={24} className="text-primary" />
-                            </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-foreground">학습 현황</h1>
-                                <p className="text-sm text-muted-foreground">주간 학습 리포트와 통계를 확인하세요.</p>
                             </div>
                         </div>
                     </div>
@@ -176,7 +168,7 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
         // [!!!] 수정된 부분: 메인 배경색 `bg-background` 적용 (기존에도 있었지만 확인)
         <div className={cn("max-w-lg mx-auto bg-background h-full flex flex-col", "page-transition-enter")}>
             {/* 헤더 (기존 `bg-card` 유지) */}
-            <div className="bg-card border-b border-border shrink-0">
+            <div className="bg-card  shrink-0">
                 <div className="px-4 py-4">
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" onClick={handleBack} className="-ml-2">

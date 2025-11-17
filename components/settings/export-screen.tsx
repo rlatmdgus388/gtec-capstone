@@ -107,7 +107,7 @@ export function ExportScreen({ onBack }: ExportScreenProps) {
     return (
         <div className="flex flex-col h-full bg-background page-transition-enter">
             {/* 헤더 (고정) */}
-            <div className="flex items-center p-4 border-b border-border shrink-0">
+            <div className="flex items-center p-4 shrink-0">
                 <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2">
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
