@@ -201,11 +201,6 @@ const renderHighlightedText = () => {
                               {/* 1. 'text' (원본) 대신 'original' (원형)을 기본으로 표시 */}
                               <h3 className="text-lg font-semibold text-foreground">{word.original}</h3>
 
-                              {/* 2. 품사 표시 */}
-                              {word.partOfSpeech && (
-                                <span className="text-sm text-muted-foreground ml-2 italic">{word.partOfSpeech}</span>
-                              )}
-
                               {/* 3. 원형과 원본 텍스트가 다를 경우, 괄호로 원본 표시 */}
                               {word.original.toLowerCase() !== word.text.toLowerCase() && (
                                 <span className="text-sm text-muted-foreground ml-2">({word.text})</span>

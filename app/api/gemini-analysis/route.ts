@@ -191,9 +191,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "텍스트가 필요합니다." }, { status: 400 });
     }
 
-    // 🔍 디버깅용: 실제로 OCR에서 얼마나 길게 들어오는지 확인해보고 싶으면 아래 주석 해제
-    // console.log("[Gemini-analysis] OCR text:", text);
-
     const chunks = splitTextByLength(text, 2000)
       .map((s) => s.trim())
       .filter((s) => /[A-Za-z]/.test(s));
@@ -228,13 +225,38 @@ export async function POST(request: Request) {
       throw new Error("모든 청크 처리에 실패했습니다.");
     }
 
+    // 🔽 여기부터 결과 후처리
     const all = successful.flat();
 
     // text + original 기준으로 중복 제거
     const key = (t: any) => `${t.text}@@${t.original}`.toLowerCase();
     const dedup = Array.from(new Map(all.map((r) => [key(r), r])).values());
 
-    return NextResponse.json(dedup);
+    // 품사 라벨 매핑
+    const POS_LABEL: Record<string, string> = {
+      n: "명사",
+      v: "동사",
+      adj: "형용사",
+      adv: "부사",
+    };
+
+    // meaning에 품사까지 붙여서 클라이언트로 보내기
+    const withPos = dedup.map((item: any) => {
+      const rawPos = String(item.partOfSpeech || "").trim().toLowerCase();
+      const label = rawPos ? POS_LABEL[rawPos] || rawPos : "";
+      const baseMeaning = String(item.meaning || "").trim();
+
+      const meaningWithPos = label
+        ? `[${label}] ${baseMeaning}` // 예: (명사) 단계
+        : baseMeaning;
+
+      return {
+        ...item,
+        meaning: meaningWithPos,
+      };
+    });
+
+    return NextResponse.json(withPos);
   } catch (error: any) {
     console.error("Gemini API 전체 처리 오류:", error);
     return NextResponse.json(

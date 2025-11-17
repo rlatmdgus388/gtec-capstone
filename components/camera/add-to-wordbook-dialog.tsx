@@ -53,7 +53,30 @@ export function AddToWordbookDialog({ words, onAddToWordbook, onBack }: AddToWor
   const handleConfirm = async () => {
     if (selectedWordbookId) {
       try {
-        const wordsToAdd = words.filter(w => w.selected).map(w => ({ word: w.text, meaning: "" }));
+        const POS_LABEL: Record<string, string> = {
+          n: "명사",
+          v: "동사",
+          adj: "형용사",
+          adv: "부사",
+        };
+        
+        const wordsToAdd = words
+          .filter((w) => w.selected)
+          .map((w) => {
+            const rawPos = w.partOfSpeech?.trim().toLowerCase();
+            const posLabel = rawPos ? POS_LABEL[rawPos] || rawPos : "";
+            const baseMeaning = w.meaning?.trim() || "";
+        
+            const meaningWithPos = posLabel
+              ? `(${posLabel}) ${baseMeaning}`   // 예: (명사) 특징, 특색
+              : baseMeaning;
+        
+            return {
+              word: w.original,
+              meaning: meaningWithPos,
+              example: "",
+            };
+          });
         await fetchWithAuth(`/api/wordbooks/${selectedWordbookId}/words`, {
           method: 'POST',
           body: JSON.stringify(wordsToAdd)
