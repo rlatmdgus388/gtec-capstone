@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
+    "@capacitor/camera": "^7.0.2",
     "@capacitor/core": "^7.4.4",
     "@google-cloud/vision": "latest",
     "@google/generative-ai": "^0.24.1",
