@@ -121,12 +121,19 @@
     /* 1. (핵심) 뷰포트의 오버스크롤 바운스 효과를 비활성화합니다. */
     overscroll-behavior: none;
     /* 2. (권장) html 태그가 항상 뷰포트 전체 높이를 차지하도록 합니다. */
-    /* @apply h-full;  <-- 이 줄을 주석 처리하거나 삭제하세요! */
+    /* @apply h-full;  <-- 잘 주석 처리 하셨습니다 */
   }
 
   body {
     @apply bg-background text-foreground;
-    /* 3. (권장) body 태그도 전체 높이를 차지하도록 합니다. */
+
+    /* ⬇️ ⬇️ ⬇️ 이 세 줄을 추가하세요 ⬇️ ⬇️ ⬇️
+      fixed: 뷰포트 기준으로 위치를 고정합니다.
+      inset-0: top/right/bottom/left를 0으로 설정하여 뷰포트를 꽉 채웁니다.
+      overflow-hidden: body 태그에서 스크롤이 발생하는 것을 원천 차단합니다.
+    */
+    @apply fixed inset-0 overflow-hidden;
+
     /* @apply h-full;  <-- 이중 스크롤 방지를 위해 이 줄을 주석 처리 (또는 삭제) */
   }
 
@@ -134,6 +141,7 @@
     @apply border-border outline-ring/50;
   }
 }
+
 
 /* 슬라이드 - 오->왼 */
 @keyframes slide-in-from-right {
