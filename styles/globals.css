@@ -115,28 +115,14 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-
-/* === 추가: 루트 높이 보장 & 바디 스크롤 차단 === */
-html, body, #__next {
+html,
+body {
   height: 100%;
 }
 
+/* 바깥 페이지 전체 스크롤 막기 */
 body {
-  overflow: hidden;            /* 바디 스크롤 제거 (중요) */
-  touch-action: manipulation;  /* 터치 스크롤 제스처 안정화 */
+  margin: 0;
+  overflow: hidden;
 }
 
-/* 모바일 체이닝(바운스) 더 강하게 막고 싶을 때 (선택) */
-main {
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
-}
