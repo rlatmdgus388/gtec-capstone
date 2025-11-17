@@ -1,83 +1,86 @@
-/* app/globals.css */
-
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
+/* [수정된 부분]
+  빌드 오류를 해결하기 위해 oklch() 색상 값을
+  16진수(hex) 코드로 모두 변환했습니다.
+*/
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(71.7% 0.188 51.18);
-  --primary-foreground: oklch(98.5% 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --background: #ebebeb;
+  --foreground: #252525;
+  --card: #ffffff;
+  --card-foreground: #252525;
+  --popover: #ffffff;
+  --popover-foreground: #252525;
+  --primary: #343434;
+  --primary-foreground: #fafafa;
+  --secondary: #f7f7f7;
+  --secondary-foreground: #343434;
+  --muted: #f7f7f7;
+  --muted-foreground: #8e8e8e;
+  --accent: #f7f7f7;
+  --accent-foreground: #343434;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --border: #ebebeb;
+  --input: #ebebeb;
+  --ring: #b5b5b5;
+  --chart-1: #c98a3c;
+  --chart-2: #3aa8b0;
+  --chart-3: #2d5aa8;
+  --chart-4: #a8ca4f;
+  --chart-5: #90c25a;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #fafafa;
+  --sidebar-foreground: #252525;
+  --sidebar-primary: #343434;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f7f7f7;
+  --sidebar-accent-foreground: #343434;
+  --sidebar-border: #ebebeb;
+  --sidebar-ring: #b5b5b5;
 }
 
-/* Updated dark mode colors to match requirements: Background #212121, Primary #F19E54, Text #DEDEDE */
 .dark {
-  --background: #212121;
-  --foreground: #dedede;
-  --card: #2a2a2a;
-  --card-foreground: #dedede;
-  --popover: #2a2a2a;
-  --popover-foreground: #dedede;
-  --primary: #f19e54;
-  --primary-foreground: #212121;
-  --secondary: #3a3a3a;
-  --secondary-foreground: #dedede;
-  --muted: #3a3a3a;
-  --muted-foreground: #a0a0a0;
-  --accent: #3a3a3a;
-  --accent-foreground: #dedede;
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: #3a3a3a;
-  --input: #3a3a3a;
-  --ring: #4a4a4a;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #1a1a1a;
-  --sidebar-foreground: #dedede;
-  --sidebar-primary: #f19e54;
-  --sidebar-primary-foreground: #212121;
-  --sidebar-accent: #3a3a3a;
-  --sidebar-accent-foreground: #dedede;
-  --sidebar-border: #3a3a3a;
-  --sidebar-ring: #4a4a4a;
+  --background: #252525;
+  --foreground: #fafafa;
+  --card: #252525;
+  --card-foreground: #fafafa;
+  --popover: #252525;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #343434;
+  --secondary: #454545;
+  --secondary-foreground: #fafafa;
+  --muted: #454545;
+  --muted-foreground: #b5b5b5;
+  --accent: #454545;
+  --accent-foreground: #fafafa;
+  --destructive: #8c2a23;
+  --destructive-foreground: #e05649;
+  --border: #454545;
+  --input: #454545;
+  --ring: #6e6e6e;
+  --chart-1: #7b4ab3;
+  --chart-2: #5ec798;
+  --chart-3: #90c25a;
+  --chart-4: #c450b8;
+  --chart-5: #d6703c;
+  --sidebar: #343434;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #7b4ab3;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #454545;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #454545;
+  --sidebar-ring: #6e6e6e;
 }
 
 @theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -108,79 +111,44 @@
   --radius-xl: calc(var(--radius) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-primary: var(--primary);
+  --color-sidebar-primary-foreground: var(--primary-foreground);
+  --color-sidebar-accent: var(--accent);
+  --color-sidebar-accent-foreground: var(--accent-foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--ring);
 }
 
-@layer base {
-  html {
-    /* 1. (핵심) 뷰포트의 오버스크롤 바운스 효과를 비활성화합니다. */
-    overscroll-behavior: none;
-    /* 2. (권장) html 태그가 항상 뷰포트 전체 높이를 차지하도록 합니다. */
-    /* @apply h-full;  <-- 잘 주석 처리 하셨습니다 */
-  }
-
-  body {
-    @apply bg-background text-foreground;
-
-    /* ⬇️ ⬇️ ⬇️ 이 줄을 추가하세요 ⬇️ ⬇️ ⬇️
-      body 태그의 스크롤을 원천 차단합니다.
-      'fixed'와 달리 레이아웃을 고정하지 않으므로,
-      자식인 h-dvh 컨테이너는 동적으로 리사이징될 수 있습니다.
-    */
-    @apply overflow-hidden;
-
-    /* @apply h-full;  <-- 잘 주석 처리 하셨습니다 */
-  }
-
-  /* ⬇️ ⬇️ ⬇️ 네이티브 앱을 위한 리셋 코드도 추가하세요 ⬇️ ⬇️ ⬇️
-    (이전 답변과 동일)
-    네이티브 앱(Capacitor) 환경에서는 body 스크롤을 다시 허용하여
-    레이아웃이 겹치지 않도록 합니다.
-  */
-  html.capacitor body {
-    @apply overflow-auto;
-  }
-
-  * {
-    @apply border-border outline-ring/50;
-  }
+/* [수정된 부분]
+  뷰포트 문제(100vh)를 해결하기 위해 100dvh를 적용하고,
+  Capacitor 환경을 위한 코드를 추가했습니다.
+*/
+html {
+  /* Prevent pull-to-refresh and overscroll bounce */
+  overscroll-behavior: none;
 }
 
-/* 슬라이드 - 오->왼 */
-@keyframes slide-in-from-right {
-  from {
-    transform: translateX(100%);
-    opacity: 0.8;
-  }
+html,
+body {
+  margin: 0;
+  padding: 0;
 
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  /* 웹 브라우저 (Chrome, Safari) 뷰포트 문제를 해결합니다. */
+  height: 100vh; /* Fallback for older browsers */
+  height: 100dvh; /* Dynamic viewport height */
 }
 
-.page-transition-enter {
-  animation: slide-in-from-right 0.25s ease-out forwards;
+/* 네이티브 앱 (Capacitor) 환경에서는 
+  뷰포트 계산 방식이 다르므로 100% 높이로 리셋합니다.
+*/
+html.capacitor,
+html.capacitor body {
+  height: 100%;
 }
 
-/* 슬라이드- 왼->오 */
-@keyframes slide-in-from-left {
-  from {
-    transform: translateX(-100%);
-    opacity: 0.8;
-  }
 
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.page-transition-enter-from-left {
-  animation: slide-in-from-left 0.25s ease-out forwards;
+/* 바깥 페이지 전체 스크롤 막기 */
+.safe-area {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
