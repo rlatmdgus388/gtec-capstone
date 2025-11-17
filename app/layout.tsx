@@ -36,15 +36,19 @@ export default function RootLayout({
                 flex-1 min-h-0
                 overflow-y-auto overscroll-contain
                 pt-[env(safe-area-inset-top)]
-                /* ▼ 하단바가 fixed로 64px라면, 아래처럼 padding-bottom에 더하세요.
-                   하단바가 '일반 흐름' 요소(sibling)면 pb는 safe-area만 주면 됩니다.
+                /* ▼ 하단바가 fixed로 64px(4rem)라고 가정하고, 
+                   safe-area와 하단바 높이를 모두 더해줍니다. 
+                   (하단바 높이가 다르면 4rem 부분을 수정하세요)
                 */
-                pb-[calc(env(safe-area-inset-bottom))]
+                pb-[calc(4rem + env(safe-area-inset-bottom))]
               "
             >
               <Suspense fallback={null}>{children}</Suspense>
             </main>
-            {/* 고정 탭바(있는 경우): <TabBar className="h-16 shrink-0" /> */}
+            {/* 고정 탭바(하단 네비게이션)가 RootLayout이 아닌 
+              (app)/(main)/layout.tsx 같은 하위 레이아웃에 있을 수 있습니다.
+              어느 위치에 있든 <main> 태그의 padding-bottom 계산은 유효합니다.
+            */}
           </div>
 
           <Toaster />

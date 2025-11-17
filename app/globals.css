@@ -1,3 +1,5 @@
+/* app/globals.css */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -125,7 +127,7 @@
   body {
     @apply bg-background text-foreground;
     /* 3. (권장) body 태그도 전체 높이를 차지하도록 합니다. */
-    @apply h-full;
+    /* @apply h-full;  <-- 이중 스크롤 방지를 위해 이 줄을 주석 처리 (또는 삭제) */
   }
 
   * {
