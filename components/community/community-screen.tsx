@@ -217,7 +217,7 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
     <div className="h-full flex flex-col bg-background">
 
       {/* 헤더: shrink-0 적용 */}
-      <div className="bg-card shrink-0">
+      <div className="bg-background shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             {/* 아이콘 박스: h-7 -> h-10 수정 */}

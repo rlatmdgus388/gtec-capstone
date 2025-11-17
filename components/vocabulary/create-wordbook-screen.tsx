@@ -58,7 +58,7 @@ export function CreateWordbookScreen({ onBack, onSave }: CreateWordbookScreenPro
 
   return (
     <div className={cn("flex-1 overflow-y-auto pb-20", "page-transition-enter")}>
-      <div className="bg-card border-b border-border sticky top-0 z-10">
+      <div className="bg-background sticky top-0 z-10">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">
@@ -66,9 +66,6 @@ export function CreateWordbookScreen({ onBack, onSave }: CreateWordbookScreenPro
             </Button>
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">새 단어장 만들기</h1>
-              <p className="text-sm text-muted-foreground">
-                새로운 단어장을 만들고 단어를 추가하세요
-              </p>
             </div>
           </div>
         </div>

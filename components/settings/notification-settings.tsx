@@ -24,7 +24,7 @@ export function NotificationSettings({ onBack }: NotificationSettingsProps) {
   return (
     <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       {/* Header */}
-      <div className="px-4 py-6 border-b border-border">
+      <div className="px-4 py-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
             <ArrowLeft size={18} className="text-muted-foreground" />

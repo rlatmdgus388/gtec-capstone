@@ -57,7 +57,7 @@ export function WordEditScreen({ wordbookName, onBack, onSave, initialData }: Wo
   return (
     <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
       {/* Header */}
-      <div className="px-2 py-4 bg-card border-b border-border">
+      <div className="px-2 py-4 bg-background">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">

@@ -33,7 +33,7 @@ export function StudyPreferences({ onBack }: StudyPreferencesProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-card shadow-sm border-b border-border sticky top-0 z-10">
+      <div className="bg-background shadow-sm border-b border-border sticky top-0 z-10">
         <div className="flex items-center justify-between p-4">
           <Button variant="ghost" size="sm" onClick={onBack} className="text-foreground hover:bg-muted">
             <ArrowLeft className="h-5 w-5" />

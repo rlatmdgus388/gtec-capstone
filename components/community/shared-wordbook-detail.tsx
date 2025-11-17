@@ -100,7 +100,7 @@ export function SharedWordbookDetail({ wordbookId, onBack }: { wordbookId: strin
 
       {/* [!!! 2. 여기가 수정되었습니다 !!!]
       // 'sticky top-0 z-10' -> 'shrink-0' (고정 헤더) */}
-      <div className="bg-card shrink-0 p-4 flex items-center">
+      <div className="bg-background shrink-0 p-4 flex items-center">
         <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
           <ArrowLeft className="h-5 w-5" />
         </Button>

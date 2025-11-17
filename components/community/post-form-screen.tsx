@@ -81,7 +81,7 @@ export function PostFormScreen({
     return (
         <div className={cn("flex-1 flex flex-col bg-background", "page-transition-enter")}>
             {/* [수정] Header: create-wordbook-screen과 동일한 구조 */}
-            <div className="bg-card border-b border-border sticky top-0 z-10">
+            <div className="bg-background sticky top-0 z-10">
                 <div className="flex items-center justify-between px-2 py-2 h-16">
                     <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">
                         <ArrowLeft size={22} className="text-foreground" />

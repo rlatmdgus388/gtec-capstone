@@ -137,7 +137,7 @@ export function DiscussionsScreen({ onBack, onViewDiscussion }: DiscussionsScree
   // 기본 리스트 스크린
   return (
     <div className={cn("h-full flex flex-col bg-background", "page-transition-enter")}>
-      <div className="bg-card shrink-0">
+      <div className="bg-background shrink-0">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">

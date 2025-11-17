@@ -196,7 +196,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
   return (
     <div className="h-full flex flex-col bg-background">
       {/* 1. Header */}
-      <div className="bg-card shrink-0">
+      <div className="bg-background shrink-0">
         <div className="px-4 py-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
             <ArrowLeft size={20} className="text-foreground" />

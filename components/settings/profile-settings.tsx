@@ -145,7 +145,7 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
   return (
     <div className={cn("min-h-screen bg-background flex flex-col", "page-transition-enter")}>
       {/* Header */}
-      <div className="bg-card sticky top-0 z-10">
+      <div className="bg-background sticky top-0 z-10">
   <div className="flex items-center justify-between p-4">
     {/* ← 왼쪽: [뒤로가기 버튼 + 제목] 묶음 */}
     <div className="flex items-center gap-2">

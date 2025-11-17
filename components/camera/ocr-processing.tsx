@@ -155,7 +155,6 @@ const renderHighlightedText = () => {
             </Button>
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">텍스트 인식</h1>
-              <p className="text-sm text-muted-foreground">AI가 이미지에서 단어를 찾고 있습니다</p>
             </div>
           </div>
           <Card className="shadow-sm">

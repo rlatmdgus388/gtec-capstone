@@ -63,8 +63,8 @@ export function WordbookEditScreen({ initialData, onBack, onSave }: WordbookEdit
     return (
         <div className={cn("flex-1 overflow-y-auto pb-20 bg-background", "page-transition-enter")}>
             {/* --- 헤더 --- */}
-            <div className="bg-card border-b border-border sticky top-0 z-10 px-4 py-4">
-                <div className="flex items-center justify-between h-10">
+            <div className="bg-background sticky top-0 z-10 px-4 py-4">
+                <div className="flex items-center gap-3 h-10">
                     <Button variant="ghost" size="sm" onClick={onBack} disabled={isSaving} className="p-2 -ml-2">
                         <ArrowLeft size={20} className="text-foreground" />
                     </Button>

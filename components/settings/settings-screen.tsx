@@ -62,7 +62,7 @@ export function SettingsScreen({ onLogout, refreshKey }: SettingsScreenProps) {
     <div className="h-full flex flex-col bg-background">
 
       {/* 2. 상단 헤더: 고정(shrink-0) 및 스타일 통일 */}
-      <div className="bg-card shrink-0">
+      <div className="bg-background shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             {/* 아이콘 박스: w-10 h-10으로 정사각형 비율 맞춤 */}

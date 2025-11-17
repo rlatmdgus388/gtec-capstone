@@ -125,7 +125,7 @@ export function SharedWordbooksScreen({
       <div className={cn("h-full flex flex-col bg-background", "page-transition-enter")}>
 
         {/* ✅ [수정] 2. 고정될 헤더 영역. 'sticky top-0 z-10' -> 'shrink-0' */}
-        <div className="bg-card shrink-0 p-4">
+        <div className="bg-background shrink-0 p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">

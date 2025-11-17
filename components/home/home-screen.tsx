@@ -126,7 +126,7 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
     // 1. 'vocabulary-list-screen.tsx'와 동일하게 h-full flex flex-col 적용
     <div className="h-full flex flex-col bg-background">
       {/* 2. 'fixed' 대신 'shrink-0' 헤더 영역으로 변경 */}
-      <div className="bg-card shrink-0">
+      <div className="bg-background shrink-0">
         <div className="px-4 py-4"> {/* h-14, border-b 등 제거, py-4 추가 */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
