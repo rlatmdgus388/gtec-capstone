@@ -121,11 +121,13 @@ export function ShareWordbookDialog({ open, onOpenChange, onShared }: ShareWordb
                         </div>
                     </ScrollArea>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="flex-row gap-3">
                     <DialogClose asChild>
-                        <Button variant="outline" onClick={() => setSelectedWordbook(null)}>취소</Button>
+                        {/* 2. flex-1: 남는 공간을 1:1로 나눠가짐 */}
+                        <Button variant="outline" onClick={() => setSelectedWordbook(null)} className="flex-1">취소</Button>
                     </DialogClose>
-                    <Button onClick={handleShare} disabled={!selectedWordbook}>
+                    {/* 3. flex-1: 남는 공간을 1:1로 나눠가짐 */}
+                    <Button onClick={handleShare} disabled={!selectedWordbook} className="flex-1">
                         선택한 단어장 공유
                     </Button>
                 </DialogFooter>
