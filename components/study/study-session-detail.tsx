@@ -156,7 +156,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
     <Tabs defaultValue="incorrect" className="h-full flex flex-col bg-background text-foreground">
       <div className="h-full flex flex-col">
         {/* 고정 헤더 */}
-        <div className="shrink-0 bg-card border-b border-border z-10">
+        <div className="shrink-0 bg-background z-10">
           <div className="px-4 pt-6 pb-4">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
