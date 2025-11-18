@@ -467,9 +467,10 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
 
   // 6. 메인 학습 화면 (기본)
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* --- 헤더 수정 --- */}
-      <div className="bg-background shrink-0">
+    // [수정 1] 'h-full' 제거
+    <div className="flex flex-col bg-background">
+      {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 및 클래스 적용 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             {/* 아이콘 박스 h-7 -> h-10으로 수정 */}
@@ -481,92 +482,89 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* --- 컨텐츠 영역 수정 --- */}
-      <div className="flex-1 overflow-y-auto pb-20">
-        {/* 컨텐츠 패딩 pt-4 -> py-6로 수정 */}
-        <div className="px-4 py-6 space-y-6">
+      {/* [수정 3] 'overflow-y-auto' 제거, 'pb-20' -> 하단 네비게이션용 패딩으로 변경 */}
+      <div className="flex-1 px-4 py-6 space-y-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
-          {/* ... (학습 모드 부분은 그대로) ... */}
-          <div>
-            <div className="grid grid-cols-2 gap-3">
-              {studyModes.map((mode) => (
-                <button
-                  key={mode.id}
-                  className="h-40 bg-card border border-border rounded-xl hover:shadow-md transition-all duration-200 p-3 flex flex-col items-center justify-center text-center space-y-2 group"
-                  onClick={() => handleModeSelect(mode)}
-                >
-                  <div className="flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                    <Image
-                      src={mode.src}
-                      alt={`${mode.name} 아이콘`}
-                      width={40}
-                      height={40}
-                      className="text-white"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground text-base">{mode.name}</h3>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-semibold text-foreground">최근 학습 기록</h2>
-              <Button variant="ghost" size="sm" onClick={() => setIsHistoryVisible(true)}>
-                더보기
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {/* ✅ [수정] 'isLoading.sessions' -> 'isLoadingSessions' */}
-              {isLoadingSessions ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
+        {/* ... (학습 모드 부분은 그대로) ... */}
+        <div>
+          <div className="grid grid-cols-2 gap-3">
+            {studyModes.map((mode) => (
+              <button
+                key={mode.id}
+                className="h-40 bg-card border border-border rounded-xl hover:shadow-md transition-all duration-200 p-3 flex flex-col items-center justify-center text-center space-y-2 group"
+                onClick={() => handleModeSelect(mode)}
+              >
+                <div className="flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <Image
+                    src={mode.src}
+                    alt={`${mode.name} 아이콘`}
+                    width={40}
+                    height={40}
+                    className="text-white"
+                  />
                 </div>
-              ) : // ✅ [수정] 'recentSessions' -> 'allSessions'
-                allSessions.length === 0 ? (
-                  <Card className="border border-border rounded-xl bg-card">
-                    <CardContent className="p-6 text-center text-muted-foreground">
-                      최근 학습 기록이 없습니다.
-                    </CardContent>
-                  </Card>
-                ) : (
-                  // ✅ [수정] 'recentSessions' -> 'allSessions'
-                  allSessions.slice(0, 5).map((session) => (
-                    <Card
-                      key={session.id}
-                      className="hover:shadow-md transition-all duration-200 cursor-pointer border border-border shadow-sm bg-card rounded-xl"
-                      onClick={() => setSelectedSession(session)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-foreground mb-0.5 text-base">{session.wordbookName}</h3>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <span>{session.mode}</span>
-                              <span className="flex items-center gap-1">
-                                <Clock size={12} />
-                                {session.duration < 60 ? `${session.duration}초` : `${Math.floor(session.duration / 60)}분`}
-                              </span>
-                              {/* [!!! 5. 수정 !!!] 헬퍼 함수 제거, "문자열" 직접 사용 */}
-                              <span>{formatRelativeTime(session.completedAt)}</span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-primary">{session.score}%</div>
-                            <div className="text-[16px] text-muted-foreground">점수</div>
+                <div>
+                  <h3 className="font-medium text-foreground text-base">{mode.name}</h3>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-foreground">최근 학습 기록</h2>
+            <Button variant="ghost" size="sm" onClick={() => setIsHistoryVisible(true)}>
+              더보기
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {/* ✅ [수정] 'isLoading.sessions' -> 'isLoadingSessions' */}
+            {isLoadingSessions ? (
+              <div className="space-y-2">
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+              </div>
+            ) : // ✅ [수정] 'recentSessions' -> 'allSessions'
+              allSessions.length === 0 ? (
+                <Card className="border border-border rounded-xl bg-card">
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    최근 학습 기록이 없습니다.
+                  </CardContent>
+                </Card>
+              ) : (
+                // ✅ [수정] 'recentSessions' -> 'allSessions'
+                allSessions.slice(0, 5).map((session) => (
+                  <Card
+                    key={session.id}
+                    className="hover:shadow-md transition-all duration-200 cursor-pointer border border-border shadow-sm bg-card rounded-xl"
+                    onClick={() => setSelectedSession(session)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-foreground mb-0.5 text-base">{session.wordbookName}</h3>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span>{session.mode}</span>
+                            <span className="flex items-center gap-1">
+                              <Clock size={12} />
+                              {session.duration < 60 ? `${session.duration}초` : `${Math.floor(session.duration / 60)}분`}
+                            </span>
+                            {/* [!!! 5. 수정 !!!] 헬퍼 함수 제거, "문자열" 직접 사용 */}
+                            <span>{formatRelativeTime(session.completedAt)}</span>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-            </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-primary">{session.score}%</div>
+                          <div className="text-[16px] text-muted-foreground">점수</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
           </div>
         </div>
       </div>

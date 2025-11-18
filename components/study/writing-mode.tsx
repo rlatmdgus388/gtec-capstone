@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, Check, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface Word {
   id: string;
@@ -38,7 +39,8 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
 
   if (!words || words.length === 0) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      // [수정] min-h-screen -> h-full
+      <div className="h-full bg-background flex items-center justify-center p-4">
         <Card>
           <CardContent className="p-6 text-center">
             <h2 className="text-xl font-bold text-foreground mb-4">복습할 단어가 없습니다.</h2>
@@ -54,7 +56,8 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
 
   if (!currentWord) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      // [수정] min-h-screen -> h-full
+      <div className="h-full bg-background flex items-center justify-center p-4">
         <Card><CardContent className="p-6 text-center">
           <h2 className="text-xl font-bold text-foreground mb-4">단어를 불러오는 중 오류가 발생했습니다.</h2>
           <Button onClick={onBack}>돌아가기</Button>
@@ -111,8 +114,10 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+    // [수정 1] 'min-h-screen' 제거, 'flex flex-col' 추가
+    <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
+      {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 및 클래스 적용 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
         <div className="px-4 py-6">
           <div className="flex items-center gap-3 mb-4">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2"><ArrowLeft size={18} /></Button>
@@ -123,8 +128,10 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
           </div>
           <Progress value={progress} className="h-2" />
         </div>
-      </div>
-      <div className="px-4 py-6 space-y-6">
+      </header>
+
+      {/* [수정 3] 'flex-1' 및 하단 여백(pb) 추가 */}
+      <div className="flex-1 px-4 py-6 space-y-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <Card>
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-primary mb-4">{question}</h2>
@@ -155,7 +162,6 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
 
       {showResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          {/* [!!! 여기가 수정되었습니다 !!!] bg-white -> bg-card */}
           <Card className="w-full max-w-md bg-card rounded-2xl">
             <CardContent className="p-6 text-center">
               <div className="flex flex-col items-center gap-4">
@@ -168,18 +174,15 @@ export function WritingMode({ words, onComplete, onBack, type = 'word' }: Writin
                   <h3 className={`text-xl font-bold ${isCorrectOnResult ? "text-green-600" : "text-red-600"}`}>{isCorrectOnResult ? "정답입니다!" : "틀렸습니다"}</h3>
                   <div className="space-y-3 text-left">
                     <div>
-                      {/* [!!! 텍스트 색상 수정 !!!] */}
                       <p className="text-sm text-muted-foreground mb-1">문제</p>
                       <p className="font-medium text-foreground">{question}</p>
                     </div>
                     <div>
-                      {/* [!!! 텍스트 색상 수정 !!!] */}
                       <p className="text-sm text-muted-foreground mb-1">정답</p>
                       <p className="font-medium text-green-600">{answer}</p>
                     </div>
                     {!isCorrectOnResult && (
                       <div>
-                        {/* [!!! 텍스트 색상 수정 !!!] */}
                         <p className="text-sm text-muted-foreground mb-1">입력한 답</p>
                         <p className="font-medium text-red-600">{userAnswer}</p>
                       </div>
