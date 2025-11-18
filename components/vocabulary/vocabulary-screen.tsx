@@ -11,6 +11,7 @@ import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 
+// ... (Wordbook, VocabularyScreenProps 인터페이스는 동일) ...
 interface Wordbook {
   id: string
   name: string
@@ -29,12 +30,14 @@ interface VocabularyScreenProps {
   onNavigateToStudy?: (wordbookId: string) => void
 }
 
+
 export function VocabularyScreen({
   onWordbookSelect,
   onStartCreate,
   refreshKey,
   onNavigateToStudy,
 }: VocabularyScreenProps) {
+  // ... (모든 state와 핸들러 함수들은 그대로) ...
   const [searchQuery, setSearchQuery] = useState("")
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -118,7 +121,7 @@ export function VocabularyScreen({
   }
 
   return (
-    // [수정 1] 'h-full' 제거. (AuthManager의 flex-1이 높이를 제어)
+    // [수정 1] 'h-full' 제거
     <div className="flex flex-col">
       <ImageSelectionModal
         open={showImageSelection}
@@ -127,9 +130,9 @@ export function VocabularyScreen({
         onGallerySelect={handleGallerySelect}
       />
 
-      {/* [수정 2] <header> 태그와 'sticky' 속성으로 상단바 고정 */}
+      {/* [수정 2] <header> 태그로 변경, 'sticky' 속성 추가 */}
       <header className="sticky top-0 z-40 w-full bg-background border-b">
-        {/* 기존 헤더 내용 */}
+        {/* 'shrink-0'는 제거해도 됩니다. */}
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -163,12 +166,8 @@ export function VocabularyScreen({
         </div>
       </header>
 
-      {/* [수정 3] 스크롤되는 메인 콘텐츠 영역 */}
-      {/* 'overflow-y-auto'와 'pb-20' 제거 */}
-      {/* [수정 4] BottomNav(h-16 = 4rem) + 홈 인디케이터(safe-area) 높이만큼
-        하단 여백(padding-bottom)을 정확히 추가합니다.
-      */}
-      <div className="flex-1 px-4 py-6 space-y-3 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      {/* [수정 3] 'overflow-y-auto'와 'pb-20' 제거 */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-28 w-full rounded-xl" />
@@ -190,7 +189,7 @@ export function VocabularyScreen({
                 onClick={() => onWordbookSelect(wordbook)}
               >
                 <CardContent className="p-4">
-                  {/* ... (Card 내용은 동일) ... */}
+                  {/* ... (Card 내용은 그대로) ... */}
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -234,3 +233,4 @@ export function VocabularyScreen({
     </div>
   )
 }
+// 이거
