@@ -18,19 +18,24 @@ interface VocabularySelectionScreenProps {
 
 export function VocabularySelectionScreen({ onBack, wordbooks, onSelectWordbook }: VocabularySelectionScreenProps) {
     return (
-        <div className="min-h-screen bg-white">
-            {/* Header */}
-            <div className="px-4 py-6 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
-                        <ArrowLeft size={18} className="text-gray-600" />
-                    </Button>
-                    <h1 className="text-xl font-bold text-gray-900">단어장 선택</h1>
+        // [수정 1] 'min-h-screen' -> 'flex flex-col' (body 스크롤 사용)
+        <div className="flex flex-col bg-white">
+            {/* [수정 2] 'div' -> 'header'로 감싸고 'sticky' 속성 추가 */}
+            {/* (참고: bg-white와 border-gray-100 등 기존 스타일 유지) */}
+            <header className="sticky top-0 z-40 w-full bg-white">
+                <div className="px-4 py-6 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                        <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
+                            <ArrowLeft size={18} className="text-gray-600" />
+                        </Button>
+                        <h1 className="text-xl font-bold text-gray-900">단어장 선택</h1>
+                    </div>
                 </div>
-            </div>
+            </header>
 
-            {/* Wordbook List */}
-            <div className="px-4 py-6">
+            {/* [수정 3] Wordbook List: 동적 하단 여백 추가 */}
+            {/* 'pb-[calc(5rem+env(safe-area-inset-bottom))]' */}
+            <div className="px-4 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
                 <p className="text-sm text-gray-600 mb-6">학습할 단어장을 선택하여 공부를 시작하세요</p>
 
                 <div className="space-y-4">

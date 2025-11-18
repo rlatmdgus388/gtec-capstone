@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+// import { Textarea } from "@/components/ui/textarea" // (사용자님이 주신 코드에 Textarea import가 없습니다)
 import { ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -55,29 +55,33 @@ export function WordEditScreen({ wordbookName, onBack, onSave, initialData }: Wo
   }
 
   return (
-    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
-      {/* Header */}
-      <div className="px-2 py-4 bg-background">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">
-              <ArrowLeft size={22} className="text-foreground" />
-            </Button>
-            <h1 className="text-xl font-bold text-foreground">{isEditMode ? "단어 편집" : "단어 추가"}</h1>
-          </div>
-          <Button
-            variant="ghost"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            className="text-primary font-bold hover:bg-primary/10 text-base px-4"
-          >
-            저장
-          </Button>
-        </div>
-      </div>
+    // [수정 1] 'min-h-screen' -> 'flex flex-col'
+    <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
-      {/* Form */}
-      <div className="px-4 py-6">
+      {/* [수정 2] 'div' -> 'header', 'sticky' 추가, 'border-b' 추가 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
+        <div className="px-2 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">
+                <ArrowLeft size={22} className="text-foreground" />
+              </Button>
+              <h1 className="text-xl font-bold text-foreground">{isEditMode ? "단어 편집" : "단어 추가"}</h1>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="text-primary font-bold hover:bg-primary/10 text-base px-4"
+            >
+              저장
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* [수정 3] Form: 'pb-6' (단순 하단 여백) 추가 */}
+      <div className="px-4 py-6 pb-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="word" className="text-sm font-medium text-muted-foreground px-1">

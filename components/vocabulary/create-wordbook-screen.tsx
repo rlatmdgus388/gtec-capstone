@@ -57,8 +57,10 @@ export function CreateWordbookScreen({ onBack, onSave }: CreateWordbookScreenPro
   }
 
   return (
-    <div className={cn("flex-1 overflow-y-auto pb-20", "page-transition-enter")}>
-      <div className="bg-background sticky top-0 z-10">
+    // [수정 1] 'flex-1 overflow-y-auto pb-20' 클래스 제거
+    <div className={cn("flex flex-col", "page-transition-enter")}>
+      {/* [수정 2] 'div' -> 'header', 'sticky' 유지, 'border-b' 추가 */}
+      <header className="bg-background sticky top-0 z-40 w-full border-b">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">
@@ -69,9 +71,10 @@ export function CreateWordbookScreen({ onBack, onSave }: CreateWordbookScreenPro
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="px-4 py-6">
+      {/* [수정 3] 'pb-6' (단순 하단 여백) 추가 */}
+      <div className="px-4 py-6 pb-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField

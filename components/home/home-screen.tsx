@@ -1,6 +1,5 @@
 "use client"
 
-
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -49,7 +48,7 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
     streak: 0,
   })
 
-  // (데이터 로딩 함수들은 기존과 동일)
+  // ... (데이터 로딩 함수들은 기존과 동일) ...
   const fetchRecentWordbooks = useCallback(async () => {
     try {
       const allWordbooks: Wordbook[] = await fetchWithAuth("/api/wordbooks")
@@ -110,7 +109,7 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
 
   // --- 렌더링 ---
   if (showPhotoCapture) {
-    // ... (PhotoWordCapture 로직)
+    // ... (PhotoWordCapture 로직은 그대로)
   }
 
   if (showStatsScreen) {
@@ -123,11 +122,11 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
 
   // (기본) 홈 메인 화면
   return (
-    // 1. 'vocabulary-list-screen.tsx'와 동일하게 h-full flex flex-col 적용
-    <div className="h-full flex flex-col bg-background">
-      {/* 2. 'fixed' 대신 'shrink-0' 헤더 영역으로 변경 */}
-      <div className="bg-background shrink-0">
-        <div className="px-4 py-4"> {/* h-14, border-b 등 제거, py-4 추가 */}
+    // [수정 1] 'h-full' 제거
+    <div className="flex flex-col bg-background">
+      {/* [수정 2] 'div' -> 'header', 'sticky' 추가, 'shrink-0' 제거 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
+        <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
               <Home size={24} className="text-primary" />
@@ -137,10 +136,12 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* 3. 스크롤되는 컨텐츠 영역: 'pt-14' 제거, 'px-4 py-6' 적용 */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 pb-20">
+      {/* [수정 3] 스크롤 영역: 'overflow-y-auto' 제거
+        [수정 4] 'pb-20' -> 'pb-[calc(5rem+env(safe-area-inset-bottom))]'
+      */}
+      <div className="flex-1 px-4 py-6 space-y-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
         {/* Today's Learning Status Card */}
         <div onClick={handleStatsCardClick} className="cursor-pointer">
@@ -228,4 +229,3 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
     </div>
   )
 }
-// dd
