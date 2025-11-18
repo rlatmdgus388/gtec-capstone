@@ -118,25 +118,29 @@
 
 @layer base {
   html {
-    /* 1. (유지) 뷰포트의 오버스크롤 바운스 효과를 비활성화합니다. */
+    /* 1. (핵심) 뷰포트의 오버스크롤 바운스 효과를 비활성화합니다. */
     overscroll-behavior: none;
+    /* 2. (권장) html 태그가 항상 뷰포트 전체 높이를 차지하도록 합니다. */
+    /* @apply h-full;  <-- 잘 주석 처리 하셨습니다 */
   }
 
   body {
     @apply bg-background text-foreground;
 
-    /* ⬇️ ⬇️ ⬇️ [핵심 수정] ⬇️ ⬇️ ⬇️
+    /* ⬇️ ⬇️ ⬇️ 이 줄을 추가하세요 ⬇️ ⬇️ ⬇️
+      body 태그의 스크롤을 원천 차단합니다.
       'fixed'와 달리 레이아웃을 고정하지 않으므로,
       자식인 h-dvh 컨테이너는 동적으로 리사이징될 수 있습니다.
     */
-    /* @apply overflow-hidden; */
-    /* <--- 이 줄을 주석 처리 */
+    @apply overflow-hidden;
 
-    /* @apply h-full; */
+    /* @apply h-full;  <-- 잘 주석 처리 하셨습니다 */
   }
 
-  /* 네이티브 앱(Capacitor) 환경에서는 body 스크롤을 다시 허용하여
-    레이아웃이 겹치지 않도록 합니다. (이 부분은 유지)
+  /* ⬇️ ⬇️ ⬇️ 네이티브 앱을 위한 리셋 코드도 추가하세요 ⬇️ ⬇️ ⬇️
+    (이전 답변과 동일)
+    네이티브 앱(Capacitor) 환경에서는 body 스크롤을 다시 허용하여
+    레이아웃이 겹치지 않도록 합니다.
   */
   html.capacitor body {
     @apply overflow-auto;
@@ -145,4 +149,38 @@
   * {
     @apply border-border outline-ring/50;
   }
+}
+
+/* 슬라이드 - 오->왼 */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0.8;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.page-transition-enter {
+  animation: slide-in-from-right 0.25s ease-out forwards;
+}
+
+/* 슬라이드- 왼->오 */
+@keyframes slide-in-from-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.8;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.page-transition-enter-from-left {
+  animation: slide-in-from-left 0.25s ease-out forwards;
 }
