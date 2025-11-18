@@ -12,6 +12,7 @@ import Papa from "papaparse" // [참고] Papa.ParseResult 타입을 위해
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils" // [추가] cn 유틸리티 추가
 
 interface Wordbook {
     id: string
@@ -255,19 +256,23 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
         (destination === 'new' && (!newWordbookName.trim() || !newWordbookCategory.trim()))
 
     return (
-        <div className="flex flex-col h-full bg-background page-transition-enter">
-            {/* 헤더 */}
-            <div className="flex items-center p-4 shrink-0">
-                <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2">
-                    <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <div className="flex-1 min-w-0 mx-2">
-                    <h1 className="text-lg font-semibold truncate">CSV 파일로 불러오기</h1>
-                </div>
-            </div>
+        // [수정 1] 'h-full' 제거, 'flex flex-col' 유지
+        <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
-            {/* 스크롤 영역 */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
+            {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
+            <header className="sticky top-0 z-40 w-full bg-background border-b">
+                <div className="flex items-center p-4">
+                    <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2">
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <div className="flex-1 min-w-0 mx-2">
+                        <h1 className="text-lg font-semibold truncate">CSV 파일로 불러오기</h1>
+                    </div>
+                </div>
+            </header>
+
+            {/* [수정 3] 'overflow-y-auto' 제거, 'pb' 값 수정 */}
+            <div className="flex-1 p-4 space-y-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
                 {/* 1단계: 파일 업로드 */}
                 <Card className="border shadow-sm rounded-xl">
@@ -442,6 +447,3 @@ export function ImportScreen({ onBack }: ImportScreenProps) {
         </div>
     )
 }
-
-
-// 이거

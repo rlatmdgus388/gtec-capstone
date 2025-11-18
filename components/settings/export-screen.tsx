@@ -1,4 +1,3 @@
-// components/settings/export-screen.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -9,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { fetchWithAuth } from "@/lib/api"
 import { auth } from "@/lib/firebase"
 import { Card, CardContent } from "@/components/ui/card" // [!!!] Card, CardContent 임포트
+import { cn } from "@/lib/utils" // [추가] cn 유틸리티 추가
 
 interface Wordbook {
     id: string
@@ -105,29 +105,30 @@ export function ExportScreen({ onBack }: ExportScreenProps) {
     }
 
     return (
-        <div className="flex flex-col h-full bg-background page-transition-enter">
-            {/* 헤더 (고정) */}
-            <div className="flex items-center p-4 shrink-0">
-                <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2">
-                    <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <div className="flex-1 min-w-0 mx-2">
-                    <h1 className="text-lg font-semibold truncate">CSV로 내보내기</h1>
-                </div>
-            </div>
+        // [수정 1] 'h-full' 제거, 'flex flex-col' 유지
+        <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
-            {/* [!!!] 수정된 스크롤 영역 (study-screen.tsx 스타일 적용) */}
-            <div className="flex-1 overflow-y-auto pb-20">
-                {/* [!!!] px-4 pt-4 space-y-3 적용 */}
+            {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
+            <header className="sticky top-0 z-40 w-full bg-background border-b">
+                <div className="flex items-center p-4">
+                    <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2">
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <div className="flex-1 min-w-0 mx-2">
+                        <h1 className="text-lg font-semibold truncate">CSV로 내보내기</h1>
+                    </div>
+                </div>
+            </header>
+
+            {/* [수정 3] 'overflow-y-auto' 제거, 'pb' 값 수정 */}
+            <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">
                 <div className="px-4 pt-4 space-y-3">
                     {isLoading ? (
-                        // [!!!] 스켈레톤 스타일 (study-screen 참조)
                         <div className="space-y-2">
                             <Skeleton className="h-20 w-full rounded-xl" />
                             <Skeleton className="h-20 w-full rounded-xl" />
                         </div>
                     ) : wordbooks.length === 0 ? (
-                        // [!!!] 빈 상태 (study-screen 참조)
                         <Card className="border border-border rounded-xl bg-card">
                             <CardContent className="p-6 text-center text-muted-foreground">
                                 단어장이 없습니다.
@@ -135,12 +136,10 @@ export function ExportScreen({ onBack }: ExportScreenProps) {
                         </Card>
                     ) : (
                         wordbooks.map((wb) => (
-                            // [!!!] Card 스타일 적용 (study-screen 참조)
                             <Card
                                 key={wb.id}
                                 className="transition-all duration-200 border border-border shadow-sm bg-card rounded-xl"
                             >
-                                {/* [!!!] CardContent 패딩 p-3 적용 */}
                                 <CardContent className="p-3">
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">

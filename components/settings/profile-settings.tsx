@@ -143,38 +143,41 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
   }
 
   return (
-    <div className={cn("min-h-screen bg-background flex flex-col", "page-transition-enter")}>
-      {/* Header */}
-      <div className="bg-background sticky top-0 z-10">
-  <div className="flex items-center justify-between p-4">
-    {/* ← 왼쪽: [뒤로가기 버튼 + 제목] 묶음 */}
-    <div className="flex items-center gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onBack}
-        className="text-foreground hover:bg-accent"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-      <h1 className="font-bold text-foreground whitespace-nowrap">
-        프로필 설정
-      </h1>
-    </div>
+    // [수정 1] 'min-h-screen' 제거, 'flex flex-col' 유지
+    <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
-    {/* → 오른쪽: 편집/취소 버튼 */}
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => (isEditing ? handleCancel() : setIsEditing(true))}
-      className="text-primary hover:bg-primary/10"
-    >
-      {isEditing ? "취소" : "편집"}
-    </Button>
+      {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
+        <div className="flex items-center justify-between p-4">
+          {/* ← 왼쪽: [뒤로가기 버튼 + 제목] 묶음 */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="text-foreground hover:bg-accent -ml-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="font-bold text-foreground whitespace-nowrap">
+              프로필 설정
+            </h1>
+          </div>
+
+          {/* → 오른쪽: 편집/취소 버튼 */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => (isEditing ? handleCancel() : setIsEditing(true))}
+            className="text-primary hover:bg-primary/10"
+          >
+            {isEditing ? "취소" : "편집"}
+          </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
+      {/* [수정 3] 'overflow-y-auto' 제거, 'pb' 값 수정 */}
+      <div className="flex-1 p-4 space-y-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {/* Profile Photo */}
         <Card className="bg-card border border-border shadow-sm rounded-xl">
           <CardContent className="p-6">

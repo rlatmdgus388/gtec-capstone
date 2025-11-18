@@ -1,4 +1,3 @@
-// components/settings/settings-screen.tsx
 "use client"
 import { Bell, Download, ChevronRight, User, Upload, LogOut, Settings, Palette } from "lucide-react"
 import { useState } from "react"
@@ -58,11 +57,11 @@ export function SettingsScreen({ onLogout, refreshKey }: SettingsScreenProps) {
   }
 
   return (
-    // 1. 루트 레이아웃: 화면 전체 높이 및 Flex 구조 적용
-    <div className="h-full flex flex-col bg-background">
+    // [수정 1] 'h-full' 제거, 'flex flex-col' 유지
+    <div className="flex flex-col bg-background">
 
-      {/* 2. 상단 헤더: 고정(shrink-0) 및 스타일 통일 */}
-      <div className="bg-background shrink-0">
+      {/* [수정 2] 'header' 태그로 변경, 'sticky' 속성 추가 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             {/* 아이콘 박스: w-10 h-10으로 정사각형 비율 맞춤 */}
@@ -74,82 +73,79 @@ export function SettingsScreen({ onLogout, refreshKey }: SettingsScreenProps) {
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* 3. 컨텐츠 영역: 남은 공간 차지 및 스크롤 적용 */}
-      <div className="flex-1 overflow-y-auto pb-20">
-        {/* 여백: 홈 화면과 동일하게 px-4 py-6 적용 */}
-        <div className="px-4 py-6 space-y-3">
+      {/* [수정 3] 'overflow-y-auto' 제거, 'pb' 값 수정, 내부 패딩 통합 */}
+      <div className="flex-1 px-4 py-6 space-y-3 pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
-          <button
-            onClick={handleViewProfile}
-            className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
-          >
-            <div className="flex items-center gap-4">
-              <User size={24} className="text-foreground" />
-              <span className="font-semibold text-foreground text-base">프로필</span>
-            </div>
-            <ChevronRight size={20} className="text-muted-foreground" />
-          </button>
-
-          <button
-            onClick={handleViewTheme}
-            className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
-          >
-            <div className="flex items-center gap-4">
-              <Palette size={24} className="text-foreground" />
-              <span className="font-semibold text-foreground text-base">테마</span>
-            </div>
-            <ChevronRight size={20} className="text-muted-foreground" />
-          </button>
-
-          <button
-            onClick={handleViewNotifications}
-            className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
-          >
-            <div className="flex items-center gap-4">
-              <Bell size={24} className="text-foreground" />
-              <span className="font-semibold text-foreground text-base">알림</span>
-            </div>
-            <ChevronRight size={20} className="text-muted-foreground" />
-          </button>
-
-          {/* [!!!] '불러오기' 버튼 */}
-          <button
-            onClick={handleImportClick}
-            className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
-          >
-            <div className="flex items-center gap-4">
-              <Upload size={24} className="text-foreground" />
-              <span className="font-semibold text-foreground text-base">CSV 파일로 단어 불러오기</span>
-            </div>
-            <ChevronRight size={20} className="text-muted-foreground" />
-          </button>
-
-          {/* '내보내기' 버튼 */}
-          <button
-            onClick={handleViewExport}
-            className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
-          >
-            <div className="flex items-center gap-4">
-              <Download size={24} className="text-foreground" />
-              <span className="font-semibold text-foreground text-base">CSV 파일로 단어 내보내기</span>
-            </div>
-            <ChevronRight size={20} className="text-muted-foreground" />
-          </button>
-
-          {/* 로그아웃 버튼 */}
-          <div className="pt-4 mt-4 border-t border-border">
-            <button
-              onClick={handleLogout}
-              className="flex items-center justify-between p-3 w-full text-left hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors rounded-xl border border-border bg-card"
-            >
-              <div className="flex items-center gap-4">
-                <LogOut size={24} className="text-red-600" />
-                <span className="font-semibold text-red-600 text-base">로그아웃</span>
-              </div>
-            </button>
+        <button
+          onClick={handleViewProfile}
+          className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
+        >
+          <div className="flex items-center gap-4">
+            <User size={24} className="text-foreground" />
+            <span className="font-semibold text-foreground text-base">프로필</span>
           </div>
+          <ChevronRight size={20} className="text-muted-foreground" />
+        </button>
+
+        <button
+          onClick={handleViewTheme}
+          className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
+        >
+          <div className="flex items-center gap-4">
+            <Palette size={24} className="text-foreground" />
+            <span className="font-semibold text-foreground text-base">테마</span>
+          </div>
+          <ChevronRight size={20} className="text-muted-foreground" />
+        </button>
+
+        <button
+          onClick={handleViewNotifications}
+          className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
+        >
+          <div className="flex items-center gap-4">
+            <Bell size={24} className="text-foreground" />
+            <span className="font-semibold text-foreground text-base">알림</span>
+          </div>
+          <ChevronRight size={20} className="text-muted-foreground" />
+        </button>
+
+        {/* [!!!] '불러오기' 버튼 */}
+        <button
+          onClick={handleImportClick}
+          className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
+        >
+          <div className="flex items-center gap-4">
+            <Upload size={24} className="text-foreground" />
+            <span className="font-semibold text-foreground text-base">CSV 파일로 단어 불러오기</span>
+          </div>
+          <ChevronRight size={20} className="text-muted-foreground" />
+        </button>
+
+        {/* '내보내기' 버튼 */}
+        <button
+          onClick={handleViewExport}
+          className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-xl border border-border bg-card"
+        >
+          <div className="flex items-center gap-4">
+            <Download size={24} className="text-foreground" />
+            <span className="font-semibold text-foreground text-base">CSV 파일로 단어 내보내기</span>
+          </div>
+          <ChevronRight size={20} className="text-muted-foreground" />
+        </button>
+
+        {/* 로그아웃 버튼 */}
+        <div className="pt-4 mt-4 border-t border-border">
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-between p-3 w-full text-left hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors rounded-xl border border-border bg-card"
+          >
+            <div className="flex items-center gap-4">
+              <LogOut size={24} className="text-red-600" />
+              <span className="font-semibold text-red-600 text-base">로그아웃</span>
+            </div>
+          </button>
         </div>
       </div>
     </div>

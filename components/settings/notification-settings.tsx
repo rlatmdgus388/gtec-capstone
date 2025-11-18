@@ -22,18 +22,21 @@ export function NotificationSettings({ onBack }: NotificationSettingsProps) {
   }
 
   return (
-    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
-      {/* Header */}
-      <div className="px-4 py-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
-            <ArrowLeft size={18} className="text-muted-foreground" />
+    // [수정 1] 'min-h-screen' 제거, 'flex flex-col' 추가
+    <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
+
+      {/* [수정 2] 'header' 태그로 변경, 'sticky' 속성 추가 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
+        <div className="px-4 py-4 flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">
+            <ArrowLeft size={20} className="text-foreground" />
           </Button>
           <h1 className="text-xl font-bold text-foreground">알림 설정</h1>
         </div>
-      </div>
+      </header>
 
-      <div className="px-4 py-6 space-y-4">
+      {/* [수정 3] 'flex-1' 및 하단 여백(pb) 추가 */}
+      <div className="flex-1 px-4 py-6 space-y-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <Card className="border border-border bg-card rounded-2xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold text-card-foreground flex items-center gap-2">
