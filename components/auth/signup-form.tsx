@@ -4,7 +4,8 @@ import type React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Check, Eye, EyeOff, ArrowLeft, Mail, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Firebase
 import { auth, db } from "@/lib/firebase";
@@ -35,7 +36,6 @@ export function SignupForm({ onBackToLogin, onSignupSuccess }: SignupFormProps) 
 
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
   const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
-  const [emailSent, setEmailSent] = useState(false);
 
   // 이메일 정규식 검사
   const validateEmail = (email: string) => {
@@ -82,7 +82,7 @@ export function SignupForm({ onBackToLogin, onSignupSuccess }: SignupFormProps) 
 
     setIsLoading(true);
     try {
-      // 1) Auth에 사용자 생성 (자동으로 로그인 상태가 됨)
+      // 1) Auth에 사용자 생성
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
@@ -100,7 +100,6 @@ export function SignupForm({ onBackToLogin, onSignupSuccess }: SignupFormProps) 
         createdAt: serverTimestamp(),
       });
 
-      setEmailSent(true);
       setCurrentStep(2);
     } catch (error: any) {
       console.error("회원가입 에러:", error);
@@ -116,7 +115,7 @@ export function SignupForm({ onBackToLogin, onSignupSuccess }: SignupFormProps) 
     }
   };
 
-  // 재사용 가능한 인증메일 전송 함수
+  // 인증메일 전송 함수
   const sendVerificationEmail = async (user: User) => {
     try {
       await sendEmailVerification(user);
@@ -126,13 +125,13 @@ export function SignupForm({ onBackToLogin, onSignupSuccess }: SignupFormProps) 
     }
   };
 
-  // 인증메일 재전송 (current user가 있어야 동작)
+  // 인증메일 재전송
   const handleResendEmail = async () => {
     setIsLoading(true);
     try {
       const current = auth.currentUser;
       if (!current) {
-        alert("현재 인증 재전송을 수행할 수 있는 사용자가 없습니다. 로그인 상태를 확인해주세요.");
+        alert("로그인 상태를 확인해주세요.");
         return;
       }
       await sendVerificationEmail(current);
@@ -145,29 +144,31 @@ export function SignupForm({ onBackToLogin, onSignupSuccess }: SignupFormProps) 
     }
   };
 
-  const handleSignupComplete = () => {
-    onSignupSuccess();
-  };
-
-  // Step 2: 인증메일 보냈습니다 화면
+  // Step 2: 인증메일 확인 화면
   if (currentStep === 2) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="w-full max-w-sm">
           <div className="flex items-center justify-between mb-8">
-            <Button variant="ghost" size="sm" onClick={onBackToLogin} className="p-2">
-              <ArrowLeft size={20} className="text-[#FF7A00]" />
+            <Button variant="ghost" size="icon" onClick={onBackToLogin} className="hover:bg-muted">
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Button>
-            <h1 className="text-xl font-semibold text-gray-900">회원가입</h1>
-            <div className="w-10" />
+            <h1 className="text-lg font-semibold text-foreground">회원가입 완료</h1>
+            <div className="w-9" />
           </div>
 
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-8">
             <div className="space-y-4">
-              <h2 className="text-lg font-medium text-gray-900">인증메일을 보내드렸어요 😊</h2>
-              <div className="space-y-2">
-                <p className="text-base font-medium text-gray-900">{formData.email}</p>
-                <p className="text-sm text-gray-600">메일을 확인하고 가입을 완료하세요!</p>
+              <div className="w-20 h-20 bg-[#FF7A00]/10 rounded-full flex items-center justify-center mx-auto">
+                <Mail className="w-10 h-10 text-[#FF7A00]" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">인증 메일 발송!</h2>
+              <div className="space-y-1">
+                <p className="text-base font-medium text-primary">{formData.email}</p>
+                <p className="text-sm text-muted-foreground">
+                  위 주소로 인증 메일을 보내드렸어요.<br />
+                  메일 확인 후 가입을 완료해주세요.
+                </p>
               </div>
             </div>
 
@@ -176,16 +177,23 @@ export function SignupForm({ onBackToLogin, onSignupSuccess }: SignupFormProps) 
                 onClick={handleResendEmail}
                 disabled={isLoading}
                 variant="outline"
-                className="w-full h-12 text-base font-medium border-2 border-gray-200 hover:bg-gray-50 bg-white rounded-full"
+                className="w-full h-14 text-base font-medium rounded-full border-border bg-background hover:bg-accent text-foreground"
               >
-                {isLoading ? "전송 중..." : "인증 메일 재발송"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    전송 중...
+                  </>
+                ) : (
+                  "인증 메일 재발송"
+                )}
               </Button>
 
               <Button
-                onClick={handleSignupComplete}
-                className="w-full h-12 text-base font-medium bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-full"
+                onClick={onSignupSuccess}
+                className="w-full h-14 text-base font-medium bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white rounded-full shadow-md"
               >
-                가입완료
+                로그인하러 가기
               </Button>
             </div>
           </div>
@@ -194,121 +202,147 @@ export function SignupForm({ onBackToLogin, onSignupSuccess }: SignupFormProps) 
     );
   }
 
-  // Step 1: 폼 화면
+  // Step 1: 회원가입 폼 화면
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">회원가입</h1>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 transition-colors duration-300">
+      <div className="w-full max-w-md animate-in fade-in duration-500">
+        <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={onBackToLogin}
+            className="pl-0 hover:bg-transparent hover:text-muted-foreground text-muted-foreground/80 mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            돌아가기
+          </Button>
+          <h1 className="text-3xl font-bold text-foreground">회원가입</h1>
+          <p className="text-muted-foreground mt-2">서비스 이용을 위해 정보를 입력해주세요.</p>
+        </div>
 
-        <form onSubmit={handleSignup} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">이름</label>
+        <form onSubmit={handleSignup} className="space-y-5">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">이름</label>
             <Input
               type="text"
               placeholder="홍길동"
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              className="w-full h-12 text-base bg-gray-50 border border-gray-200 rounded-full px-4 placeholder:text-gray-400"
+              className="w-full h-12 text-base bg-card border-border text-foreground rounded-full px-4 placeholder:text-muted-foreground/50 focus-visible:ring-[#FF7A00]"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">이메일</label>
             <div className="relative">
               <Input
                 type="email"
                 placeholder="you@example.com"
                 value={formData.email}
                 onChange={(e) => handleEmailChange(e.target.value)}
-                className={`w-full h-12 text-base bg-gray-50 border rounded-full px-4 pr-10 placeholder:text-gray-400 ${
-                  emailValid === true
-                    ? "border-green-500"
-                    : emailValid === false
-                    ? "border-red-500"
-                    : "border-gray-200"
-                }`}
+                className={cn(
+                  "w-full h-12 text-base bg-card rounded-full px-4 pr-10 placeholder:text-muted-foreground/50 focus-visible:ring-[#FF7A00]",
+                  emailValid === true && "border-green-500 focus-visible:ring-green-500",
+                  emailValid === false && "border-red-500 focus-visible:ring-red-500",
+                  emailValid === null && "border-border"
+                )}
                 required
               />
-              {emailValid === true && <Check className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" size={20} />}
-            </div>
-            {emailValid === true && <p className="text-sm text-green-600 mt-1">사용 가능한 이메일입니다</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => handlePasswordChange(e.target.value)}
-                className={`w-full h-12 text-base bg-gray-50 border rounded-full px-4 pr-10 placeholder:text-gray-400 ${
-                  formData.password.length >= 6 && passwordMatch !== false ? "border-green-500" : "border-gray-200"
-                }`}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-              {formData.password.length >= 6 && passwordMatch !== false && (
-                <Check className="absolute right-10 top-1/2 -translate-y-1/2 text-green-500" size={20} />
+              {emailValid === true && (
+                <Check className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
               )}
             </div>
-            {formData.password.length > 0 && formData.password.length < 6 && (
-              <p className="text-sm text-gray-500 mt-1">비밀번호는 6자 이상 입력해주세요</p>
+            {emailValid === true && (
+              <p className="text-xs text-green-500 pl-2">사용 가능한 이메일입니다</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호 확인</label>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">비밀번호</label>
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="6자 이상 입력"
+                value={formData.password}
+                onChange={(e) => handlePasswordChange(e.target.value)}
+                className={cn(
+                  "w-full h-12 text-base bg-card rounded-full px-4 pr-12 placeholder:text-muted-foreground/50 focus-visible:ring-[#FF7A00]",
+                  formData.password.length >= 6 && passwordMatch !== false ? "border-green-500 focus-visible:ring-green-500" : "border-border"
+                )}
+                required
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                {formData.password.length >= 6 && passwordMatch !== false && (
+                  <Check className="text-green-500" size={18} />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+            {formData.password.length > 0 && formData.password.length < 6 && (
+              <p className="text-xs text-muted-foreground pl-2">비밀번호는 6자 이상이어야 합니다</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">비밀번호 확인</label>
             <div className="relative">
               <Input
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="비밀번호 재입력"
                 value={formData.confirmPassword}
                 onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                className={`w-full h-12 text-base bg-gray-50 border rounded-full px-4 pr-10 placeholder:text-gray-400 ${
-                  passwordMatch === true
-                    ? "border-green-500"
-                    : passwordMatch === false
-                    ? "border-red-500"
-                    : "border-gray-200"
-                }`}
+                className={cn(
+                  "w-full h-12 text-base bg-card rounded-full px-4 pr-12 placeholder:text-muted-foreground/50 focus-visible:ring-[#FF7A00]",
+                  passwordMatch === true && "border-green-500 focus-visible:ring-green-500",
+                  passwordMatch === false && "border-red-500 focus-visible:ring-red-500",
+                  passwordMatch === null && "border-border"
+                )}
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-              {passwordMatch === true && <Check className="absolute right-10 top-1/2 -translate-y-1/2 text-green-500" size={20} />}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                {passwordMatch === true && (
+                  <Check className="text-green-500" size={18} />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-            {passwordMatch === false && <p className="text-sm text-red-600 mt-1">비밀번호가 일치하지 않습니다</p>}
+            {passwordMatch === false && (
+              <p className="text-xs text-red-500 pl-2">비밀번호가 일치하지 않습니다</p>
+            )}
           </div>
 
           <Button
             type="submit"
             disabled={isLoading || !isFormValid}
-            className={`w-full h-12 text-base font-medium rounded-full mt-6 ${
-              isFormValid ? "bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
+            className={cn(
+              "w-full h-14 text-base font-medium rounded-full mt-8 shadow-md transition-all",
+              isFormValid
+                ? "bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white hover:shadow-lg"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )}
           >
-            {isLoading ? "가입 중..." : "가입하기"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                가입 처리 중...
+              </>
+            ) : (
+              "가입하기"
+            )}
           </Button>
         </form>
-
-        <div className="mt-6 text-center">
-          <button onClick={onBackToLogin} className="text-sm text-gray-500 hover:text-gray-700">
-            ← 돌아가기
-          </button>
-        </div>
       </div>
     </div>
   );
