@@ -1,3 +1,4 @@
+// components/vocabulary/vocabulary-screen.tsx
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -11,7 +12,6 @@ import { fetchWithAuth } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 
-// ... (Wordbook, VocabularyScreenProps 인터페이스는 동일) ...
 interface Wordbook {
   id: string
   name: string
@@ -30,14 +30,12 @@ interface VocabularyScreenProps {
   onNavigateToStudy?: (wordbookId: string) => void
 }
 
-
 export function VocabularyScreen({
   onWordbookSelect,
   onStartCreate,
   refreshKey,
   onNavigateToStudy,
 }: VocabularyScreenProps) {
-  // ... (모든 state와 핸들러 함수들은 그대로) ...
   const [searchQuery, setSearchQuery] = useState("")
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -121,8 +119,9 @@ export function VocabularyScreen({
   }
 
   return (
-    // [수정 1] 'h-full' 제거
-    <div className="flex flex-col">
+    // 'h-full flex flex-col' (o)
+    // AuthManager의 main(flex-1)을 가득 채웁니다. 이게 맞습니다.
+    <div className="h-full flex flex-col">
       <ImageSelectionModal
         open={showImageSelection}
         onClose={() => setShowImageSelection(false)}
@@ -130,9 +129,8 @@ export function VocabularyScreen({
         onGallerySelect={handleGallerySelect}
       />
 
-      {/* [수정 2] <header> 태그로 변경, 'sticky' 속성 추가 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
-        {/* 'shrink-0'는 제거해도 됩니다. */}
+      {/* 헤더는 'shrink-0' (o) */}
+      <div className="bg-background shrink-0">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -164,10 +162,19 @@ export function VocabularyScreen({
             </Button>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* [수정 3] 'overflow-y-auto'와 'pb-20' 제거 */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
+      {/*
+        [핵심 수정] 스크롤 영역 'flex-1 overflow-y-auto' (o)
+        'pb-20'을 "정확한 계산값"으로 변경합니다.
+      */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        {/*
+          '4rem' = BottomNav의 높이(h-16)
+          'env(...)` = BottomNav의 홈 인디케이터 여백
+          이 둘을 더한 값만큼 패딩을 줘서,
+          스크롤을 끝까지 내려도 콘텐츠가 가려지지 않게 합니다.
+        */}
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-28 w-full rounded-xl" />
@@ -189,7 +196,7 @@ export function VocabularyScreen({
                 onClick={() => onWordbookSelect(wordbook)}
               >
                 <CardContent className="p-4">
-                  {/* ... (Card 내용은 그대로) ... */}
+                  {/* ... (Card 내용은 동일) ... */}
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -233,4 +240,3 @@ export function VocabularyScreen({
     </div>
   )
 }
-// 이거
