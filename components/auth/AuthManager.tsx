@@ -222,24 +222,18 @@ export default function AuthManager() {
   }
 
   // [수정 1] 'h-screen' -> 'min-h-screen'
-  // 이렇게 변경하면 콘텐츠가 길어질 때 body가 스크롤됩니다.
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto">
 
       {/* [수정 2] 'overflow-hidden' 제거 */}
-      {/* main이 스크롤되는 게 아니라, body가 스크롤되도록 합니다. */}
       <main className="flex-1">
         {renderScreen()}
       </main>
 
-      {/* [수정 3] <BottomNav>를 <footer>로 감싸고 sticky 속성 추가 */}
+      {/* [수정 3] 'footer' 래퍼 제거 (BottomNav가 fixed이므로) */}
       {!(activeTab === "vocabulary" && isCreatingWordbook) && (
-        <footer className="sticky bottom-0 z-40 w-full border-t bg-background">
-          <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-        </footer>
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
       )}
     </div>
   )
 }
-
-// 이거

@@ -1,66 +1,56 @@
 // components/navigation/bottom-nav.tsx
 "use client"
 
-import { Home, BookOpen, Brain, Users, Settings } from "lucide-react"
+// [수정] 'GraduationCap' 아이콘을 import합니다.
+import { Home, BookOpen, GraduationCap, Users, Settings } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-// NavItem 인터페이스
-interface NavItemProps {
-  icon: React.ElementType
-  label: string
-  isActive: boolean
-  onClick: () => void
-}
-
-// BottomNavProps 인터페이스
 interface BottomNavProps {
   activeTab: string
   onTabChange: (tab: string) => void
 }
 
-// NavItem 컴포넌트
-const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, isActive, onClick }) => {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-        }`}
-    >
-      <Icon size={24} className="mb-0.5" />
-      <span className="text-xs font-medium">{label}</span>
-    </button>
-  )
-}
-
-// 내비게이션 아이템 데이터
-const navItems = [
-  { id: "home", icon: Home, label: "홈" },
-  { id: "vocabulary", icon: BookOpen, label: "단어장" },
-  { id: "study", icon: Brain, label: "학습" },
-  { id: "community", icon: Users, label: "커뮤니티" },
-  { id: "settings", icon: Settings, label: "설정" },
+// [수정] 탭 목록을 새 스타일에 맞게 변경합니다.
+const tabs = [
+  { id: "home", label: "홈", icon: Home },
+  { id: "vocabulary", label: "단어장", icon: BookOpen },
+  { id: "study", label: "학습", icon: GraduationCap },
+  { id: "community", label: "커뮤니티", icon: Users },
+  { id: "settings", label: "설정", icon: Settings },
 ]
 
-// BottomNav 컴포넌트
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
-    // [수정] 바깥쪽 div에는 높이(h-16)가 없습니다.
-    <div className="w-full max-w-md bg-background">
+    // [수정] 'fixed' 스타일을 적용합니다.
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
       {/*
-        [핵심 수정] 안쪽 div가 실제 높이(h-16)와
-        홈 인디케이터 여백(pb-[env(safe-area-inset-bottom)])을 모두 가집니다.
+        [핵심 수정]
+        'py-2'를 'pt-2' (위쪽 여백)와
+        'pb-[calc(0.5rem+env(safe-area-inset-bottom))]' (아래쪽 여백 + 안전 영역)
+        으로 분리합니다. 'py-2'는 0.5rem입니다.
       */}
-      <div
-        className="flex h-16 items-center justify-around pb-[env(safe-area-inset-bottom)]"
-      >
-        {navItems.map((item) => (
-          <NavItem
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            isActive={activeTab === item.id}
-            onClick={() => onTabChange(item.id)}
-          />
-        ))}
+      <div className="flex items-center justify-around px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] max-w-md mx-auto">
+        {tabs.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+          return (
+            // [수정] 새로운 버튼 스타일을 적용합니다.
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={cn(
+                "flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-colors min-w-0 flex-1",
+                isActive
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+              )}
+            >
+              {/* [수정] Icon size={20}, mb-1 */}
+              <Icon size={20} className="mb-1" />
+              <span className="text-xs font-medium truncate">{tab.label}</span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
