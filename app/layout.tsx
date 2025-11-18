@@ -31,21 +31,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <ThemeProvider>
-          {/* h-dvh(전체 화면 높이)를 가진 flex 컨테이너 */}
-          <div className="flex h-dvh flex-col">
-            {/*
-              [핵심 수정]
-              이 <main> 태그가 스크롤을 하지 않도록 수정합니다.
-              'overflow-y-auto'와 'pb-[...]' 클래스를 제거합니다.
-              
-              이제 이 태그는 스크롤 없이,
-              자식 컴포넌트(AuthManager -> VocabularyScreen)가
-              높이를 100% 차지하도록 공간만(flex-1) 물려줍니다.
-            */}
-            <main className="flex-1 min-h-0">
-              <Suspense fallback={null}>{children}</Suspense>
-            </main>
-          </div>
+          {/*
+            [핵심 수정]
+            <div className="flex h-dvh flex-col"> 와
+            <main className="flex-1 min-h-0"> 를 제거했습니다.
+            
+            Suspense와 children이 ThemeProvider 바로 밑에 와서
+            자식 컴포넌트가 body에서 직접 렌더링되도록 합니다.
+          */}
+          <Suspense fallback={null}>{children}</Suspense>
+
           <Toaster />
         </ThemeProvider>
         <Analytics />
