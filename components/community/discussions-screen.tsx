@@ -136,8 +136,11 @@ export function DiscussionsScreen({ onBack, onViewDiscussion }: DiscussionsScree
 
   // 기본 리스트 스크린
   return (
-    <div className={cn("h-full flex flex-col bg-background", "page-transition-enter")}>
-      <div className="bg-background shrink-0">
+    // [수정 1] 'h-full' 제거, 'flex flex-col' 유지
+    <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
+
+      {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
@@ -150,9 +153,10 @@ export function DiscussionsScreen({ onBack, onViewDiscussion }: DiscussionsScree
             글쓰기
           </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1 overflow-y-auto pb-20">
+      {/* [수정 3] 'overflow-y-auto' 제거, 'pb' 값 수정 */}
+      <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <div className="p-4 space-y-4">
           <div className="flex space-x-2 overflow-x-auto pb-2">
             {CATEGORIES.map((category) => (

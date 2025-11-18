@@ -121,11 +121,11 @@ export function SharedWordbooksScreen({
     <>
       <ShareWordbookDialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen} onShared={fetchWordbooks} />
 
-      {/* ✅ [수정] 1. 'flex-1 overflow-y-auto pb-20' -> 'h-full flex flex-col' */}
-      <div className={cn("h-full flex flex-col bg-background", "page-transition-enter")}>
+      {/* [수정 1] 'h-full' 제거, 'flex flex-col' 유지 */}
+      <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
-        {/* ✅ [수정] 2. 고정될 헤더 영역. 'sticky top-0 z-10' -> 'shrink-0' */}
-        <div className="bg-background shrink-0 p-4">
+        {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
+        <header className="sticky top-0 z-40 w-full bg-background border-b p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
@@ -168,10 +168,10 @@ export function SharedWordbooksScreen({
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
-        </div>
+        </header>
 
-        {/* ✅ [수정] 3. 스크롤될 콘텐츠 영역. 'flex-1 overflow-y-auto' + 'pb-20' 적용 */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 pb-20">
+        {/* [수정 3] 'overflow-y-auto' 제거, 'pb' 값 수정 */}
+        <div className="flex-1 p-4 space-y-2 pb-[calc(5rem+env(safe-area-inset-bottom))]">
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-24 w-full" />

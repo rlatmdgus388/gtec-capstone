@@ -6,6 +6,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription, // [추가] 접근성을 위한 Description 컴포넌트
     DialogFooter,
     DialogClose,
 } from "@/components/ui/dialog";
@@ -15,8 +16,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchWithAuth } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// [수정] id 타입을 number -> string으로 변경 (다른 컴포넌트와 통일)
 interface Wordbook {
-    id: number;
+    id: string;
     name: string;
     wordCount: number;
     category: string;
@@ -89,9 +91,12 @@ export function ShareWordbookDialog({ open, onOpenChange, onShared }: ShareWordb
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>단어장 공유하기</DialogTitle>
+                    {/* [추가] 접근성을 위해 DialogDescription 추가 */}
+                    <DialogDescription>
+                        커뮤니티에 공유할 단어장을 선택해주세요.
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                    <p className="text-sm text-gray-500 mb-4">공유할 단어장을 선택하세요.</p>
                     <ScrollArea className="h-72">
                         <div className="pr-4 space-y-2">
                             {isLoading ? (
@@ -110,7 +115,6 @@ export function ShareWordbookDialog({ open, onOpenChange, onShared }: ShareWordb
                                     >
                                         <CardContent className="p-3">
                                             <h4 className="font-semibold">{wb.name}</h4>
-                                            {/* [수정] 5번 요청: '단어' -> 'words' */}
                                             <p className="text-sm text-gray-500">{wb.wordCount} words</p>
                                         </CardContent>
                                     </Card>
@@ -123,10 +127,8 @@ export function ShareWordbookDialog({ open, onOpenChange, onShared }: ShareWordb
                 </div>
                 <DialogFooter className="flex-row gap-3">
                     <DialogClose asChild>
-                        {/* 2. flex-1: 남는 공간을 1:1로 나눠가짐 */}
                         <Button variant="outline" onClick={() => setSelectedWordbook(null)} className="flex-1">취소</Button>
                     </DialogClose>
-                    {/* 3. flex-1: 남는 공간을 1:1로 나눠가짐 */}
                     <Button onClick={handleShare} disabled={!selectedWordbook} className="flex-1">
                         선택한 단어장 공유
                     </Button>

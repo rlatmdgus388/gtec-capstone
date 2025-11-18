@@ -248,9 +248,11 @@ export function DiscussionDetailScreen({
 
   return (
     <>
-      <div className={cn("h-full flex flex-col bg-background", "page-transition-enter-from-left")}>
+      {/* [수정 1] 'h-full' 제거 */}
+      <div className={cn("flex flex-col bg-background", "page-transition-enter-from-left")}>
 
-        <div className="bg-background shrink-0 p-4 flex items-center">
+        {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
+        <header className="sticky top-0 z-40 w-full bg-background border-b flex items-center p-4">
           <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -283,9 +285,10 @@ export function DiscussionDetailScreen({
               </DropdownMenu>
             </div>
           )}
-        </div>
+        </header>
 
-        <div className="flex-1 overflow-y-auto pb-20">
+        {/* [수정 3] 'overflow-y-auto' 제거, 'pb' 값 수정 */}
+        <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">
           <div className="p-4">
             {isLoading ? (
               <div className="space-y-4">

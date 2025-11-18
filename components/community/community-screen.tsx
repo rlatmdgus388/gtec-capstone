@@ -213,11 +213,11 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
   }
 
   return (
-    // 레이아웃: h-full flex flex-col 적용
-    <div className="h-full flex flex-col bg-background">
+    // [수정 1] 'h-full' 제거, 'flex flex-col' 유지
+    <div className="flex flex-col bg-background">
 
-      {/* 헤더: shrink-0 적용 */}
-      <div className="bg-background shrink-0">
+      {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             {/* 아이콘 박스: h-7 -> h-10 수정 */}
@@ -229,203 +229,200 @@ export function CommunityScreen({ refreshKey }: CommunityScreenProps) { // ✅ [
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* 컨텐츠 스크롤 영역 */}
-      <div className="flex-1 overflow-y-auto pb-20">
-        {/* 내부 패딩: py-4 -> py-6, space-y-4 -> space-y-6 수정 */}
-        <div className="px-4 py-6 space-y-6">
-          {/* Shared Wordbooks */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <BookOpen size={20} className="text-primary" /> 인기 공유 단어장
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-primary hover:bg-primary/10"
-                onClick={() => setCurrentView("allWordbooks")}
-              >
-                더보기
-              </Button>
-            </div>
-            {isLoading.wordbooks ? (
-              <div className="space-y-2">
-                <Skeleton className="h-24 w-full rounded-xl" />
-                <Skeleton className="h-24 w-full rounded-xl" />
-                <Skeleton className="h-24 w-full rounded-xl" />
-              </div>
-            ) : sharedWordbooks.length === 0 ? (
-              <Card className="text-center py-12 border border-border rounded-xl">
-                <CardContent>
-                  <BookOpen size={48} className="mx-auto text-muted mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">공유된 단어장이 없습니다</h3>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {sharedWordbooks.slice(0, 3).map((wordbook) => (
-                  <Card
-                    key={wordbook.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer bg-card border border-border rounded-xl"
-                    onClick={() => handleViewWordbook(wordbook.id)}
-                  >
-                    <CardContent className="px-4 py-2">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium text-card-foreground">{wordbook.name}</h3>
-                            <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-0">
-                              {wordbook.category}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            by {wordbook.author.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
-                        </div>
-                      </div>
-
-                      {/* 아이콘 순서: 조회 -> 하트 -> 다운로드 */}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Eye size={14} />
-                          {wordbook.views}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart size={14} />
-                          {wordbook.likes}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Download size={14} />
-                          {wordbook.downloads}
-                        </span>
-                      </div>
-
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+      {/* [수정 3] 'overflow-y-auto' 제거, 'pb' 값 수정 */}
+      <div className="flex-1 px-4 py-6 space-y-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+        {/* Shared Wordbooks */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <BookOpen size={20} className="text-primary" /> 인기 공유 단어장
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary hover:bg-primary/10"
+              onClick={() => setCurrentView("allWordbooks")}
+            >
+              더보기
+            </Button>
           </div>
-
-          {/* Discussion Board */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <MessageCircle size={20} className="text-primary" /> 인기 토론글
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-primary hover:bg-primary/10"
-                onClick={() => setCurrentView("allDiscussions")}
-              >
-                더보기
-              </Button>
+          {isLoading.wordbooks ? (
+            <div className="space-y-2">
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
             </div>
-            {isLoading.discussions ? (
-              <div className="space-y-2">
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-                <Skeleton className="h-20 w-full rounded-xl" />
-              </div>
-            ) : discussions.length === 0 ? (
-              <Card className="text-center py-12 border border-border rounded-xl">
-                <CardContent>
-                  <MessageCircle size={48} className="mx-auto text-muted mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">게시글이 없습니다</h3>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {discussions.slice(0, 3).map((discussion) => (
-                  <Card key={discussion.id} className="bg-card border border-border rounded-xl">
-                    <div className="flex items-start gap-3 p-4">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                          {discussion.author.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 cursor-pointer" onClick={() => handleViewDiscussion(discussion.id)}>
+          ) : sharedWordbooks.length === 0 ? (
+            <Card className="text-center py-12 border border-border rounded-xl">
+              <CardContent>
+                <BookOpen size={48} className="mx-auto text-muted mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">공유된 단어장이 없습니다</h3>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {sharedWordbooks.slice(0, 3).map((wordbook) => (
+                <Card
+                  key={wordbook.id}
+                  className="hover:shadow-md transition-shadow cursor-pointer bg-card border border-border rounded-xl"
+                  onClick={() => handleViewWordbook(wordbook.id)}
+                >
+                  <CardContent className="px-4 py-2">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-card-foreground text-sm">{discussion.title}</h3>
-                          <Badge variant="outline" className="text-xs border-border">
-                            {discussion.category}
+                          <h3 className="font-medium text-card-foreground">{wordbook.name}</h3>
+                          <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-0">
+                            {wordbook.category}
                           </Badge>
                         </div>
-
-                        {/* 아이콘 순서 및 댓글 수(commentCount || 0) 수정 */}
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{discussion.author.name}</span>
-                          <span>{timeAgo(discussion.createdAt)}</span>
-                          <span className="flex items-center gap-1">
-                            <Eye size={12} />
-                            {discussion.views}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Heart size={12} />
-                            {discussion.likes}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageCircle size={12} />
-                            {discussion.commentCount || 0} {/* replies -> commentCount */}
-                          </span>
-                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          by {wordbook.author.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{wordbook.wordCount} words</p>
                       </div>
-                      {currentUserId === discussion.author.uid && (
-                        <Drawer>
-                          <DrawerTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DrawerTrigger>
-                          <DrawerContent>
-                            <div className="mx-auto w-full max-w-sm">
-                              <div className="p-2">
-                                <DrawerClose asChild>
-                                  <Button
-                                    variant="ghost"
-                                    className="w-full justify-start p-2 h-12 text-sm"
-                                    onClick={() => {
-                                      // [!!!] 린터가 post가 null이 아님을 확신하도록
-                                      // if (post) 블록을 추가합니다. (이전 답변 내용)
-                                      // [정정] discussion 객체를 사용해야 합니다.
-                                      // [재수정] handleEditClick은 DiscussionPost 타입을 받으므로 OK
-                                      handleEditClick(discussion)
-                                    }}
-                                  >
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    수정
-                                  </Button>
-                                </DrawerClose>
-                                <DrawerClose asChild>
-                                  <Button
-                                    variant="ghost"
-                                    className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive"
-                                    onClick={() => handleDeleteClick(discussion.id)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    삭제
-                                  </Button>
-                                </DrawerClose>
-                              </div>
-                              <DrawerFooter className="pt-2">
-                                <DrawerClose asChild>
-                                  <Button variant="outline">취소</Button>
-                                </DrawerClose>
-                              </DrawerFooter>
-                            </div>
-                          </DrawerContent>
-                        </Drawer>
-                      )}
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+
+                    {/* 아이콘 순서: 조회 -> 하트 -> 다운로드 */}
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Eye size={14} />
+                        {wordbook.views}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Heart size={14} />
+                        {wordbook.likes}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Download size={14} />
+                        {wordbook.downloads}
+                      </span>
+                    </div>
+
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Discussion Board */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <MessageCircle size={20} className="text-primary" /> 인기 토론글
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary hover:bg-primary/10"
+              onClick={() => setCurrentView("allDiscussions")}
+            >
+              더보기
+            </Button>
           </div>
+          {isLoading.discussions ? (
+            <div className="space-y-2">
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+            </div>
+          ) : discussions.length === 0 ? (
+            <Card className="text-center py-12 border border-border rounded-xl">
+              <CardContent>
+                <MessageCircle size={48} className="mx-auto text-muted mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">게시글이 없습니다</h3>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {discussions.slice(0, 3).map((discussion) => (
+                <Card key={discussion.id} className="bg-card border border-border rounded-xl">
+                  <div className="flex items-start gap-3 p-4">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                        {discussion.author.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 cursor-pointer" onClick={() => handleViewDiscussion(discussion.id)}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-card-foreground text-sm">{discussion.title}</h3>
+                        <Badge variant="outline" className="text-xs border-border">
+                          {discussion.category}
+                        </Badge>
+                      </div>
+
+                      {/* 아이콘 순서 및 댓글 수(commentCount || 0) 수정 */}
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>{discussion.author.name}</span>
+                        <span>{timeAgo(discussion.createdAt)}</span>
+                        <span className="flex items-center gap-1">
+                          <Eye size={12} />
+                          {discussion.views}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Heart size={12} />
+                          {discussion.likes}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle size={12} />
+                          {discussion.commentCount || 0} {/* replies -> commentCount */}
+                        </span>
+                      </div>
+                    </div>
+                    {currentUserId === discussion.author.uid && (
+                      <Drawer>
+                        <DrawerTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <div className="mx-auto w-full max-w-sm">
+                            <div className="p-2">
+                              <DrawerClose asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="w-full justify-start p-2 h-12 text-sm"
+                                  onClick={() => {
+                                    // [!!!] 린터가 post가 null이 아님을 확신하도록
+                                    // if (post) 블록을 추가합니다. (이전 답변 내용)
+                                    // [정정] discussion 객체를 사용해야 합니다.
+                                    // [재수정] handleEditClick은 DiscussionPost 타입을 받으므로 OK
+                                    handleEditClick(discussion)
+                                  }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  수정
+                                </Button>
+                              </DrawerClose>
+                              <DrawerClose asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="w-full justify-start p-2 h-12 text-sm text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteClick(discussion.id)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  삭제
+                                </Button>
+                              </DrawerClose>
+                            </div>
+                            <DrawerFooter className="pt-2">
+                              <DrawerClose asChild>
+                                <Button variant="outline">취소</Button>
+                              </DrawerClose>
+                            </DrawerFooter>
+                          </div>
+                        </DrawerContent>
+                      </Drawer>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
