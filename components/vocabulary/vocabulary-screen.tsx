@@ -170,7 +170,7 @@ export function VocabularyScreen({
         [수정 4] 'pb-[calc(4rem+env(safe-area-inset-bottom))]' 유지
         (이 하단 여백은 새 'fixed' 하단바를 피하기에 충분한 크기입니다)
       */}
-      <div className="flex-1 px-4 py-6 space-y-3 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="flex-1 px-4 py-6 space-y-3 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {/* ... (이하 모든 콘텐츠는 동일) ... */}
         {isLoading ? (
           <div className="space-y-3">
