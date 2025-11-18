@@ -72,7 +72,8 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
 
   if (!words || words.length === 0) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      // [수정] min-h-screen -> h-full (페이지 전체가 아닌 컴포넌트 높이)
+      <div className="h-full bg-background flex items-center justify-center">
         <Card><CardContent className="p-6 text-center">
           <h2 className="text-xl font-bold text-foreground mb-4">단어가 없습니다</h2>
           <p className="text-muted-foreground mb-4">퀴즈를 시작하려면 단어를 추가해주세요.</p>
@@ -84,7 +85,8 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
 
   if (!currentWord) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      // [수정] min-h-screen -> h-full
+      <div className="h-full bg-background flex items-center justify-center">
         <Card><CardContent className="p-6 text-center">
           <h2 className="text-xl font-bold text-foreground mb-4">오류가 발생했습니다</h2>
           <p className="text-muted-foreground mb-4">단어를 불러올 수 없습니다.</p>
@@ -140,8 +142,10 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
   }
 
   return (
-    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+    // [수정 1] 'min-h-screen' 제거, 'flex flex-col' 추가
+    <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
+      {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 및 클래스 적용 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
         <div className="px-4 py-6">
           <div className="flex items-center gap-3 mb-4">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2"><ArrowLeft size={18} /></Button>
@@ -156,9 +160,10 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
           </div>
           <Progress value={progress} className="h-2" />
         </div>
-      </div>
+      </header>
 
-      <div className="px-4 py-6 space-y-6">
+      {/* [수정 3] 'flex-1' 및 하단 여백(pb) 추가 */}
+      <div className="flex-1 px-4 py-6 space-y-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <Card><CardContent className="p-6 text-center">
           <h2 className="text-2xl font-bold text-foreground mb-2">{currentWord.word}</h2>
           <p className="text-lg text-muted-foreground">이 단어의 뜻은?</p>

@@ -108,22 +108,27 @@ export function StudyHistoryScreen({
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* ... (헤더 부분은 그대로 유지) ... */}
-      <div className="px-4 py-3 shrink-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-10">
-        <div className="relative flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
-            <ArrowLeft size={18} className="text-muted-foreground" />
-          </Button>
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-foreground">학습 기록</h1>
-            <p className="text-muted-foreground text-sm">매일 00시(KST)를 기준으로 갱신됩니다.</p>
+    // [수정 1] 'h-full' 제거
+    <div className="flex flex-col bg-background">
+      {/* [수정 2] 'div' -> 'header'로 변경, 클래스 수정 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
+        {/* [수정 3] 헤더 내부에 'px-4 py-3' 래퍼 추가 */}
+        <div className="px-4 py-3">
+          <div className="relative flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
+              <ArrowLeft size={18} className="text-muted-foreground" />
+            </Button>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-bold text-foreground">학습 기록</h1>
+              <p className="text-muted-foreground text-sm">매일 00시(KST)를 기준으로 갱신됩니다.</p>
+            </div>
           </div>
+          {/* ✅ [수정] KST 기준임을 명시 */}
         </div>
-        {/* ✅ [수정] KST 기준임을 명시 */}
-      </div>
+      </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-36">
+      {/* [수정 4] 'overflow-y-auto' 제거, 'pb-36' -> 하단 여백 수정 */}
+      <div className="flex-1 p-4 space-y-4 pb-[calc(10rem+env(safe-area-inset-bottom))]">
         {/* ✅ [수정] 'isLoading' prop 사용 */}
         {isLoading ? (
           <>
@@ -151,7 +156,8 @@ export function StudyHistoryScreen({
         )}
       </div>
 
-      <div className="fixed bottom-18 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
+      {/* [수정 5] 'bottom-18' -> 'bottom-[5rem]', 'z-10' -> 'z-30' 수정 */}
+      <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-30 p-4 bg-background border-t border-border">
         <Drawer
           open={isDrawerOpen}
           onOpenChange={(isOpen) => {

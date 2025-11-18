@@ -202,10 +202,12 @@ export function AggregatedStudyDetailScreen({
   )
 
   return (
-    <Tabs defaultValue="incorrect" className="h-full flex flex-col bg-background text-foreground">
-      <div className="h-full flex flex-col">
-        {/* 고정 헤더 */}
-        <div className="shrink-0 bg-background z-10">
+    // [수정 1] 'h-full' 제거
+    <Tabs defaultValue="incorrect" className="flex flex-col bg-background text-foreground">
+      {/* [수정 2] 'h-full' 제거 */}
+      <div className="flex flex-col">
+        {/* [수정 3] 'header' 태그로 변경 및 'sticky' 속성 적용 */}
+        <header className="sticky top-0 z-40 w-full bg-background border-b">
           <div className="px-4 pt-4 pb-4">
             <div className="relative flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
@@ -234,10 +236,10 @@ export function AggregatedStudyDetailScreen({
               </TabsList>
             </div>
           )}
-        </div>
+        </header>
 
-        {/* 스크롤 영역 */}
-        <div className="flex-1 overflow-y-auto p-4 pb-36">
+        {/* [수정 4] 'overflow-y-auto' 제거, 'pb' 수정 */}
+        <div className="flex-1 p-4 pb-[calc(10rem+env(safe-area-inset-bottom))]">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
@@ -278,8 +280,8 @@ export function AggregatedStudyDetailScreen({
         </div>
       </div>
 
-      {/* 하단 고정 버튼 */}
-      <div className="fixed bottom-18 left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4 bg-background border-t border-border">
+      {/* [수정 5] 'bottom-18' -> 'bottom-[5rem]', 'z-10' -> 'z-30' 수정 */}
+      <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-30 p-4 bg-background border-t border-border">
         <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
           <DrawerTrigger asChild>
             <Button

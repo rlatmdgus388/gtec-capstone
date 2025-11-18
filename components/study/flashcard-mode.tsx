@@ -15,9 +15,9 @@ interface Word {
 
 interface FlashcardModeProps {
   words: Word[]
-  onComplete: (results: { 
-    correct: number; 
-    total: number; 
+  onComplete: (results: {
+    correct: number;
+    total: number;
     timeSpent: number;
     correctWords: string[];
     incorrectWords: string[];
@@ -39,7 +39,7 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
   }
 
   const handleAnswer = (isCorrect: boolean) => {
-    const newResults = { ...results, [currentWord.id]: isCorrect ? "correct" : "incorrect" as "correct" | "incorrect"};
+    const newResults = { ...results, [currentWord.id]: isCorrect ? "correct" : "incorrect" as "correct" | "incorrect" };
     setResults(newResults);
 
     if (Object.keys(newResults).length === words.length) {
@@ -47,7 +47,7 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
       const correctWords = Object.keys(newResults).filter(id => newResults[id] === 'correct');
       const incorrectWords = Object.keys(newResults).filter(id => newResults[id] === 'incorrect');
-      
+
       onComplete({ correct: correctCount, total: words.length, timeSpent, correctWords, incorrectWords });
     } else {
       const nextIndex = words.findIndex((word, index) => index > currentIndex && !newResults[word.id]);
@@ -76,8 +76,10 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
   }
 
   return (
-    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+    // [수정 1] 'min-h-screen' 제거, 'flex flex-col' 추가
+    <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
+      {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 및 클래스 적용 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
         <div className="px-4 py-6">
           <div className="flex items-center gap-3 mb-4">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2"><ArrowLeft size={18} /></Button>
@@ -88,8 +90,9 @@ export function FlashcardMode({ words, onComplete, onBack }: FlashcardModeProps)
           </div>
           <Progress value={progress} className="h-2" />
         </div>
-      </div>
-      <div className="px-4 py-6 flex-1 flex flex-col">
+      </header>
+      {/* [수정 3] 'flex-1' 유지, 하단 여백(pb) 추가 */}
+      <div className="flex-1 flex flex-col px-4 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <div className="flex-1 flex items-center justify-center mb-6">
           <div className="w-full max-w-sm">
             <Card className="h-80 cursor-pointer transition-all duration-300 hover:shadow-lg" onClick={handleFlip} style={{ transformStyle: "preserve-3d", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)" }}>

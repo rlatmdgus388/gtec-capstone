@@ -194,19 +194,21 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
   const canStart = selectedWordbook && !isLoading.words && maxWords > 0 && numericWordCount > 0;
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* 1. Header */}
-      <div className="bg-background shrink-0">
+    // [수정 1] 'h-full' 제거
+    <div className="flex flex-col bg-background">
+      {/* [수정 2] 'div' -> 'header'로 변경, 클래스 수정 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
+        {/* [수정 3] 헤더 내부에 'px-4 py-4' 래퍼 추가 */}
         <div className="px-4 py-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
             <ArrowLeft size={20} className="text-foreground" />
           </Button>
           <h1 className="text-xl font-bold text-foreground">{modeName} 설정</h1>
         </div>
-      </div>
+      </header>
 
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-[10rem]">
+      {/* [수정 4] 'overflow-y-auto' 제거, 'pb-[10rem]' -> 하단 여백 수정 */}
+      <div className="flex-1 p-4 space-y-6 pb-[calc(10rem+env(safe-area-inset-bottom))]">
 
         {/* 2.1. 단어장 선택 (이하 동일) */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
@@ -367,8 +369,8 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
 
       </div>
 
-      {/* 3. Footer (하단 고정 버튼) (이하 동일) */}
-      <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-10 p-4">
+      {/* [수정 5] 'z-10' -> 'z-30' 수정 */}
+      <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-30 p-4">
         <Button
           size="lg"
           className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"

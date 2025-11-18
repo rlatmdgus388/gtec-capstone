@@ -77,9 +77,10 @@ export function AutoplayMode({ words, onComplete, onBack }: AutoplayModeProps) {
   }
 
   return (
-    <div className={cn("min-h-screen bg-background", "page-transition-enter")}>
-      {/* Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+    // [수정 1] 'min-h-screen' 제거, 'flex flex-col' 추가
+    <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
+      {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 및 클래스 적용 */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b">
         <div className="px-4 py-6">
           <div className="flex items-center gap-3 mb-4">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
@@ -108,9 +109,10 @@ export function AutoplayMode({ words, onComplete, onBack }: AutoplayModeProps) {
 
           <Progress value={progress} className="h-2" />
         </div>
-      </div>
+      </header>
 
-      <div className="px-4 py-6 flex-1 flex flex-col">
+      {/* [수정 3] 'flex-1' 유지, 하단 여백(pb) 추가 */}
+      <div className="flex-1 flex flex-col px-4 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {/* Word Display */}
         <div className="flex-1 flex items-center justify-center mb-6">
           <Card className="w-full max-w-md h-96 shadow-lg">
