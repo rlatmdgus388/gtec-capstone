@@ -33,8 +33,9 @@ export default function AuthManager() {
   const [communityRefreshKey, setCommunityRefreshKey] = useState(0)
   const [studyRefreshKey, setStudyRefreshKey] = useState(0)
   const [homeRefreshKey, setHomeRefreshKey] = useState(0)
-  const [settingsRefreshKey, setSettingsRefreshKey] = useState(0) // [!!!] 설정 탭 refreshKey 추가
+  const [settingsRefreshKey, setSettingsRefreshKey] = useState(0)
 
+  // ... (useEffect, isAuthenticated, isGoogleUser 등 모든 로직은 그대로) ...
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
@@ -56,6 +57,7 @@ export default function AuthManager() {
   }
 
   if (!isAuthenticated) {
+    // ... (인증 로직은 그대로) ...
     switch (authScreen) {
       case "email-login":
         return <EmailLoginForm onBackToMain={() => setAuthScreen("main")} onLoginSuccess={() => setAuthScreen("main")} />
@@ -70,6 +72,7 @@ export default function AuthManager() {
     return <EmailVerificationScreen onLogout={() => auth.signOut()} />
   }
 
+  // ... (handleLogout, handleWordbookSelect 등 모든 핸들러 함수는 그대로) ...
   const handleLogout = () => {
     auth.signOut()
   }
@@ -115,30 +118,27 @@ export default function AuthManager() {
 
 
   const handleTabChange = (tab: string) => {
-    // 단어장 탭에서 상세 화면 보고 있을 때 다시 단어장 탭 누르면 목록으로
+    // ... (탭 변경 로직은 그대로) ...
     if (tab === "vocabulary" && activeTab === "vocabulary" && (selectedWordbookForDetail || isCreatingWordbook)) {
       setSelectedWordbookForDetail(null)
       setIsCreatingWordbook(false)
-      setVocabularyRefreshKey((prev) => prev + 1) // 목록 새로고침
+      setVocabularyRefreshKey((prev) => prev + 1)
       return
     }
 
-    // 커뮤니티 탭을 다시 눌렀을 때 메인으로
     if (tab === "community" && activeTab === "community") {
       setCommunityRefreshKey((prev) => prev + 1)
-      setSelectedWordbookForDetail(null) // (다른 탭에서 왔을 때처럼)
+      setSelectedWordbookForDetail(null)
       setIsCreatingWordbook(false)
       return
     }
 
-    // 학습 탭을 다시 눌렀을 때 메인으로 (결과 화면 등에서 복귀)
     if (tab === "study" && activeTab === "study") {
       setStudyRefreshKey((prev) => prev + 1)
       setSelectedWordbookForDetail(null)
       setIsCreatingWordbook(false)
       return
     }
-
 
     if (tab === "home" && activeTab === "home") {
       setHomeRefreshKey((prev) => prev + 1);
@@ -147,9 +147,8 @@ export default function AuthManager() {
       return;
     }
 
-    // [!!!] 설정 탭을 다시 눌렀을 때 메인으로 (하위 메뉴에서 복귀)
     if (tab === "settings" && activeTab === "settings") {
-      setSettingsRefreshKey((prev) => prev + 1); // 설정 탭 key 업데이트
+      setSettingsRefreshKey((prev) => prev + 1);
       setSelectedWordbookForDetail(null)
       setIsCreatingWordbook(false)
       return;
@@ -159,14 +158,12 @@ export default function AuthManager() {
       setSelectedWordbookForDetail(null)
     }
 
-    // 다른 탭으로 이동 시 모든 refreshKey를 리셋할 필요는 없지만,
-    // (탭 이동 시 컴포넌트가 unmount/mount 되므로)
-    // vocabulary 관련 상태는 초기화
     setIsCreatingWordbook(false)
     setActiveTab(tab)
   }
 
   const renderScreen = () => {
+    // ... (renderScreen 로직은 그대로) ...
     switch (activeTab) {
       case "home":
         return (
@@ -209,7 +206,6 @@ export default function AuthManager() {
         return <CommunityScreen refreshKey={communityRefreshKey} />
 
       case "settings":
-        // [!!!] SettingsScreen에 key={settingsRefreshKey} 추가
         return <SettingsScreen key={settingsRefreshKey} onLogout={handleLogout} />
       default:
         return (
@@ -225,14 +221,23 @@ export default function AuthManager() {
     }
   }
 
+  // [수정 1] 'h-screen' -> 'min-h-screen'
+  // 이렇게 변경하면 콘텐츠가 길어질 때 body가 스크롤됩니다.
   return (
-    <div className="h-screen bg-background flex flex-col max-w-md mx-auto">
-      <main className="flex-1 overflow-hidden">{renderScreen()}</main>
+    <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto">
+
+      {/* [수정 2] 'overflow-hidden' 제거 */}
+      {/* main이 스크롤되는 게 아니라, body가 스크롤되도록 합니다. */}
+      <main className="flex-1">
+        {renderScreen()}
+      </main>
+
+      {/* [수정 3] <BottomNav>를 <footer>로 감싸고 sticky 속성 추가 */}
       {!(activeTab === "vocabulary" && isCreatingWordbook) && (
-        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+        <footer className="sticky bottom-0 z-40 w-full border-t bg-background">
+          <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+        </footer>
       )}
     </div>
   )
 }
-
-// 이거
