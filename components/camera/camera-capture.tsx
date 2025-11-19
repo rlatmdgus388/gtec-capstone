@@ -19,46 +19,46 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
-  /** ⭐ 카메라 시작 */
+  /** ⭐ 카메라 시작 (반드시 버튼 클릭 같은 사용자 제스처 안에서 호출) */
   const startCamera = useCallback(async () => {
-    // 1. 브라우저 지원 여부 및 보안 컨텍스트(HTTPS) 확인
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      const isSecure = window.isSecureContext;
-      const errorMessage = isSecure 
+      const isSecure = window.isSecureContext
+      const errorMessage = isSecure
         ? "이 브라우저는 카메라를 지원하지 않습니다."
-        : "카메라 권한은 HTTPS 환경에서만 동작합니다.\n(ngrok이나 배포 환경에서 테스트해주세요)";
-      
-      alert(errorMessage);
-      onClose(); // 카메라 창 닫기
-      return;
+        : "카메라 권한은 HTTPS 환경에서만 동작합니다.\n배포된 주소(https)에서 테스트해주세요."
+
+      alert(errorMessage)
+      onClose()
+      return
     }
-  
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           facingMode: "environment",
-          // iOS Safari 대응: 프레임 속도 제한 (일부 구형 기기 버벅임 방지)
-          // width: { ideal: 1280 },
-          // height: { ideal: 720 } 
-        }, 
+        },
         audio: false,
       })
-  
+
       streamRef.current = stream
       setCameraActive(true)
-  
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream
+        // iOS Safari 일부 버전 대응: play()를 명시적으로 호출
+        try {
+          await videoRef.current.play()
+        } catch (e) {
+          console.warn("video play() failed:", e)
+        }
       }
     } catch (error) {
       console.error("Error accessing camera:", error)
-      // 권한 거부 혹은 다른 하드웨어 에러
       alert("카메라 권한이 거부되었거나 사용할 수 없습니다.\n브라우저 설정에서 카메라 권한을 허용해주세요.")
       onClose()
     }
-  }, [onClose]) // onClose 의존성 추가
+  }, [onClose])
 
-  
   /** ⭐ 카메라 종료 */
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -68,18 +68,12 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
     setCameraActive(false)
   }, [])
 
-  /** ⭐ 실제로 <video>가 렌더된 뒤 stream을 붙이는 역할 */
+  /** ⭐ 컴포넌트 unmount 시 스트림 정리 */
   useEffect(() => {
-    if (cameraActive && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current
+    return () => {
+      stopCamera()
     }
-  }, [cameraActive])
-
-  /** ⭐ mount 시 카메라 시작 / unmount 시 정리 */
-  useEffect(() => {
-    startCamera()
-    return () => stopCamera()
-  }, [startCamera, stopCamera])
+  }, [stopCamera])
 
   /** ⭐ 사진 촬영 */
   const capturePhoto = useCallback(() => {
@@ -116,7 +110,6 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
-
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/50 to-transparent">
         <div className="flex items-center justify-between p-4 pt-8">
@@ -146,18 +139,22 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             ) : (
               <div className="flex flex-col items-center justify-center text-white">
                 <Camera size={64} className="mb-4 opacity-50" />
-                <p className="text-lg mb-2">카메라 준비 중...</p>
-                <p className="text-sm opacity-80">잠시만 기다려주세요</p>
+                <p className="text-lg mb-2">카메라가 꺼져 있습니다</p>
+                <p className="text-sm opacity-80 mb-4">
+                  하단의 &quot;카메라 켜기&quot; 버튼을 눌러 카메라를 시작하세요
+                </p>
               </div>
             )}
 
             {/* Focus Frame */}
-            <div className="absolute inset-4 border-2 border-white/50 rounded-lg">
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-primary rounded-tl-lg" />
-              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-primary rounded-tr-lg" />
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-primary rounded-bl-lg" />
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-primary rounded-br-lg" />
-            </div>
+            {cameraActive && (
+              <div className="absolute inset-4 border-2 border-white/50 rounded-lg">
+                <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-primary rounded-br-lg" />
+              </div>
+            )}
 
             {/* Instructions */}
             <div className="absolute bottom-32 left-4 right-4">
@@ -172,11 +169,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             </div>
           </>
         ) : (
-          <img
-            src={capturedImage}
-            alt="Captured"
-            className="w-full h-full object-cover"
-          />
+          <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
         )}
       </div>
 
@@ -184,15 +177,26 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent">
         <div className="p-6 pb-8">
           {!capturedImage ? (
-            <div className="flex items-center justify-center">
-              <Button
-                size="lg"
-                onClick={capturePhoto}
-                disabled={!cameraActive || isCapturing}
-                className="w-20 h-20 rounded-full bg-white hover:bg-white/90 text-black p-0"
-              >
-                <Camera size={32} />
-              </Button>
+            <div className="flex items-center justify-center gap-4">
+              {!cameraActive ? (
+                <Button
+                  size="lg"
+                  onClick={startCamera}
+                  className="px-8 rounded-full bg-primary hover:bg-primary/90 text-white"
+                >
+                  <Camera size={20} className="mr-2" />
+                  카메라 켜기
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  onClick={capturePhoto}
+                  disabled={!cameraActive || isCapturing}
+                  className="w-20 h-20 rounded-full bg-white hover:bg-white/90 text-black p-0"
+                >
+                  <Camera size={32} />
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center gap-4">

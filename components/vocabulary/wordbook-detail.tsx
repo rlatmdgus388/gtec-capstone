@@ -1,6 +1,7 @@
 "use client"
 
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera"
+import { Capacitor } from "@capacitor/core"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -37,7 +38,7 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  Camera as CameraIcon, // 'Camera'가 Capacitor와 겹치므로 'CameraIcon'으로 변경
+  Camera as CameraIcon,
   CheckCircle,
   FolderInput,
   BookCopy,
@@ -84,17 +85,17 @@ interface DetectedWord {
 
 const getTimestampInMillis = (timestamp: any): number => {
   if (!timestamp) {
-    return 0;
+    return 0
   }
   if (timestamp._seconds !== undefined && timestamp._nanoseconds !== undefined) {
-    return timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000;
+    return timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000
   }
-  const date = new Date(timestamp);
+  const date = new Date(timestamp)
   if (!isNaN(date.getTime())) {
-    return date.getTime();
+    return date.getTime()
   }
-  return 0;
-};
+  return 0
+}
 
 export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailProps) {
   // --- 상태 관리 ---
@@ -137,8 +138,8 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       const fetchedWords = data.words || []
 
       fetchedWords.sort((a: Word, b: Word) => {
-        const dateA = getTimestampInMillis(a.createdAt);
-        const dateB = getTimestampInMillis(b.createdAt);
+        const dateA = getTimestampInMillis(a.createdAt)
+        const dateB = getTimestampInMillis(b.createdAt)
         if (dateB !== dateA) {
           return dateB - dateA
         }
@@ -221,7 +222,10 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     }
   }
 
-  const handleUpdateWord = async (wordId: string, updatedData: { word: string; meaning: string; example?: string; pronunciation?: string }) => {
+  const handleUpdateWord = async (
+    wordId: string,
+    updatedData: { word: string; meaning: string; example?: string; pronunciation?: string },
+  ) => {
     try {
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words/${wordId}`, {
         method: "PUT",
@@ -396,22 +400,25 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
     setShowImageSelection(true)
   }
 
-  // 네이티브 카메라를 호출합니다.
+  // 네이티브/웹 공통: 사진 촬영
   const handleCameraSelect = async () => {
-    setShowImageSelection(false); // 모달 닫기
+    setShowImageSelection(false) // 모달 닫기
     try {
-      // 1. 권한 확인
-      const permission = await Camera.checkPermissions();
-      if (permission.camera !== 'granted') {
-        // 권한 요청
-        const request = await Camera.requestPermissions({ permissions: ['camera'] });
-        if (request.camera !== 'granted') {
-          alert('카메라 권한이 필요합니다.');
-          return;
+      const isNative = Capacitor.isNativePlatform()
+
+      // ✅ 네이티브(Capacitor)에서만 권한 API 사용
+      if (isNative) {
+        const permission = await Camera.checkPermissions()
+        if (permission.camera !== "granted") {
+          const request = await Camera.requestPermissions({ permissions: ["camera"] })
+          if (request.camera !== "granted") {
+            alert("카메라 권한이 필요합니다.")
+            return
+          }
         }
       }
 
-      // 2. 네이티브 카메라 실행
+      // ✅ 공통: 카메라 실행 (웹/네이티브 모두 지원)
       const image = await Camera.getPhoto({
         quality: 90, // 고화질
         allowEditing: false,
@@ -419,57 +426,56 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
         source: CameraSource.Camera, // 카메라 실행
         width: 1920,
         height: 1080,
-        correctOrientation: true // (중요) 방향 자동 보정
-      });
+        correctOrientation: true, // 방향 자동 보정
+      })
 
       if (image.dataUrl) {
-        // 3. 고화질 이미지를 OCR 처리 화면으로 전달
-        setSelectedImageData(image.dataUrl);
-        setShowPhotoCapture(true);
+        setSelectedImageData(image.dataUrl)
+        setShowPhotoCapture(true)
       }
     } catch (error: any) {
-      // 사용자가 '취소'한 경우는 무시
-      if (error.message !== "User cancelled photos app") {
-        console.error('카메라 오류:', error);
-        alert("카메라를 여는 중 오류가 발생했습니다.");
+      if (error?.message !== "User cancelled photos app") {
+        console.error("카메라 오류:", error)
+        alert("카메라를 여는 중 오류가 발생했습니다.")
       }
     }
   }
 
-  // 네이티브 갤러리를 호출합니다.
+  // 네이티브/웹 공통: 갤러리 선택
   const handleGallerySelect = async () => {
-    setShowImageSelection(false); // 모달 닫기
+    setShowImageSelection(false) // 모달 닫기
     try {
-      // 1. 권한 확인 (갤러리는 'photos')
-      const permission = await Camera.checkPermissions();
-      if (permission.photos !== 'granted') {
-        const request = await Camera.requestPermissions({ permissions: ['photos'] });
-        if (request.photos !== 'granted') {
-          alert('갤러리 접근 권한이 필요합니다.');
-          return;
+      const isNative = Capacitor.isNativePlatform()
+
+      // ✅ 네이티브(Capacitor)에서만 photos 권한 체크
+      if (isNative) {
+        const permission = await Camera.checkPermissions()
+        if (permission.photos !== "granted") {
+          const request = await Camera.requestPermissions({ permissions: ["photos"] })
+          if (request.photos !== "granted") {
+            alert("갤러리 접근 권한이 필요합니다.")
+            return
+          }
         }
       }
 
-      // 2. 네이티브 갤러리 실행
       const image = await Camera.getPhoto({
         quality: 90,
-        resultType: CameraResultType.DataUrl, // base64 (DataUrl)로 받기
+        resultType: CameraResultType.DataUrl,
         source: CameraSource.Photos, // 갤러리 실행
         width: 1920,
         height: 1080,
-        correctOrientation: true // (중요) 방향 자동 보정
-      });
+        correctOrientation: true,
+      })
 
       if (image.dataUrl) {
-        // 3. 고화질 이미지를 OCR 처리 화면으로 전달
-        setSelectedImageData(image.dataUrl);
-        setShowPhotoCapture(true);
+        setSelectedImageData(image.dataUrl)
+        setShowPhotoCapture(true)
       }
     } catch (error: any) {
-      // 사용자가 '취소'한 경우는 무시
-      if (error.message !== "User cancelled photos app") {
-        console.error('갤러리 오류:', error);
-        alert("사진을 불러오는 중 오류가 발생했습니다.");
+      if (error?.message !== "User cancelled photos app") {
+        console.error("갤러리 오류:", error)
+        alert("사진을 불러오는 중 오류가 발생했습니다.")
       }
     }
   }
@@ -480,11 +486,10 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
       return
     }
     try {
-      // [수정] OCR 처리 화면에서 받은 meaning을 사용 (품사 포함 가능)
       const wordsToAdd = addedWords.map((word) => ({
-        word: word.text, // (참고) ocr-processing에서는 original을 text로 보낼 수도 있습니다.
+        word: word.text,
         meaning: word.meaning || "",
-        example: "" // (참고) ocr-processing에서 품사를 example로 분리했다면 여기서 매핑
+        example: "",
       }))
 
       await fetchWithAuth(`/api/wordbooks/${wordbook.id}/words`, {
@@ -527,7 +532,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   if (showPhotoCapture)
     return (
       <PhotoWordCapture
-        imageData={selectedImageData} // 네이티브 카메라/갤러리에서 받은 고화질 이미지
+        imageData={selectedImageData}
         onClose={() => setShowPhotoCapture(false)}
         onWordsAdded={handleWordsAdded}
       />
@@ -536,14 +541,15 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
   // --- (기본 UI 렌더링) ---
   return (
     <>
-      {/* [수정 1] 'h-full' 제거 */}
       <div className={cn("flex flex-col bg-background", "page-transition-enter-from-left")}>
-        {/* --- 다이얼로그 및 모달 --- */}
+        {/* 다이얼로그 및 모달들 */}
         <AlertDialog open={!!wordToDelete} onOpenChange={(open) => !open && setWordToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>단어 삭제</AlertDialogTitle>
-              <AlertDialogDescription>'{wordToDelete?.word}' 단어를 정말로 삭제하시겠습니까?</AlertDialogDescription>
+              <AlertDialogDescription>
+                &apos;{wordToDelete?.word}&apos; 단어를 정말로 삭제하시겠습니까?
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
@@ -553,6 +559,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -567,11 +574,14 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
         <AlertDialog open={isDeleteWordbookDialogOpen} onOpenChange={setIsDeleteWordbookDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>단어장 삭제</AlertDialogTitle>
-              <AlertDialogDescription>'{wordbook.name}' 단어장을 정말로 삭제하시겠습니까?</AlertDialogDescription>
+              <AlertDialogDescription>
+                &apos;{wordbook.name}&apos; 단어장을 정말로 삭제하시겠습니까?
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
@@ -582,7 +592,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* 이 모달이 handleCameraSelect와 handleGallerySelect를 호출합니다. */}
         <ImageSelectionModal
           open={showImageSelection}
           onClose={() => setShowImageSelection(false)}
@@ -624,7 +633,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
           </DrawerContent>
         </Drawer>
 
-        {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
+        {/* 헤더 */}
         <header className="sticky top-0 z-40 w-full bg-background border-b">
           <div className="px-4 py-4">
             {isEditMode ? (
@@ -741,7 +750,6 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                     className="h-12 flex items-center justify-center gap-2 bg-card border border-border hover:bg-muted text-foreground rounded-lg font-medium"
                     onClick={handlePhotoCaptureClick}
                   >
-                    {/* [수정] Camera -> CameraIcon으로 변경 */}
                     <CameraIcon size={18} />
                     사진으로 추가
                   </Button>
@@ -751,7 +759,7 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
           </div>
         </header>
 
-        {/* [수정 3] 'overflow-y-auto' 제거, 'pb-20' -> 하단 네비게이션용 패딩으로 변경 */}
+        {/* 본문 */}
         <div className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))]">
           <div className="px-4 py-4 space-y-4">
             {!isEditMode && (
@@ -763,7 +771,11 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                     className="text-xs rounded-full flex-shrink-0"
                     onClick={handleFilterToggle}
                   >
-                    {filterMastered === "all" ? <Filter size={14} className="mr-1" /> : <X size={14} className="mr-1 text-red-500" />}
+                    {filterMastered === "all" ? (
+                      <Filter size={14} className="mr-1" />
+                    ) : (
+                      <X size={14} className="mr-1 text-red-500" />
+                    )}
                     {filterMastered === "all" ? "전체" : "미암기"}
                   </Button>
                   <Button
@@ -772,7 +784,11 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                     className="text-xs rounded-full flex-shrink-0"
                     onClick={handleSortToggle}
                   >
-                    {sortOrder === "random" ? <Shuffle size={14} className="mr-1" /> : <ListFilter size={14} className="mr-1" />}
+                    {sortOrder === "random" ? (
+                      <Shuffle size={14} className="mr-1" />
+                    ) : (
+                      <ListFilter size={14} className="mr-1" />
+                    )}
                     {sortOrder === "random" ? "랜덤" : "기본"}
                   </Button>
                   <Button
@@ -781,17 +797,31 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                     onClick={handleToggleHideMode}
                     className="text-xs rounded-full flex-shrink-0"
                   >
-                    {hideMode === "none" && (<><Eye size={14} className="mr-1" />모두 보기</>)}
-                    {hideMode === "word" && (<><EyeOff size={14} className="mr-1" />단어 숨김</>)}
-                    {hideMode === "meaning" && (<><EyeOff size={14} className="mr-1" />뜻 숨김</>)}
+                    {hideMode === "none" && (
+                      <>
+                        <Eye size={14} className="mr-1" />
+                        모두 보기
+                      </>
+                    )}
+                    {hideMode === "word" && (
+                      <>
+                        <EyeOff size={14} className="mr-1" />
+                        단어 숨김
+                      </>
+                    )}
+                    {hideMode === "meaning" && (
+                      <>
+                        <EyeOff size={14} className="mr-1" />
+                        뜻 숨김
+                      </>
+                    )}
                   </Button>
                 </div>
                 <ScrollBar orientation="horizontal" className="h-2" />
               </ScrollArea>
             )}
 
-            {/* --- 단어 카드 목록 --- */}
-            {/* (참고) isEditMode일 때 'pb-24'는 하단의 fixed 버튼을 피하기 위함 */}
+            {/* 단어 카드 목록 */}
             <div className={`space-y-3 ${isEditMode ? "pb-24" : ""}`}>
               {isLoading ? (
                 <div className="space-y-3 pt-4">
@@ -804,10 +834,18 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                   <CardContent>
                     <Edit size={48} className="mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      {searchQuery ? "검색 결과가 없습니다" : filterMastered === "exclude" ? "조건에 맞는 단어가 없습니다" : "단어가 없습니다"}
+                      {searchQuery
+                        ? "검색 결과가 없습니다"
+                        : filterMastered === "exclude"
+                        ? "조건에 맞는 단어가 없습니다"
+                        : "단어가 없습니다"}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      {searchQuery ? "다른 검색어를 시도해보세요" : filterMastered === "exclude" ? "필터를 변경하거나 단어를 추가하세요" : "첫 번째 단어를 추가해보세요"}
+                      {searchQuery
+                        ? "다른 검색어를 시도해보세요"
+                        : filterMastered === "exclude"
+                        ? "필터를 변경하거나 단어를 추가하세요"
+                        : "첫 번째 단어를 추가해보세요"}
                     </p>
                     {!searchQuery && (
                       <Button
@@ -824,8 +862,10 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
                 filteredAndSortedWords.map((word) => (
                   <Card
                     key={word.id}
-                    className={`transition-all rounded-lg bg-card ${selectedWords.has(word.id) ? "border-primary ring-2 ring-primary" : "border border-border"
-                      }`}
+                    className={cn(
+                      "transition-all rounded-lg bg-card",
+                      selectedWords.has(word.id) ? "border-primary ring-2 ring-primary" : "border border-border",
+                    )}
                     onClick={() => isEditMode && handleWordSelection(word.id)}
                   >
                     <CardContent className="p-4">
@@ -926,10 +966,9 @@ export function WordbookDetail({ wordbook, onBack, onUpdate }: WordbookDetailPro
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* --- 하단 편집 모드 버튼들 --- */}
+      {/* 하단 편집 모드 버튼들 */}
       {isEditMode && (
         <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-20 p-4">
           <div className="flex flex-col items-end gap-4">
