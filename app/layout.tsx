@@ -8,7 +8,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { ThemeProvider } from "@/lib/theme-context"
 import { Toaster } from "@/components/ui/toaster"
-import { NativeStatusBar } from "@/components/NativeStatusBar"  // ⬅️ 추가
+import { NativeStatusBar } from "@/components/native-statusbar"  // ⬅️ 추가
 import "./globals.css"
 
 export const metadata: Metadata = {
