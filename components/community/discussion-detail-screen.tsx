@@ -252,7 +252,7 @@ export function DiscussionDetailScreen({
       <div className={cn("flex flex-col bg-background", "page-transition-enter-from-left")}>
 
         {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
-        <header className="sticky top-0 z-40 w-full bg-background border-b flex items-center p-4">
+        <header className="sticky top-0 z-40 w-full bg-background flex items-center p-4">
           <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">
             <ArrowLeft className="h-5 w-5" />
           </Button>

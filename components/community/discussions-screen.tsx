@@ -140,7 +140,7 @@ export function DiscussionsScreen({ onBack, onViewDiscussion }: DiscussionsScree
     <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
       {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={onBack} className="mr-2 h-8 w-8">

@@ -20,7 +20,7 @@ export function StudyPeriodSummaryCard({
 }: StudyPeriodSummaryCardProps) {
   return (
     <Card
-      className="bg-card border-border hover:shadow-md transition-shadow cursor-pointer rounded-3xl"
+      className="bg-card hover:shadow-md transition-shadow cursor-pointer rounded-3xl"
       onClick={onClick}
     >
       <CardContent className="px-5 py-3">

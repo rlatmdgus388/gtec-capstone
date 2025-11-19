@@ -158,7 +158,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
       {/* [수정 2] 'h-full' 제거 */}
       <div className="flex flex-col">
         {/* [수정 3] 'div' -> 'header', 'sticky' 속성 추가 */}
-        <header className="sticky top-0 z-40 w-full bg-background border-b">
+        <header className="sticky top-0 z-40 w-full bg-background">
           <div className="px-4 pt-6 pb-4">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={onBack} className="p-2">

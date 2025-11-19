@@ -145,7 +145,7 @@ export function QuizMode({ words, onComplete, onBack }: QuizModeProps) {
     // [수정 1] 'min-h-screen' 제거, 'flex flex-col' 추가
     <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
       {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 및 클래스 적용 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         <div className="px-4 py-6">
           <div className="flex items-center gap-3 mb-4">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2"><ArrowLeft size={18} /></Button>

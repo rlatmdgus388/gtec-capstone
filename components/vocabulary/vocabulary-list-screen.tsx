@@ -42,7 +42,7 @@ export function VocabularyListScreen({ onBack, wordbook }: VocabularyListScreenP
         // [수정] 'min-h-screen bg-white' -> 'flex flex-col' (sticky 레이아웃)
         <div className="flex flex-col">
             {/* [수정] 'div' -> 'header', 'sticky' 추가, 'bg-background' 및 'border-b' (표준) 적용 */}
-            <header className="sticky top-0 z-40 w-full bg-background border-b">
+            <header className="sticky top-0 z-40 w-full bg-background">
                 <div className="px-4 py-4"> {/* [수정] 'py-6' -> 'py-4' */}
                     <div className="flex items-center gap-3 mb-4">
                         <Button variant="ghost" size="sm" onClick={onBack} className="p-2">

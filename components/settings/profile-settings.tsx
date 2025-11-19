@@ -147,10 +147,10 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
     <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
       {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 추가 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         <div className="flex items-center justify-between p-4">
           {/* ← 왼쪽: [뒤로가기 버튼 + 제목] 묶음 */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="sm"
@@ -159,7 +159,7 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="font-bold text-foreground whitespace-nowrap">
+            <h1 className="font-semibold text-lg whitespace-nowrap">
               프로필 설정
             </h1>
           </div>

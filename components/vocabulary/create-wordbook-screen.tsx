@@ -60,7 +60,7 @@ export function CreateWordbookScreen({ onBack, onSave }: CreateWordbookScreenPro
     // [수정 1] 'flex-1 overflow-y-auto pb-20' 클래스 제거
     <div className={cn("flex flex-col", "page-transition-enter")}>
       {/* [수정 2] 'div' -> 'header', 'sticky' 유지, 'border-b' 추가 */}
-      <header className="bg-background sticky top-0 z-40 w-full border-b">
+      <header className="bg-background sticky top-0 z-40 w-full">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">

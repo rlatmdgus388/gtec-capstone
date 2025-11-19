@@ -64,7 +64,7 @@ export function WordbookEditScreen({ initialData, onBack, onSave }: WordbookEdit
         // [수정 1] 'flex-1 overflow-y-auto pb-20' 제거, 'flex flex-col' 추가
         <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
             {/* [수정 2] 'div' -> 'header'로 변경, 클래스 수정 */}
-            <header className="sticky top-0 z-40 w-full bg-background border-b">
+            <header className="sticky top-0 z-40 w-full bg-background">
                 <div className="px-4 py-4">
                     <div className="flex items-center gap-3 h-10">
                         <Button variant="ghost" size="sm" onClick={onBack} disabled={isSaving} className="p-2 -ml-2">

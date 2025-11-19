@@ -197,7 +197,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
     // [수정 1] 'h-full' 제거
     <div className="flex flex-col bg-background">
       {/* [수정 2] 'div' -> 'header'로 변경, 클래스 수정 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         {/* [수정 3] 헤더 내부에 'px-4 py-4' 래퍼 추가 */}
         <div className="px-4 py-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">

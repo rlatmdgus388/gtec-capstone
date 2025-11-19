@@ -37,7 +37,7 @@ export function ThemeSettings({ onBack }: ThemeSettingsProps) {
   return (
     <div className="min-h-screen bg-muted/40 pb-10">
       {/* Header */}
-      <div className="bg-background border-b sticky top-0 z-20 px-4 h-14 flex items-center justify-between">
+      <div className="bg-background border-b sticky top-0 z-20 px-4 h-14 flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"

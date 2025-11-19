@@ -207,7 +207,7 @@ export function AggregatedStudyDetailScreen({
       {/* [수정 2] 'h-full' 제거 */}
       <div className="flex flex-col">
         {/* [수정 3] 'header' 태그로 변경 및 'sticky' 속성 적용 */}
-        <header className="sticky top-0 z-40 w-full bg-background border-b">
+        <header className="sticky top-0 z-40 w-full bg-background">
           <div className="px-4 pt-4 pb-4">
             <div className="relative flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={onBack} className="p-2">

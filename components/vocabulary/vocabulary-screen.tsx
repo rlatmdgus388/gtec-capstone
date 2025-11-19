@@ -130,7 +130,7 @@ export function VocabularyScreen({
 
       {/* [수정 2] 'div'를 'header'로 바꾸고 'sticky' 속성 추가 */}
       {/* 'shrink-0' 제거, 'z-40 w-full border-b' 추가 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         {/* 헤더의 내용은 사용자님이 주신 코드 그대로 유지 */}
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">

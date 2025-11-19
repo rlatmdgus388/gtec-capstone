@@ -23,7 +23,7 @@ export function VocabularySelectionScreen({ onBack, wordbooks, onSelectWordbook 
             {/* [수정 2] 'div' -> 'header'로 감싸고 'sticky' 속성 추가 */}
             {/* (참고: bg-white와 border-gray-100 등 기존 스타일 유지) */}
             <header className="sticky top-0 z-40 w-full bg-white">
-                <div className="px-4 py-6 border-b border-gray-100">
+                <div className="px-4 py-6">
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
                             <ArrowLeft size={18} className="text-gray-600" />

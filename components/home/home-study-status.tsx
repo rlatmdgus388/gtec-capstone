@@ -89,12 +89,12 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
                 {/* 스켈레톤 헤더 */}
                 <div className="bg-background shrink-0">
                     <div className="px-4 py-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <Button variant="ghost" size="icon" onClick={handleBack} className="-ml-2">
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
                             <div>
-                                <h1 className="text-2xl font-bold text-foreground">학습 현황</h1>
+                                <h1 className="text-xl font-bold text-foreground">학습 현황</h1>
                             </div>
                         </div>
                     </div>
@@ -120,12 +120,12 @@ export const HomeStudyStatus = ({ onBack }: HomeStudyStatusProps) => {
                 {/* 오류 시 헤더 */}
                 <div className="bg-background shrink-0">
                     <div className="px-4 py-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <Button variant="ghost" size="icon" onClick={handleBack} className="-ml-2">
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
                             <div>
-                                <h1 className="text-2xl font-bold text-foreground">학습 현황</h1>
+                                <h1 className="text-xl font-bold text-foreground">학습 현황</h1>
                             </div>
                         </div>
                     </div>

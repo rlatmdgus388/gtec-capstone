@@ -26,12 +26,12 @@ export function NotificationSettings({ onBack }: NotificationSettingsProps) {
     <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
       {/* [수정 2] 'header' 태그로 변경, 'sticky' 속성 추가 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         <div className="px-4 py-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2 -ml-2">
             <ArrowLeft size={20} className="text-foreground" />
           </Button>
-          <h1 className="text-xl font-bold text-foreground">알림 설정</h1>
+          <h1 className="font-semibold text-lg text-foreground">알림 설정</h1>
         </div>
       </header>
 

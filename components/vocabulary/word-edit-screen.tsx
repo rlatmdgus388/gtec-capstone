@@ -59,7 +59,7 @@ export function WordEditScreen({ wordbookName, onBack, onSave, initialData }: Wo
     <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
       {/* [수정 2] 'div' -> 'header', 'sticky' 추가, 'border-b' 추가 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         <div className="px-2 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">

@@ -125,7 +125,7 @@ export function HomeScreen({ onWordbookSelect, activeTab }: HomeScreenProps) {
     // [수정 1] 'h-full' 제거
     <div className="flex flex-col bg-background">
       {/* [수정 2] 'div' -> 'header', 'sticky' 추가, 'shrink-0' 제거 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">

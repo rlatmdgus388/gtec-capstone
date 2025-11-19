@@ -83,7 +83,7 @@ export function PostFormScreen({
         <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
             {/* [수정 2] 'header' 태그로 변경, 'sticky' 속성 추가 */}
-            <header className="sticky top-0 z-40 w-full bg-background border-b">
+            <header className="sticky top-0 z-40 w-full bg-background">
                 <div className="flex items-center justify-between px-4 py-3 h-14">
                     <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2">
                         <ArrowLeft size={22} className="text-foreground" />

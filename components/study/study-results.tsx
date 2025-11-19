@@ -37,7 +37,7 @@ export function StudyResults({ results, mode, onRestart, onHome }: StudyResultsP
     <div className={cn("flex flex-col bg-background", "page-transition-enter")}>
 
       {/* [수정 2] 상단 고정 헤더 추가 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         <div className="px-4 py-4 flex items-center justify-center relative">
           <h1 className="text-xl font-bold text-foreground">학습 결과</h1>
         </div>

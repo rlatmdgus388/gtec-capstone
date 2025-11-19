@@ -470,7 +470,7 @@ export function StudyScreen({ selectedWordbookId, refreshKey }: StudyScreenProps
     // [수정 1] 'h-full' 제거
     <div className="flex flex-col bg-background">
       {/* [수정 2] 'div' -> 'header'로 변경, 'sticky' 속성 및 클래스 적용 */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b">
+      <header className="sticky top-0 z-40 w-full bg-background">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             {/* 아이콘 박스 h-7 -> h-10으로 수정 */}
