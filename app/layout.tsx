@@ -8,6 +8,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { ThemeProvider } from "@/lib/theme-context"
 import { Toaster } from "@/components/ui/toaster"
+import { NativeStatusBar } from "@/components/native-statusbar"  // ⬅️ 추가
 import { PwaElementsLoader } from "@/components/pwa-elements-loader" // ✅ 추가
 import "./globals.css"
 
@@ -31,14 +32,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <ThemeProvider>
-          {/* 🔹 PWA 웹 컴포넌트 로더 (웹에서 한 번만 실행) */}
-          <PwaElementsLoader />
+        <NativeStatusBar /> {/* ⬅️ 네이티브용 상태바/세이프에어리어 처리 */}
 
-          {/* 기존 구조 유지 */}
+        <ThemeProvider>
+          <PwaElementsLoader />
           <Suspense fallback={null}>{children}</Suspense>
           <Toaster />
         </ThemeProvider>
+
         <Analytics />
       </body>
     </html>
