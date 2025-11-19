@@ -8,6 +8,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { ThemeProvider } from "@/lib/theme-context"
 import { Toaster } from "@/components/ui/toaster"
+import { NativeStatusBar } from "@/components/NativeStatusBar"  // ⬅️ 추가
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -30,19 +31,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <ThemeProvider>
-          {/*
-            [핵심 수정]
-            <div className="flex h-dvh flex-col"> 와
-            <main className="flex-1 min-h-0"> 를 제거했습니다.
-            
-            Suspense와 children이 ThemeProvider 바로 밑에 와서
-            자식 컴포넌트가 body에서 직접 렌더링되도록 합니다.
-          */}
-          <Suspense fallback={null}>{children}</Suspense>
+        <NativeStatusBar /> {/* ⬅️ 네이티브용 상태바/세이프에어리어 처리 */}
 
+        <ThemeProvider>
+          <Suspense fallback={null}>{children}</Suspense>
           <Toaster />
         </ThemeProvider>
+
         <Analytics />
       </body>
     </html>

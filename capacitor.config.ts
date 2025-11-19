@@ -1,15 +1,16 @@
-/// <reference types="@capacitor/status-bar" />
-import { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.snapvoca.app',   // 네 값 그대로
-  appName: 'SnapVoca',
+  appId: 'com.snapvoca.app',
+  appName: 'Snap Voca',
   webDir: 'out',
+  server: {
+    url: 'https://gtec-capstone-6tbh.vercel.app', // ✅ 배포된 Vercel 주소
+    cleartext: true, // HTTPS니까 false
+  },
   plugins: {
     StatusBar: {
       overlaysWebView: false,   // 그대로 유지
-      style: 'DARK',
-      backgroundColor: '#000000',
     },
   },
   android: {
