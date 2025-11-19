@@ -1,22 +1,21 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+/// <reference types="@capacitor/status-bar" />
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.snapvoca.app',
-  appName: 'Snap Voca',
+  appId: 'com.snapvoca.app',   // 네 값 그대로
+  appName: 'SnapVoca',
   webDir: 'out',
-  server: {
-    url: 'https://gtec-capstone-6tbh.vercel.app', // ✅ 배포된 Vercel 주소
-    cleartext: false, // HTTPS니까 false
-  },
   plugins: {
     StatusBar: {
-      // ✅ 상태바가 WebView 위에 겹치지 않게
-      overlaysWebView: false,
-      // 선택: 상태바 글자 색 / 배경색 (원하는 대로)
+      overlaysWebView: false,   // 그대로 유지
       style: 'DARK',
       backgroundColor: '#000000',
-    }
-  }
+    },
+  },
+  android: {
+    // ✅ system bar 영역만큼 WebView 마진 자동 조정 (Android 15 edge-to-edge 대응)
+    adjustMarginsForEdgeToEdge: 'auto', // 안 되면 'force'로 바꿔봐도 됨
+  },
 };
 
 export default config;
