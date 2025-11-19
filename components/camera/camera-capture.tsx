@@ -21,28 +21,44 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
   /** ⭐ 카메라 시작 */
   const startCamera = useCallback(async () => {
+    // 1. 브라우저 지원 여부 및 보안 컨텍스트(HTTPS) 확인
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      const isSecure = window.isSecureContext;
+      const errorMessage = isSecure 
+        ? "이 브라우저는 카메라를 지원하지 않습니다."
+        : "카메라 권한은 HTTPS 환경에서만 동작합니다.\n(ngrok이나 배포 환경에서 테스트해주세요)";
+      
+      alert(errorMessage);
+      onClose(); // 카메라 창 닫기
+      return;
+    }
+  
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }, // 모바일 후면 카메라
+        video: { 
+          facingMode: "environment",
+          // iOS Safari 대응: 프레임 속도 제한 (일부 구형 기기 버벅임 방지)
+          // width: { ideal: 1280 },
+          // height: { ideal: 720 } 
+        }, 
         audio: false,
       })
-
-      // 스트림 저장
+  
       streamRef.current = stream
-
-      // 다음 렌더에서 <video> 태그가 만들어지도록 활성화
       setCameraActive(true)
-
-      // 만약 videoRef가 이미 존재하면 붙이기
+  
       if (videoRef.current) {
         videoRef.current.srcObject = stream
       }
     } catch (error) {
       console.error("Error accessing camera:", error)
-      alert("카메라에 접근할 수 없습니다. 권한을 확인해주세요.")
+      // 권한 거부 혹은 다른 하드웨어 에러
+      alert("카메라 권한이 거부되었거나 사용할 수 없습니다.\n브라우저 설정에서 카메라 권한을 허용해주세요.")
+      onClose()
     }
-  }, [])
+  }, [onClose]) // onClose 의존성 추가
 
+  
   /** ⭐ 카메라 종료 */
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
