@@ -37,7 +37,7 @@ export function ThemeSettings({ onBack }: ThemeSettingsProps) {
   return (
     <div className="min-h-screen bg-muted/40 pb-10">
       {/* Header */}
-      <div className="bg-background border-b sticky top-0 z-20 px-4 h-14 flex items-center gap-3">
+      <div className="bg-background sticky top-0 z-20 px-4 h-14 flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
@@ -55,8 +55,6 @@ export function ThemeSettings({ onBack }: ThemeSettingsProps) {
         {/* Theme Selection Section */}
         <section className="space-y-3">
           <div className="flex items-center gap-2 px-1">
-            <Palette className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-medium text-muted-foreground">화면 모드</h2>
           </div>
 
           <Card className="border-none shadow-sm overflow-hidden">
