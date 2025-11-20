@@ -10,7 +10,6 @@ import { fetchWithAuth } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 // [!!!] 1. 'session' prop에 wordbookId가 있다고 가정합니다.
-// (이 컴포넌트를 부르는 부모에서 꼭 wordbookId를 넘겨줘야 합니다)
 interface StudySession {
   id: string
   wordbookId: string // [!!!] 이 ID가 매우 중요합니다.
@@ -22,13 +21,11 @@ interface StudySession {
 }
 
 // [!!!] 2. WordResult에서 wordbookId 제거
-// (API가 안준다고 가정하고, 대신 session의 ID를 쓸 것입니다)
 interface WordResult {
   id: string
   word: string
   meaning: string
   mastered: boolean
-  // wordbookId: string // <- 제거
 }
 
 interface StudySessionDetailScreenProps {
@@ -36,6 +33,9 @@ interface StudySessionDetailScreenProps {
   onBack: () => void
   onStartReview: (mode: string, words: WordResult[], writingType?: "word" | "meaning") => void
 }
+
+// 프로젝트 하단 탭바의 높이를 4rem (64px)으로 가정합니다. (StudyHistoryScreen과 통일)
+const PROJECT_TAB_BAR_HEIGHT = '4rem';
 
 export function StudySessionDetailScreen({ session, onBack, onStartReview }: StudySessionDetailScreenProps) {
 
@@ -77,13 +77,10 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
   }
 
   // [!!!] 3. 암기 상태 토글 함수 수정
-  // item에서 wordbookId를 받는 대신, session에서 가져옵니다.
   const handleToggleMastered = async (wordId: string, currentMasteredStatus: boolean) => {
 
-    // [!!!] session prop에서 wordbookId를 가져옵니다.
     const wordbookId = session.wordbookId;
 
-    // [!!!] 새로운 안전장치: session.wordbookId가 있는지 확인
     if (!wordbookId) {
       console.error("session.wordbookId가 없어 API를 호출할 수 없습니다.");
       alert("세션 정보에 wordbookId가 누락되어 상태를 변경할 수 없습니다.");
@@ -139,10 +136,9 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
             className={cn(
               "text-xs font-semibold rounded-full px-3 py-1 h-auto ml-2 flex-shrink-0",
               item.mastered
-                ? "text-green-700 bg-green-100 hover:bg-green-200"
+                ? "text-green-700 bg-green-100 hover:bg-green-200 dark:text-green-300 dark:bg-green-800"
                 : "text-muted-foreground bg-muted hover:bg-muted-foreground/20",
             )}
-            // [!!!] onClick 핸들러가 wordbookId 없이 item.id만 전달하도록 수정
             onClick={() => handleToggleMastered(item.id, item.mastered)}
           >
             {item.mastered ? "암기 완료" : "암기 미완료"}
@@ -153,12 +149,10 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
   )
 
   return (
-    // [수정 1] 'h-full' 제거, 'flex flex-col' 유지
-    <Tabs defaultValue="incorrect" className="flex flex-col bg-background text-foreground">
-      {/* [수정 2] 'h-full' 제거 */}
+    <Tabs defaultValue="incorrect" className="flex flex-col bg-background min-h-screen text-foreground">
+      {/* 1. Header & TabsList */}
       <div className="flex flex-col">
-        {/* [수정 3] 'div' -> 'header', 'sticky' 속성 추가 */}
-        <header className="sticky top-0 z-40 w-full bg-background">
+        <header className="sticky top-0 z-40 w-full bg-background border-b border-border">
           <div className="px-4 pt-6 pb-4">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
@@ -171,14 +165,12 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
           {!isLoading && (
             <div className="px-4 pb-4">
               <TabsList className="grid w-full grid-cols-2 bg-popover border-border rounded-md">
-                {/* ▼▼▼ [수정] className 추가 ▼▼▼ */}
                 <TabsTrigger
                   value="correct"
                   className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
                   정답 ({correctWords.length})
                 </TabsTrigger>
-                {/* ▼▼▼ [수정] className 추가 ▼▼▼ */}
                 <TabsTrigger
                   value="incorrect"
                   className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -190,8 +182,8 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
           )}
         </header>
 
-        {/* [수정 4] 'overflow-y-auto' 제거, 'pb' 값 수정 */}
-        <div className="flex-1 p-4 pb-[calc(10rem+env(safe-area-inset-bottom))]">
+        {/* 2. TabsContent Area (Scrollable) */}
+        <div className="flex-1 p-4 pb-[calc(10rem+env(safe-area-inset-bottom))] overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
@@ -230,8 +222,15 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
         </div>
       </div>
 
-      {/* [수정 5] 'bottom-18' -> 'bottom-[5rem]', 'z-10' -> 'z-30' 수정 */}
-      <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-30 p-4 bg-background border-t border-border">
+      {/* 3. Fixed Footer (오답 복습 버튼) - 투명 스타일 및 Safe Area 적용 */}
+      <div
+        // 배경 투명, 그림자 없음, p-4 유지
+        className="fixed left-0 right-0 mx-auto w-full max-w-md z-30 p-4 rounded-xl"
+        style={{
+          // 탭바 높이 (4rem) + 미세한 여백 (0.5rem) + Safe Area
+          bottom: `calc(${PROJECT_TAB_BAR_HEIGHT} + 0.5rem + env(safe-area-inset-bottom))`,
+        }}
+      >
         <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
           <DrawerTrigger asChild>
             <Button
@@ -244,6 +243,7 @@ export function StudySessionDetailScreen({ session, onBack, onStartReview }: Stu
 
           <DrawerContent>
             <div className="mx-auto w-full max-w-sm">
+              <h3 className="text-lg font-semibold text-center py-2 border-b border-border">복습 모드 선택</h3>
               {drawerContent === "modes" && (
                 <div className="p-2">
                   {studyModes.map((mode) =>
