@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -17,7 +17,6 @@ interface StudySession {
 }
 
 // [!!!] 1. WordResult 인터페이스는 그대로 유지합니다.
-// (백엔드가 wordbookId를 주지 않아도, 프론트에서 채워줄 것입니다)
 interface WordResult {
   id: string
   wordbookId: string // [!!!] 이 필드를 프론트에서 채울 것입니다.
@@ -33,6 +32,9 @@ interface AggregatedStudyDetailScreenProps {
   onStartReview: (mode: string, words: WordResult[], writingType?: "word" | "meaning") => void
 }
 
+// 프로젝트 하단 탭바 높이 및 안전 영역 상수를 사용합니다.
+const PROJECT_TAB_BAR_HEIGHT = '4rem';
+
 export function AggregatedStudyDetailScreen({
   periodTitle,
   sessions,
@@ -42,6 +44,10 @@ export function AggregatedStudyDetailScreen({
   const [correctWords, setCorrectWords] = useState<WordResult[]>([])
   const [incorrectWords, setIncorrectWords] = useState<WordResult[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // 🔥 [추가] 탭 상태 추적 (기본값: 오답 탭)
+  const [activeTab, setActiveTab] = useState("incorrect");
+
   const [drawerContent, setDrawerContent] = useState<"modes" | "writingOptions">("modes")
 
   const studyModes = [
@@ -51,74 +57,68 @@ export function AggregatedStudyDetailScreen({
     { id: "quiz", name: "객관식 퀴즈", icon: Brain },
   ]
 
-  // [!!!] 2. useEffect 로직 (핵심 수정)
-  useEffect(() => {
-    const fetchWordDetails = async () => {
-      if (sessions.length === 0) {
-        setIsLoading(false)
-        return
-      }
-      setIsLoading(true)
-
-      // [!!!] 맵 생성: <wordId, wordbookId>
-      const correctWordMap = new Map<string, string>()
-      const incorrectWordMap = new Map<string, string>()
-
-      const correctApiPayload: { wordbookId: string; wordId: string }[] = []
-      const incorrectApiPayload: { wordbookId: string; wordId: string }[] = []
-
-      sessions.forEach((session) => {
-        session.correctWords?.forEach((wordId) => {
-          if (!correctWordMap.has(wordId)) { // 중복 단어 방지
-            correctWordMap.set(wordId, session.wordbookId)
-            correctApiPayload.push({ wordbookId: session.wordbookId, wordId })
-          }
-        })
-        session.incorrectWords?.forEach((wordId) => {
-          if (!incorrectWordMap.has(wordId)) { // 중복 단어 방지
-            incorrectWordMap.set(wordId, session.wordbookId)
-            incorrectApiPayload.push({ wordbookId: session.wordbookId, wordId })
-          }
-        })
-      })
-
-      try {
-        const [correct, incorrect] = await Promise.all([
-          correctApiPayload.length > 0
-            ? fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(correctApiPayload) })
-            : Promise.resolve([]),
-          incorrectApiPayload.length > 0
-            ? fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(incorrectApiPayload) })
-            : Promise.resolve([]),
-        ])
-
-        // [!!!] 3. 'wordbookId' 다시 합치기 (핵심)
-        // 백엔드 응답(correct)에는 wordbookId가 없다고 가정합니다.
-        const correctWithWordbookId = (correct || []).map((word: Omit<WordResult, 'wordbookId'>) => ({
-          ...word,
-          // 맵에서 word.id를 키로 wordbookId를 찾아 추가합니다.
-          wordbookId: correctWordMap.get(word.id) || '',
-        }));
-
-        const incorrectWithWordbookId = (incorrect || []).map((word: Omit<WordResult, 'wordbookId'>) => ({
-          ...word,
-          // 맵에서 word.id를 키로 wordbookId를 찾아 추가합니다.
-          wordbookId: incorrectWordMap.get(word.id) || '',
-        }));
-
-        // [!!!] 4. 'wordbookId'가 포함된 최종 데이터를 상태에 저장
-        setCorrectWords(correctWithWordbookId)
-        setIncorrectWords(incorrectWithWordbookId)
-
-      } catch (error) {
-        console.error("단어 상세 정보 로딩 실패:", error)
-      } finally {
-        setIsLoading(false)
-      }
+  // 🔥 [수정] 단어 상세 정보를 불러오는 로직을 useCallback으로 감싸 재사용 가능하게 변경
+  const fetchWordDetails = useCallback(async () => {
+    if (sessions.length === 0) {
+      setIsLoading(false)
+      return
     }
+    setIsLoading(true)
 
-    fetchWordDetails()
+    const correctWordMap = new Map<string, string>()
+    const incorrectWordMap = new Map<string, string>()
+    const correctApiPayload: { wordbookId: string; wordId: string }[] = []
+    const incorrectApiPayload: { wordbookId: string; wordId: string }[] = []
+
+    sessions.forEach((session) => {
+      session.correctWords?.forEach((wordId) => {
+        if (!correctWordMap.has(wordId)) {
+          correctWordMap.set(wordId, session.wordbookId)
+          correctApiPayload.push({ wordbookId: session.wordbookId, wordId })
+        }
+      })
+      session.incorrectWords?.forEach((wordId) => {
+        if (!incorrectWordMap.has(wordId)) {
+          incorrectWordMap.set(wordId, session.wordbookId)
+          incorrectApiPayload.push({ wordbookId: session.wordbookId, wordId })
+        }
+      })
+    })
+
+    try {
+      const [correct, incorrect] = await Promise.all([
+        correctApiPayload.length > 0
+          ? fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(correctApiPayload) })
+          : Promise.resolve([]),
+        incorrectApiPayload.length > 0
+          ? fetchWithAuth("/api/word", { method: "POST", body: JSON.stringify(incorrectApiPayload) })
+          : Promise.resolve([]),
+      ])
+
+      const correctWithWordbookId = (correct || []).map((word: Omit<WordResult, 'wordbookId'>) => ({
+        ...word,
+        wordbookId: correctWordMap.get(word.id) || '',
+      }));
+
+      const incorrectWithWordbookId = (incorrect || []).map((word: Omit<WordResult, 'wordbookId'>) => ({
+        ...word,
+        wordbookId: incorrectWordMap.get(word.id) || '',
+      }));
+
+      setCorrectWords(correctWithWordbookId)
+      setIncorrectWords(incorrectWithWordbookId)
+
+    } catch (error) {
+      console.error("단어 상세 정보 로딩 실패:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }, [sessions])
+
+  // [!!!] 2. useEffect 로직 (useCallback 함수 호출)
+  useEffect(() => {
+    fetchWordDetails()
+  }, [fetchWordDetails])
 
   const handleReview = (mode: string, writingType?: "word" | "meaning") => {
     if (incorrectWords.length > 0) {
@@ -128,10 +128,8 @@ export function AggregatedStudyDetailScreen({
     }
   }
 
-  // [!!!] 5. 암기 상태 토글 함수 (이제 정상 작동)
+  // [!!!] 3. 암기 상태 토글 함수 (개별 단어)
   const handleToggleMastered = async (wordbookId: string, wordId: string, currentMasteredStatus: boolean) => {
-
-    // [!!!] 6. 안전장치 (이제 이 alert가 뜨지 않아야 합니다)
     if (!wordbookId) {
       console.error("wordbookId가 없어 API를 호출할 수 없습니다.");
       alert("데이터에 wordbookId가 누락되어 상태를 변경할 수 없습니다.");
@@ -150,7 +148,6 @@ export function AggregatedStudyDetailScreen({
     setIncorrectWords(prev => toggleMasteredInList(prev));
 
     try {
-      // [!!!] 7. "단어장"에서 찾은 실제 API 주소 사용
       await fetchWithAuth(`/api/wordbooks/${wordbookId}/words/${wordId}`, {
         method: 'PUT',
         body: JSON.stringify({
@@ -172,8 +169,47 @@ export function AggregatedStudyDetailScreen({
     }
   };
 
+  // 🔥 [추가] 4. 정답 단어 일괄 암기 완료 처리 함수
+  const handleMarkAllCorrectAsMastered = async () => {
+    if (correctWords.length === 0 || isLoading) return;
 
-  // [!!!] 8. 렌더링 함수 (변경 없음)
+    setIsLoading(true);
+    let successCount = 0;
+
+    // 아직 완료되지 않은 정답 단어만 처리 대상으로 선택
+    const wordsToMark = correctWords.filter(word => !word.mastered);
+
+    // 1. Optimistic UI Update (화면에서 모두 '암기 완료'로 표시)
+    setCorrectWords(prev => prev.map(word => ({ ...word, mastered: true })));
+
+    // 2. API Call (Parallel processing)
+    try {
+      const updatePromises = wordsToMark.map(word =>
+        // word.wordbookId는 이미 fetchWordDetails에서 채워져 있습니다.
+        fetchWithAuth(`/api/wordbooks/${word.wordbookId}/words/${word.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ mastered: true }),
+        }).then(() => { successCount++; })
+          .catch(err => {
+            console.error(`Failed to mark word ${word.word}:`, err);
+          })
+      );
+      await Promise.all(updatePromises);
+
+      // 3. Final feedback
+      alert(`${successCount}개의 단어를 암기 완료 처리했습니다.`);
+
+    } catch (error) {
+      console.error("일괄 암기 완료 처리 실패:", error);
+      alert("일괄 처리 중 심각한 오류가 발생했습니다. 데이터를 새로고침합니다.");
+      fetchWordDetails(); // 에러 발생 시 데이터 동기화를 위해 전체 새로고침
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  // [!!!] 5. 렌더링 함수 (스타일 업데이트)
   const renderWordCard = (item: WordResult) => (
     <Card key={item.id} className="bg-card border-border">
       <CardContent className="p-3">
@@ -191,7 +227,6 @@ export function AggregatedStudyDetailScreen({
                 ? "text-green-700 bg-green-100 hover:bg-green-200"
                 : "text-muted-foreground bg-muted hover:bg-muted-foreground/20",
             )}
-            // 'item.wordbookId'는 useEffect에서 채워줬기 때문에 이제 값이 있습니다.
             onClick={() => handleToggleMastered(item.wordbookId, item.id, item.mastered)}
           >
             {item.mastered ? "암기 완료" : "암기 미완료"}
@@ -201,13 +236,21 @@ export function AggregatedStudyDetailScreen({
     </Card>
   )
 
+  const isCorrectTabActive = activeTab === "correct";
+  const wordsToMasterCount = correctWords.filter(w => !w.mastered).length;
+  const reviewButtonDisabled = incorrectWords.length === 0 || isLoading;
+  const masteredButtonDisabled = wordsToMasterCount === 0 || isLoading;
+
+
   return (
-    // [수정 1] 'h-full' 제거
-    <Tabs defaultValue="incorrect" className="flex flex-col bg-background text-foreground">
-      {/* [수정 2] 'h-full' 제거 */}
+    // 🔥 [수정] activeTab과 onValueChange를 바인딩
+    <Tabs
+      value={activeTab}
+      onValueChange={setActiveTab}
+      className="flex flex-col bg-background text-foreground min-h-screen"
+    >
       <div className="flex flex-col">
-        {/* [수정 3] 'header' 태그로 변경 및 'sticky' 속성 적용 */}
-        <header className="sticky top-0 z-40 w-full bg-background">
+        <header className="sticky top-0 z-40 w-full bg-background border-b border-border">
           <div className="px-4 pt-4 pb-4">
             <div className="relative flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
@@ -220,7 +263,6 @@ export function AggregatedStudyDetailScreen({
           {!isLoading && (
             <div className="px-4 pb-4">
               <TabsList className="grid w-full grid-cols-2 bg-popover border-border rounded-md">
-                {/* [수정] data-[state=active]일 때 주황색 배경 및 텍스트 색상 적용 */}
                 <TabsTrigger
                   value="correct"
                   className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -238,7 +280,6 @@ export function AggregatedStudyDetailScreen({
           )}
         </header>
 
-        {/* [수정 4] 'overflow-y-auto' 제거, 'pb' 수정 */}
         <div className="flex-1 p-4 pb-[calc(10rem+env(safe-area-inset-bottom))]">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
@@ -280,81 +321,110 @@ export function AggregatedStudyDetailScreen({
         </div>
       </div>
 
-      {/* [수정 5] 'bottom-18' -> 'bottom-[5rem]', 'z-10' -> 'z-30' 수정 */}
-      <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-30 p-4 bg-background border-t border-border">
-        <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
-          <DrawerTrigger asChild>
-            <Button
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium"
-              disabled={incorrectWords.length === 0 || isLoading}
-            >
-              오답 단어 복습하기
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <div className="mx-auto w-full max-w-sm">
-              {drawerContent === "modes" && (
-                <div className="p-2">
-                  {studyModes.map((mode) => {
-                    if (mode.id === "writing") {
+      {/* 🔥 [수정] 하단 버튼 조건부 렌더링 */}
+      <div
+        className="fixed left-0 right-0 mx-auto w-full max-w-md z-30 p-4 rounded-xl"
+        style={{
+          bottom: `calc(${PROJECT_TAB_BAR_HEIGHT} + 0.5rem + env(safe-area-inset-bottom))`,
+        }}
+      >
+        {isCorrectTabActive ? (
+          // 탭이 '정답'일 때: 암기 완료 버튼 표시 (Green 스타일 적용)
+          <Button
+            className="w-full h-12 rounded-xl font-medium transition-all
+                       text-green-700 bg-green-100 hover:bg-green-200"
+            disabled={masteredButtonDisabled}
+            onClick={handleMarkAllCorrectAsMastered}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                처리 중...
+              </>
+            ) : (
+              `정답 단어 암기 완료 (${wordsToMasterCount}개)`
+            )}
+          </Button>
+        ) : (
+          // 탭이 '오답'일 때: 복습하기 Drawer 표시 (Primary 스타일 유지)
+          <Drawer onOpenChange={(isOpen) => !isOpen && setDrawerContent("modes")}>
+            <DrawerTrigger asChild>
+              <Button
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium"
+                disabled={reviewButtonDisabled}
+              >
+                오답 단어 복습하기
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+              <div className="mx-auto w-full max-w-sm">
+                {drawerContent === "modes" && (
+                  <div className="p-2">
+                    <h3 className="text-lg font-semibold text-center py-2 border-b border-border text-foreground">복습 모드 선택</h3>
+                    {studyModes.map((mode) => {
+                      if (mode.id === "writing") {
+                        return (
+                          <Button
+                            key={mode.id}
+                            variant="ghost"
+                            className="w-full justify-start p-2 h-12 text-sm"
+                            onClick={() => setDrawerContent("writingOptions")}
+                          >
+                            <mode.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <span className="text-foreground">{mode.name}</span>
+                          </Button>
+                        )
+                      }
                       return (
-                        <Button
-                          key={mode.id}
-                          variant="ghost"
-                          className="w-full justify-start p-2 h-12 text-sm"
-                          onClick={() => setDrawerContent("writingOptions")}
-                        >
-                          <mode.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <span className="text-foreground">{mode.name}</span>
-                        </Button>
+                        <DrawerClose asChild key={mode.id}>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start p-2 h-12 text-sm"
+                            onClick={() => handleReview(mode.id)}
+                          >
+                            <mode.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <span className="text-foreground">{mode.name}</span>
+                          </Button>
+                        </DrawerClose>
                       )
-                    }
-                    return (
-                      <DrawerClose asChild key={mode.id}>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start p-2 h-12 text-sm"
-                          onClick={() => handleReview(mode.id)}
-                        >
-                          <mode.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <span className="text-foreground">{mode.name}</span>
-                        </Button>
-                      </DrawerClose>
-                    )
-                  })}
-                </div>
-              )}
-              {drawerContent === "writingOptions" && (
-                <div className="p-2">
+                    })}
+                  </div>
+                )}
+                {drawerContent === "writingOptions" && (
+                  <div className="p-2">
+                    <h3 className="text-lg font-semibold text-center py-2 border-b border-border text-foreground">받아쓰기 옵션</h3>
+                    <DrawerClose asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start p-2 h-12 text-sm"
+                        onClick={() => handleReview("writing", "word")}
+                      >
+                        뜻 보고 단어 쓰기
+                      </Button>
+                    </DrawerClose>
+                    <DrawerClose asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start p-2 h-12 text-sm"
+                        onClick={() => handleReview("writing", "meaning")}
+                      >
+                        단어 보고 뜻 쓰기
+                      </Button>
+                    </DrawerClose>
+                  </div>
+                )}
+                <DrawerFooter className="pt-2">
                   <DrawerClose asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start p-2 h-12 text-sm"
-                      onClick={() => handleReview("writing", "word")}
-                    >
-                      뜻 보고 단어 쓰기
-                    </Button>
+                    <Button variant="outline">취소</Button>
                   </DrawerClose>
-                  <DrawerClose asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start p-2 h-12 text-sm"
-                      onClick={() => handleReview("writing", "meaning")}
-                    >
-                      단어 보고 뜻 쓰기
-                    </Button>
-                  </DrawerClose>
-                </div>
-              )}
-              <DrawerFooter className="pt-2">
-                <DrawerClose asChild>
-                  <Button variant="outline">취소</Button>
-                </DrawerClose>
-              </DrawerFooter>
-            </div>
-          </DrawerContent>
-        </Drawer>
+                </DrawerFooter>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        )}
       </div>
     </Tabs>
   )
 }
+
+// text-green-700 bg-green-100 hover:bg-green-200
