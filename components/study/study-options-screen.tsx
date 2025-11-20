@@ -52,6 +52,9 @@ interface StudyOptionsScreenProps {
 
 type MasteryFilter = "all" | "unmastered" | "mastered";
 
+// 하단바 위에 버튼 박스 높이 설정
+const PROJECT_TAB_BAR_HEIGHT = '5rem';
+
 export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: StudyOptionsScreenProps) {
 
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
@@ -60,8 +63,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
   const [allWords, setAllWords] = useState<Word[]>([]); // 선택한 단어장의 모든 단어
   const [masteryFilter, setMasteryFilter] = useState<MasteryFilter>("unmastered"); // 기본값 '암기 미완료'
 
-  // [!!! 1. 여기가 수정되었습니다 !!!]
-  // 'number'에서 'number | string'으로 변경하여 빈 문자열("") 상태 허용
   const [wordCount, setWordCount] = useState<number | string>(10); // 학습할 단어 개수
 
   const [writingModeType, setWritingModeType] = useState<'word' | 'meaning'>('word');
@@ -127,6 +128,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
   useEffect(() => {
     if (!isLoading.words) {
       if (filteredWords.length > 0) {
+        // 단어 개수를 최대치로 설정
         setWordCount(filteredWords.length);
       } else {
         setWordCount(0);
@@ -138,7 +140,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
     setSelectedWordbook(wordbook);
   };
 
-  // [!!! 2. 여기가 수정되었습니다 !!!]
   // Slider 또는 Input에서 호출되는 핸들러
   const handleCountChange = (value: number) => {
     const max = filteredWords.length;
@@ -147,7 +148,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
       return;
     }
 
-    // (문제의 코드 수정) value < 1 (즉, 0)을 허용합니다. (음수만 방지)
     if (value < 0) setWordCount(0);
     else if (value > max) setWordCount(max);
     else setWordCount(value);
@@ -155,8 +155,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
 
   // 학습 시작 버튼 클릭
   const handleStartClick = () => {
-    // [!!! 3. 여기가 수정되었습니다 !!!]
-    // Number()로 변환하여 확인
     const numericWordCount = Number(wordCount);
     if (!selectedWordbook || filteredWords.length === 0 || numericWordCount <= 0) {
       alert("학습할 단어를 선택해주세요.");
@@ -188,17 +186,14 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
   const selectedWordbookName = selectedWordbook?.name || "단어장을 선택하세요";
   const maxWords = filteredWords.length;
 
-  // [!!! 4. 여기가 수정되었습니다 !!!]
-  // Number()로 변환하여 확인
   const numericWordCount = Number(wordCount);
   const canStart = selectedWordbook && !isLoading.words && maxWords > 0 && numericWordCount > 0;
 
   return (
-    // [수정 1] 'h-full' 제거
-    <div className="flex flex-col bg-background">
-      {/* [수정 2] 'div' -> 'header'로 변경, 클래스 수정 */}
-      <header className="sticky top-0 z-40 w-full bg-background">
-        {/* [수정 3] 헤더 내부에 'px-4 py-4' 래퍼 추가 */}
+    <div className="flex flex-col bg-background min-h-screen">
+
+      {/* 1. Header */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b border-border">
         <div className="px-4 py-4 flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
             <ArrowLeft size={20} className="text-foreground" />
@@ -207,10 +202,10 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
         </div>
       </header>
 
-      {/* [수정 4] 'overflow-y-auto' 제거, 'pb-[10rem]' -> 하단 여백 수정 */}
-      <div className="flex-1 p-4 space-y-6 pb-[calc(10rem+env(safe-area-inset-bottom))]">
+      {/* 2. Content Area (Scrollable) */}
+      <div className="flex-1 p-4 space-y-6 pb-[calc(14rem+env(safe-area-inset-bottom))] overflow-y-auto">
 
-        {/* 2.1. 단어장 선택 (이하 동일) */}
+        {/* 2.1. 단어장 선택 */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="text-lg text-foreground">1. 단어장 선택</CardTitle>
@@ -268,7 +263,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
           </CardContent>
         </Card>
 
-        {/* 2.2. 학습 범위 (암기 여부) (이하 동일) */}
+        {/* 2.2. 학습 범위 (암기 여부) */}
         <Card className="bg-card border-border shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="text-lg text-foreground">2. 학습 범위</CardTitle>
@@ -290,7 +285,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="mastered" id="filter-mastered" />
-                <Label htmlFor="mastered" className="flex-1">암기 완료</Label>
+                <Label htmlFor="filter-mastered" className="flex-1">암기 완료</Label>
               </div>
             </RadioGroup>
           </CardContent>
@@ -304,7 +299,6 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                {/* [!!! 5. 여기가 수정되었습니다 !!!] */}
                 <Input
                   type="number"
                   value={wordCount}
@@ -325,13 +319,13 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
                       setWordCount(0);
                     }
                   }}
-                  className="w-20 text-center text-lg font-bold border-border bg-background text-foreground"
+                  className="w-20 text-center text-lg font-bold border-border bg-card text-foreground focus-visible:ring-primary"
                   disabled={!selectedWordbook || isLoading.words || maxWords === 0}
                 />
                 <span className="text-muted-foreground text-sm">/ {maxWords}개</span>
               </div>
               <Slider
-                value={[Number(wordCount) || 0]} // [수정] Number()로 변환
+                value={[Number(wordCount) || 0]}
                 onValueChange={(value) => handleCountChange(value[0])}
                 max={maxWords}
                 min={maxWords > 0 ? 1 : 0}
@@ -342,7 +336,7 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
           </CardContent>
         </Card>
 
-        {/* 2.4. (조건부) 받아쓰기 타입 (이하 동일) */}
+        {/* 2.4. (조건부) 받아쓰기 타입 */}
         {modeId === 'writing' && (
           <Card className="bg-card border-border shadow-sm rounded-xl">
             <CardHeader>
@@ -369,19 +363,28 @@ export function StudyOptionsScreen({ modeId, modeName, onBack, onStartStudy }: S
 
       </div>
 
-      {/* [수정 5] 'z-10' -> 'z-30' 수정 */}
-      <div className="fixed bottom-[5rem] left-1/2 -translate-x-1/2 w-full max-w-md z-30 p-4">
-        <Button
-          size="lg"
-          className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
-          disabled={!canStart}
-          onClick={handleStartClick}
-        >
-          {canStart ? `학습 시작 (${numericWordCount}개)` : // [수정] numericWordCount 사용
-            !selectedWordbook ? "단어장을 선택하세요" :
-              isLoading.words ? "단어 로딩 중..." :
-                "학습할 단어가 없습니다"}
-        </Button>
+      {/* 3. Fixed Footer (Start Button) - 배경 투명화 및 여백 유지 */}
+      <div
+        // 배경과 그림자를 제거하여 투명하게 만듦 (bg-transparent)
+        className="fixed left-0 right-0 mx-auto w-full max-w-md z-30 pt-4"
+        style={{
+          // PROJECT_TAB_BAR_HEIGHT (4rem) + 0.5rem Gap + Safe Area Inset
+          bottom: `calc(${PROJECT_TAB_BAR_HEIGHT} + 0.5rem + env(safe-area-inset-bottom))`,
+        }}
+      >
+        <div className="px-4">
+          <Button
+            size="lg"
+            className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
+            disabled={!canStart}
+            onClick={handleStartClick}
+          >
+            {canStart ? `학습 시작 (${numericWordCount}개)` :
+              !selectedWordbook ? "단어장을 선택하세요" :
+                isLoading.words ? "단어 로딩 중..." :
+                  "학습할 단어가 없습니다"}
+          </Button>
+        </div>
       </div>
     </div>
   )
