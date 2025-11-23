@@ -36,16 +36,24 @@ export default function AuthManager() {
   const [homeRefreshKey, setHomeRefreshKey] = useState(0)
   const [settingsRefreshKey, setSettingsRefreshKey] = useState(0)
 
+  const [debugLog, setDebugLog] = useState<string[]>([])
+
+  const addLog = (msg: string) => {
+    setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`])
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      addLog(`AuthStateChanged: ${currentUser ? currentUser.email : 'null'}`)
       setUser(currentUser)
       setIsLoading(false)
     })
 
     // [Redirect 처리] 앱 로드 시 리다이렉트 결과 확인 (AuthManager에서 처리)
+    addLog("getRedirectResult 호출 시작")
     getRedirectResult(auth).then(async (result) => {
       if (result) {
-        console.log("리다이렉트 로그인 성공:", result.user.email);
+        addLog(`리다이렉트 성공: ${result.user.email}`)
         // Firestore 유저 생성 로직
         const userDocRef = doc(db, "users", result.user.uid);
         const userDoc = await getDoc(userDocRef);
@@ -56,10 +64,12 @@ export default function AuthManager() {
             createdAt: serverTimestamp(),
           });
         }
+      } else {
+        addLog("리다이렉트 결과 없음 (null)")
       }
     }).catch((error) => {
+      addLog(`리다이렉트 에러: ${error.message}`)
       console.error("리다이렉트 확인 에러:", error);
-      // alert(`리다이렉트 에러: ${error.message}`);
     });
 
     return () => unsubscribe()
@@ -69,23 +79,40 @@ export default function AuthManager() {
   const isGoogleUser = user?.providerData.some((provider) => provider.providerId === "google.com") ?? false
   const isEmailVerified = user?.emailVerified || isGoogleUser
 
+  // 디버그용 오버레이 렌더링
+  const renderDebugOverlay = () => (
+    <div className="fixed top-0 left-0 w-full bg-black/80 text-white p-2 text-xs z-50 max-h-40 overflow-y-auto pointer-events-none">
+      <p>User: {user ? user.email : 'null'}</p>
+      <p>Loading: {isLoading ? 'true' : 'false'}</p>
+      {debugLog.map((log, i) => <p key={i}>{log}</p>)}
+    </div>
+  )
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center flex-col gap-4">
         <p>로딩 중...</p>
+        {renderDebugOverlay()}
       </div>
     )
   }
 
   if (!isAuthenticated) {
-    switch (authScreen) {
-      case "email-login":
-        return <EmailLoginForm onBackToMain={() => setAuthScreen("main")} onLoginSuccess={() => setAuthScreen("main")} />
-      case "signup":
-        return <SignupForm onBackToLogin={() => setAuthScreen("main")} onSignupSuccess={() => setAuthScreen("main")} />
-      default:
-        return <LoginForm onShowEmailLogin={() => setAuthScreen("email-login")} onShowSignup={() => setAuthScreen("signup")} />
-    }
+    return (
+      <>
+        {renderDebugOverlay()}
+        {(() => {
+          switch (authScreen) {
+            case "email-login":
+              return <EmailLoginForm onBackToMain={() => setAuthScreen("main")} onLoginSuccess={() => setAuthScreen("main")} />
+            case "signup":
+              return <SignupForm onBackToLogin={() => setAuthScreen("main")} onSignupSuccess={() => setAuthScreen("main")} />
+            default:
+              return <LoginForm onShowEmailLogin={() => setAuthScreen("email-login")} onShowSignup={() => setAuthScreen("signup")} />
+          }
+        })()}
+      </>
+    )
   }
 
   if (!isEmailVerified) {
