@@ -9,6 +9,8 @@ import {
   signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
+  setPersistence,
+  browserLocalPersistence,
   User
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -41,16 +43,28 @@ export function LoginForm({
   useEffect(() => {
     const handleRedirectResult = async () => {
       try {
-        alert("리다이렉트 결과 확인 시작"); // 디버깅용
+        // 1. 리다이렉트 결과 확인
+        // alert("리다이렉트 결과 확인 시작"); // 디버깅용
         const result = await getRedirectResult(auth);
         if (result) {
-          alert(`로그인 성공! 유저: ${result.user.email}`); // 디버깅용
+          // alert(`로그인 성공! 유저: ${result.user.email}`); // 디버깅용
           setIsLoading(true);
           await checkUserAndCreateFirestore(result.user);
           setIsLoading(false);
-        } else {
-          alert("리다이렉트 결과 없음 (일반 진입)"); // 디버깅용
+          return;
         }
+
+        // 2. 이미 로그인된 상태인지 확인 (리다이렉트 결과가 null이어도 세션이 유지될 수 있음)
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          // alert(`이미 로그인된 상태입니다. 유저: ${currentUser.email}`); // 디버깅용
+          setIsLoading(true);
+          await checkUserAndCreateFirestore(currentUser);
+          setIsLoading(false);
+          return;
+        }
+
+        // alert("리다이렉트 결과 없음 & 로그인 안됨");
       } catch (error) {
         console.error("리다이렉트 로그인 확인 중 에러:", error);
         const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
@@ -70,19 +84,20 @@ export function LoginForm({
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     try {
+      // 로그인 상태 유지를 위해 로컬 지속성 설정
+      await setPersistence(auth, browserLocalPersistence);
+
       if (isMobile) {
-        // [모바일] 리다이렉트 방식 (화면이 이동됨)
+        // [모바일] 리다이렉트 방식
         await signInWithRedirect(auth, provider);
-        // 리다이렉트 되면 페이지가 넘어가므로 setIsLoading(false)를 할 필요가 없음
       } else {
-        // [PC] 팝업 방식 (기존 유지)
+        // [PC] 팝업 방식
         const result = await signInWithPopup(auth, provider);
         await checkUserAndCreateFirestore(result.user);
         setIsLoading(false);
       }
     } catch (error) {
       console.error("Google 로그인 에러:", error);
-      // 에러 메시지를 구체적으로 표시하여 디버깅 용이하게 함
       const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
       alert(`Google 로그인 오류: ${errorMessage}`);
       setIsLoading(false);
