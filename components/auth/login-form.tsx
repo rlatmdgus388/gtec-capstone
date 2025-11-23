@@ -7,7 +7,6 @@ import { auth, db } from "@/lib/firebase";
 import {
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult,
   GoogleAuthProvider,
   setPersistence,
   browserLocalPersistence,
@@ -39,41 +38,9 @@ export function LoginForm({
     }
   };
 
-  // [Redirect 처리] 컴포넌트가 마운트될 때, 리다이렉트 결과가 있는지 확인
+  // [Redirect 처리] AuthManager에서 처리하므로 여기서는 제거함
   useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        // 1. 리다이렉트 결과 확인
-        // alert("리다이렉트 결과 확인 시작"); // 디버깅용
-        const result = await getRedirectResult(auth);
-        if (result) {
-          // alert(`로그인 성공! 유저: ${result.user.email}`); // 디버깅용
-          setIsLoading(true);
-          await checkUserAndCreateFirestore(result.user);
-          setIsLoading(false);
-          return;
-        }
-
-        // 2. 이미 로그인된 상태인지 확인 (리다이렉트 결과가 null이어도 세션이 유지될 수 있음)
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          // alert(`이미 로그인된 상태입니다. 유저: ${currentUser.email}`); // 디버깅용
-          setIsLoading(true);
-          await checkUserAndCreateFirestore(currentUser);
-          setIsLoading(false);
-          return;
-        }
-
-        // alert("리다이렉트 결과 없음 & 로그인 안됨");
-      } catch (error) {
-        console.error("리다이렉트 로그인 확인 중 에러:", error);
-        const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
-        alert(`리다이렉트 확인 에러: ${errorMessage}`);
-        setIsLoading(false);
-      }
-    };
-
-    handleRedirectResult();
+    // 필요한 경우 여기에 추가 로직 작성
   }, []);
 
   const handleGoogleLogin = async () => {

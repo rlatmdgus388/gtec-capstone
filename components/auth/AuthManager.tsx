@@ -14,8 +14,9 @@ import { CommunityScreen } from "@/components/community/community-screen"
 import { SettingsScreen } from "@/components/settings/settings-screen"
 import { WordbookDetail } from "@/components/vocabulary/wordbook-detail"
 import { CreateWordbookScreen } from "@/components/vocabulary/create-wordbook-screen"
-import { auth } from "@/lib/firebase"
-import { onAuthStateChanged, User } from "firebase/auth"
+import { auth, db } from "@/lib/firebase"
+import { onAuthStateChanged, User, getRedirectResult } from "firebase/auth"
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore"
 import { fetchWithAuth } from "@/lib/api"
 
 export default function AuthManager() {
@@ -35,12 +36,32 @@ export default function AuthManager() {
   const [homeRefreshKey, setHomeRefreshKey] = useState(0)
   const [settingsRefreshKey, setSettingsRefreshKey] = useState(0)
 
-  // ... (useEffect, isAuthenticated, isGoogleUser 등 모든 로직은 그대로) ...
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
       setIsLoading(false)
     })
+
+    // [Redirect 처리] 앱 로드 시 리다이렉트 결과 확인 (AuthManager에서 처리)
+    getRedirectResult(auth).then(async (result) => {
+      if (result) {
+        console.log("리다이렉트 로그인 성공:", result.user.email);
+        // Firestore 유저 생성 로직
+        const userDocRef = doc(db, "users", result.user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (!userDoc.exists()) {
+          await setDoc(userDocRef, {
+            email: result.user.email,
+            name: result.user.displayName || result.user.email?.split("@")[0],
+            createdAt: serverTimestamp(),
+          });
+        }
+      }
+    }).catch((error) => {
+      console.error("리다이렉트 확인 에러:", error);
+      // alert(`리다이렉트 에러: ${error.message}`);
+    });
+
     return () => unsubscribe()
   }, [])
 
@@ -57,7 +78,6 @@ export default function AuthManager() {
   }
 
   if (!isAuthenticated) {
-    // ... (인증 로직은 그대로) ...
     switch (authScreen) {
       case "email-login":
         return <EmailLoginForm onBackToMain={() => setAuthScreen("main")} onLoginSuccess={() => setAuthScreen("main")} />
@@ -72,7 +92,6 @@ export default function AuthManager() {
     return <EmailVerificationScreen onLogout={() => auth.signOut()} />
   }
 
-  // ... (handleLogout, handleWordbookSelect 등 모든 핸들러 함수는 그대로) ...
   const handleLogout = () => {
     auth.signOut()
   }
@@ -116,9 +135,7 @@ export default function AuthManager() {
     setActiveTab("study")
   }
 
-
   const handleTabChange = (tab: string) => {
-    // ... (탭 변경 로직은 그대로) ...
     if (tab === "vocabulary" && activeTab === "vocabulary" && (selectedWordbookForDetail || isCreatingWordbook)) {
       setSelectedWordbookForDetail(null)
       setIsCreatingWordbook(false)
@@ -163,7 +180,6 @@ export default function AuthManager() {
   }
 
   const renderScreen = () => {
-    // ... (renderScreen 로직은 그대로) ...
     switch (activeTab) {
       case "home":
         return (
@@ -221,16 +237,12 @@ export default function AuthManager() {
     }
   }
 
-  // [수정 1] 'h-screen' -> 'min-h-screen'
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto">
-
-      {/* [수정 2] 'overflow-hidden' 제거 */}
       <main className="flex-1">
         {renderScreen()}
       </main>
 
-      {/* [수정 3] 'footer' 래퍼 제거 (BottomNav가 fixed이므로) */}
       {!(activeTab === "vocabulary" && isCreatingWordbook) && (
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
       )}
