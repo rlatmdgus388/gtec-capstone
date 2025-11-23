@@ -41,14 +41,20 @@ export function LoginForm({
   useEffect(() => {
     const handleRedirectResult = async () => {
       try {
+        // alert("리다이렉트 결과 확인 시작"); // 디버깅용
         const result = await getRedirectResult(auth);
         if (result) {
+          // alert(`로그인 성공! 유저: ${result.user.email}`); // 디버깅용
           setIsLoading(true);
           await checkUserAndCreateFirestore(result.user);
           setIsLoading(false);
+        } else {
+          // alert("리다이렉트 결과 없음 (일반 진입)"); // 디버깅용
         }
       } catch (error) {
         console.error("리다이렉트 로그인 확인 중 에러:", error);
+        const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+        alert(`리다이렉트 확인 에러: ${errorMessage}`);
         setIsLoading(false);
       }
     };
