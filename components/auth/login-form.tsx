@@ -76,7 +76,9 @@ export function LoginForm({
       }
     } catch (error) {
       console.error("Google 로그인 에러:", error);
-      alert("Google 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      // 에러 메시지를 구체적으로 표시하여 디버깅 용이하게 함
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+      alert(`Google 로그인 오류: ${errorMessage}`);
       setIsLoading(false);
     }
   };
