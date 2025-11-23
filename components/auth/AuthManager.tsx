@@ -50,6 +50,8 @@ export default function AuthManager() {
     })
 
     // [Redirect 처리] 앱 로드 시 리다이렉트 결과 확인 (AuthManager에서 처리)
+    addLog(`Hostname: ${window.location.hostname}`)
+    addLog(`AuthDomain: ${auth.app.options.authDomain}`)
     addLog("getRedirectResult 호출 시작")
     getRedirectResult(auth).then(async (result) => {
       if (result) {
