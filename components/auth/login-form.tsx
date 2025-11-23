@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SnapVocaLogo } from "@/components/snap-voca-logo";
 import { auth, db } from "@/lib/firebase";
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
+  User
+} from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 
@@ -17,27 +23,60 @@ export function LoginForm({
 }) {
   const [isLoading, setIsLoading] = useState(false);
 
+  // [공통 로직] 유저 정보를 Firestore에 확인하고 저장하는 함수
+  const checkUserAndCreateFirestore = async (user: User) => {
+    const userDocRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+      await setDoc(userDocRef, {
+        email: user.email,
+        name: user.displayName || user.email?.split("@")[0],
+        createdAt: serverTimestamp(),
+      });
+    }
+  };
+
+  // [Redirect 처리] 컴포넌트가 마운트될 때, 리다이렉트 결과가 있는지 확인
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setIsLoading(true);
+          await checkUserAndCreateFirestore(result.user);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("리다이렉트 로그인 확인 중 에러:", error);
+        setIsLoading(false);
+      }
+    };
+
+    handleRedirectResult();
+  }, []);
+
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
 
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const userDocRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
+    // 모바일 기기인지 체크 (간단한 UserAgent 검사)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
-          email: user.email,
-          name: user.displayName || user.email?.split("@")[0],
-          createdAt: serverTimestamp(),
-        });
+    try {
+      if (isMobile) {
+        // [모바일] 리다이렉트 방식 (화면이 이동됨)
+        await signInWithRedirect(auth, provider);
+        // 리다이렉트 되면 페이지가 넘어가므로 setIsLoading(false)를 할 필요가 없음
+      } else {
+        // [PC] 팝업 방식 (기존 유지)
+        const result = await signInWithPopup(auth, provider);
+        await checkUserAndCreateFirestore(result.user);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Google 로그인 에러:", error);
       alert("Google 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -71,7 +110,6 @@ export function LoginForm({
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                {/* absolute left-6 제거하고 mr-3만 남김 -> 텍스트 바로 옆에 위치 */}
                 <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" aria-hidden>
                   <path
                     fill="#4285F4"
