@@ -39,6 +39,9 @@ export default function AuthManager() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
       setIsLoading(false)
+      if (currentUser) {
+        setActiveTab("home")
+      }
     })
     return () => unsubscribe()
   }, [])
